@@ -11,6 +11,7 @@ def scrape_data():
     soup = BeautifulSoup(response.text, "html.parser")
 
     table = soup.find("table")
+    print(soup.prettify())  # See the full page source
     data = []
 
     if table:
