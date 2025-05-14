@@ -1,9 +1,13 @@
+import os
 import time
 import asyncio
 from flask import Flask, jsonify
 from playwright.async_api import async_playwright
 
 app = Flask(__name__)
+
+# Ensure Railway uses the correct port
+port = int(os.environ.get("PORT", 8080))
 
 async def scrape_data():
     url = "https://swishanalytics.com/optimus/mlb/batter-vs-pitcher-stats?date=2025-05-14"
@@ -77,4 +81,4 @@ def stats():
     return jsonify(asyncio.run(scrape_data()))
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)  # Ensures public access
+    app.run(host="0.0.0.0", port=port)  # Ensures Railway exposes the app publicly
