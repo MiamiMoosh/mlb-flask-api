@@ -9,6 +9,9 @@ app = Flask(__name__)
 # Ensure Railway uses the correct port
 port = int(os.environ.get("PORT", 8080))
 
+# Automatically install Playwright's browsers on startup
+os.system("playwright install chromium")
+
 async def scrape_data():
     url = "https://swishanalytics.com/optimus/mlb/batter-vs-pitcher-stats?date=2025-05-14"
     start_time = time.time()  # Start timing
@@ -75,6 +78,10 @@ async def scrape_data():
         print(f"[DEBUG] Browser closed at {time.strftime('%H:%M:%S')}")
 
     return rows_data
+
+@app.route("/")
+def home():
+    return jsonify({"message": "Welcome to the MLB Stats API!"})
 
 @app.route("/stats")
 def stats():
