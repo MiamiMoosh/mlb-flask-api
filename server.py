@@ -9,7 +9,8 @@ app = Flask(__name__)
 # Ensure Railway uses the correct port
 port = int(os.environ.get("PORT", 8080))
 
-# Automatically install Playwright's browsers on startup
+# Automatically install Playwright's dependencies and browsers at startup
+os.system("playwright install-deps")
 os.system("playwright install chromium")
 
 async def scrape_data():
@@ -46,33 +47,36 @@ async def scrape_data():
 
         extract_start = time.time()
 
-        # Extract all rows' data in **one single operation**
+        # Extract all rows' data, including **team names from image alt tags**
         rows_data = await page.eval_on_selector_all("table tbody tr", """
             rows => rows.map(row => {
                 let cells = row.querySelectorAll("td");
-                if (cells.length < 14) return null;
+                let teamImgs = row.querySelectorAll("td img[alt]");  // Select team images
+
+                if (cells.length < 14 || teamImgs.length < 2) return null;
+
                 return {
+                    team_batter: teamImgs[0].alt.trim(),
                     batter: cells[0].innerText.trim(),
-                    team: cells[1].innerText.trim(),  // Double-check this index
-                    pitcher: cells[2].innerText.trim(),
+                    team_pitcher: teamImgs[1].alt.trim(),
+                    pitcher: cells[1].innerText.trim(),
                     stats: {
-                        PA: cells[3].innerText.trim(),
-                        AB: cells[4].innerText.trim(),
-                        H: cells[5].innerText.trim(),
-                        '1B': cells[6].innerText.trim(),
-                        '2B': cells[7].innerText.trim(),
-                        '3B': cells[8].innerText.trim(),
-                        HR: cells[9].innerText.trim(),
-                        BB: cells[10].innerText.trim(),
-                        SO: cells[11].innerText.trim(),
-                        AVG: cells[12].innerText.trim(),
-                        OBP: cells[13].innerText.trim(),
-                        SLG: cells[14].innerText.trim()
+                        PA: cells[2].innerText.trim(),
+                        AB: cells[3].innerText.trim(),
+                        H: cells[4].innerText.trim(),
+                        '1B': cells[5].innerText.trim(),
+                        '2B': cells[6].innerText.trim(),
+                        '3B': cells[7].innerText.trim(),
+                        HR: cells[8].innerText.trim(),
+                        BB: cells[9].innerText.trim(),
+                        SO: cells[10].innerText.trim(),
+                        AVG: cells[11].innerText.trim(),
+                        OBP: cells[12].innerText.trim(),
+                        SLG: cells[13].innerText.trim()
                     }
                 };
             }).filter(row => row !== null)
         """)
-
 
         print(f"[DEBUG] Batch data extraction completed in {time.time() - extract_start:.2f} seconds")
 
