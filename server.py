@@ -2,9 +2,6 @@ from flask import Flask, jsonify
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import os
 
@@ -15,8 +12,8 @@ def scrape_data():
 
     # Set up Selenium WebDriver
     options = Options()
-    options.binary_location = "/usr/bin/google-chrome"  # Use Google Chrome instead of Chromium
-    options.add_argument("--headless")  # Run without opening a browser window
+    options.binary_location = "/usr/bin/google-chrome-stable"  # Use Chrome instead of Chromium
+    options.add_argument("--headless")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
 
