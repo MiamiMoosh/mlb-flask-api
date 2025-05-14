@@ -12,10 +12,18 @@ app = Flask(__name__)
 def scrape_data():
     url = "https://swishanalytics.com/optimus/mlb/batter-vs-pitcher-stats?date=2025-05-14"
 
-    # Set up Selenium WebDriver
-    options = Options()
-    options.binary_location = "/usr/bin/chromium-browser"  # Ensure Render uses the correct Chromium binary
-    options.add_argument("--headless")  # Run without opening a browser window
+    import os
+
+    options = webdriver.ChromeOptions()
+
+    # Check which binary exists and set it accordingly
+    binary_paths = ["/usr/bin/chromium-browser", "/usr/bin/chromium"]
+    for path in binary_paths:
+        if os.path.exists(path):
+            options.binary_location = path
+            break
+
+    options.add_argument("--headless")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
 
