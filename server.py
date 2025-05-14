@@ -80,6 +80,13 @@ def scrape_data():
     driver.quit()
     return data
 
+@app.route("/debug")
+def debug():
+    import subprocess
+    chrome_path = subprocess.run(["which", "chromium-browser"], capture_output=True, text=True).stdout.strip()
+    chrome_version = subprocess.run(["chromium-browser", "--version"], capture_output=True, text=True).stdout.strip()
+    return jsonify({"chromium_path": chrome_path, "chromium_version": chrome_version})
+
 @app.route("/stats")
 def stats():
     return jsonify(scrape_data())
