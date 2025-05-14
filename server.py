@@ -42,7 +42,7 @@ async def scrape_data():
         print(f"[DEBUG] Page loaded in {time.time() - nav_start:.2f} seconds")
 
         wait_start = time.time()
-        await page.wait_for_selector("table tbody tr", timeout=5000)
+        await page.wait_for_selector("table tbody tr img[alt]", timeout=7000)
         print(f"[DEBUG] Table appeared in {time.time() - wait_start:.2f} seconds")
 
         extract_start = time.time()
