@@ -2,28 +2,32 @@ from flask import Flask, jsonify
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import os
+import subprocess
 
 app = Flask(__name__)
 
 def scrape_data():
     url = "https://swishanalytics.com/optimus/mlb/batter-vs-pitcher-stats?date=2025-05-14"
 
-    # Set up Selenium WebDriver
-    options = webdriver.ChromeOptions()
-    options.binary_location = "/usr/bin/chromium"  # Use Chromium instead of Google Chrome
-
+    # Use remote WebDriver instead of local Chrome/Chromium
+    options = Options()
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
 
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=options)
-
-    driver.get(url)
-
     try:
+        driver = webdriver.Remote(
+            command_executor="http://hub.browserstack.com/wd/hub",
+            options=options
+        )
+
+        driver.get(url)
+
         # Explicit wait for table rows to ensure data loads
         wait = WebDriverWait(driver, 15)
         rows = wait.until(EC.presence_of_all_elements_located((By.XPATH, "//table/tbody/tr")))
@@ -32,24 +36,9 @@ def scrape_data():
         for row in rows:
             cells = row.find_elements(By.TAG_NAME, "td")
             if len(cells) >= 14:  # Ensure enough columns exist
-                
-                # Extract team icons
-                batter_img = cells[0].find_element(By.TAG_NAME, "img")
-                pitcher_img = cells[1].find_element(By.TAG_NAME, "img")
-
-                batter_team = batter_img.get_attribute("alt")  # Extract team name
-                pitcher_team = pitcher_img.get_attribute("alt")
-
-                # If alt is empty, extract team name from filename in src URL
-                if not batter_team:
-                    batter_team = batter_img.get_attribute("src").split("/")[-1].split(".")[0]
-                if not pitcher_team:
-                    pitcher_team = pitcher_img.get_attribute("src").split("/")[-1].split(".")[0]
-
                 batter = cells[0].text.strip()
                 pitcher = cells[1].text.strip()
-                
-                # Expanded stats
+
                 stats = {
                     "PA": cells[2].text.strip(),
                     "AB": cells[3].text.strip(),
@@ -64,12 +53,10 @@ def scrape_data():
                     "OBP": cells[12].text.strip(),
                     "SLG": cells[13].text.strip()
                 }
-                
+
                 data.append({
                     "batter": batter,
-                    "batter_team": batter_team,
                     "pitcher": pitcher,
-                    "pitcher_team": pitcher_team,
                     "stats": stats
                 })
 
@@ -85,16 +72,15 @@ def stats():
 
 @app.route("/debug")
 def debug():
-    import subprocess
-
+    # Gather system information to debug missing browser issues
     os_version = subprocess.run(["cat", "/etc/os-release"], capture_output=True, text=True).stdout.strip()
     
-    # Check package managers
-    apt_exists = subprocess.run(["which", "apt"], capture_output=True, text=True).stdout.strip()
-    yum_exists = subprocess.run(["which", "yum"], capture_output=True, text=True).stdout.strip()
-    apk_exists = subprocess.run(["which", "apk"], capture_output=True, text=True).stdout.strip()
+    package_managers = {
+        "apt": subprocess.run(["which", "apt"], capture_output=True, text=True).stdout.strip(),
+        "yum": subprocess.run(["which", "yum"], capture_output=True, text=True).stdout.strip(),
+        "apk": subprocess.run(["which", "apk"], capture_output=True, text=True).stdout.strip(),
+    }
 
-    # Check Chrome installation
     chrome_path_google = subprocess.run(["which", "google-chrome"], capture_output=True, text=True).stdout.strip()
     chrome_path_chromium = subprocess.run(["which", "chromium"], capture_output=True, text=True).stdout.strip()
 
@@ -103,11 +89,7 @@ def debug():
 
     return jsonify({
         "os_version": os_version,
-        "package_managers": {
-            "apt": apt_exists,
-            "yum": yum_exists,
-            "apk": apk_exists
-        },
+        "package_managers": package_managers,
         "google_chrome_path": chrome_path_google,
         "chromium_path": chrome_path_chromium,
         "google_chrome_version": chrome_version_google,
