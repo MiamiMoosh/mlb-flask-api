@@ -87,12 +87,13 @@ def debug():
     import subprocess
 
     os_version = subprocess.run(["cat", "/etc/os-release"], capture_output=True, text=True).stdout.strip()
-    package_managers = {
-        "apt": subprocess.run(["command", "-v", "apt"], capture_output=True, text=True).stdout.strip(),
-        "yum": subprocess.run(["command", "-v", "yum"], capture_output=True, text=True).stdout.strip(),
-        "apk": subprocess.run(["command", "-v", "apk"], capture_output=True, text=True).stdout.strip(),
-    }
+    
+    # Check package managers
+    apt_exists = subprocess.run(["which", "apt"], capture_output=True, text=True).stdout.strip()
+    yum_exists = subprocess.run(["which", "yum"], capture_output=True, text=True).stdout.strip()
+    apk_exists = subprocess.run(["which", "apk"], capture_output=True, text=True).stdout.strip()
 
+    # Check Chrome installation
     chrome_path_google = subprocess.run(["which", "google-chrome"], capture_output=True, text=True).stdout.strip()
     chrome_path_chromium = subprocess.run(["which", "chromium"], capture_output=True, text=True).stdout.strip()
 
@@ -101,7 +102,11 @@ def debug():
 
     return jsonify({
         "os_version": os_version,
-        "package_managers": package_managers,
+        "package_managers": {
+            "apt": apt_exists,
+            "yum": yum_exists,
+            "apk": apk_exists
+        },
         "google_chrome_path": chrome_path_google,
         "chromium_path": chrome_path_chromium,
         "google_chrome_version": chrome_version_google,
