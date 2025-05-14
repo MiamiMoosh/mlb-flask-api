@@ -1,14 +1,17 @@
-import subprocess
+import os
 from flask import Flask, jsonify
 from playwright.sync_api import sync_playwright
 
 app = Flask(__name__)
 
+# Manually set Playwright's browser directory to avoid missing files
+os.environ["PLAYWRIGHT_BROWSERS_PATH"] = "/opt/render/.cache/ms-playwright"
+
 def scrape_data():
     url = "https://swishanalytics.com/optimus/mlb/batter-vs-pitcher-stats?date=2025-05-14"
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(headless=True)  # Uses Playwright's managed Chromium
         page = browser.new_page()
         page.goto(url)
         page.wait_for_selector("table tbody tr")
