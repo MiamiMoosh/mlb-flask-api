@@ -1,9 +1,11 @@
 from flask import Flask, jsonify
 from selenium import webdriver
-from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
-import time
 
 app = Flask(__name__)
 
@@ -11,28 +13,69 @@ def scrape_data():
     url = "https://swishanalytics.com/optimus/mlb/batter-vs-pitcher-stats?date=2025-05-14"
 
     # Set up Selenium WebDriver
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless")  # Runs Chrome in the background (no GUI)
+    options = Options()
+    options.add_argument("--headless")  # Run without opening a browser window
+    options.add_argument("--disable-gpu")
+    options.add_argument("--no-sandbox")
+    
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
 
-    # Load the page
     driver.get(url)
-    time.sleep(5)  # Give JavaScript time to load the stats table
 
-    # Find the table element
-    table = driver.find_element(By.TAG_NAME, "table")
-    rows = table.find_elements(By.TAG_NAME, "tr")
+    try:
+        # Explicit wait for table rows to ensure data loads
+        wait = WebDriverWait(driver, 15)
+        rows = wait.until(EC.presence_of_all_elements_located((By.XPATH, "//table/tbody/tr")))
 
-    data = []
+        data = []
+        for row in rows:
+            cells = row.find_elements(By.TAG_NAME, "td")
+            if len(cells) >= 14:  # Ensure enough columns exist
+                
+                # Extract team icons
+                batter_img = cells[0].find_element(By.TAG_NAME, "img")
+                pitcher_img = cells[1].find_element(By.TAG_NAME, "img")
 
-    for row in rows:
-        cells = row.find_elements(By.TAG_NAME, "td")
-        if len(cells) >= 3:
-            batter = cells[0].text.strip()
-            pitcher = cells[1].text.strip()
-            stats = cells[2].text.strip()
-            data.append({"batter": batter, "pitcher": pitcher, "stats": stats})
+                batter_team = batter_img.get_attribute("alt")  # Extract team name
+                pitcher_team = pitcher_img.get_attribute("alt")
+
+                # If alt is empty, try extracting the filename from the image URL
+                if not batter_team:
+                    batter_team = batter_img.get_attribute("src").split("/")[-1].split(".")[0]
+
+                if not pitcher_team:
+                    pitcher_team = pitcher_img.get_attribute("src").split("/")[-1].split(".")[0]
+
+                batter = cells[0].text.strip()
+                pitcher = cells[1].text.strip()
+                
+                # Expanded stats
+                stats = {
+                    "PA": cells[2].text.strip(),
+                    "AB": cells[3].text.strip(),
+                    "H": cells[4].text.strip(),
+                    "1B": cells[5].text.strip(),
+                    "2B": cells[6].text.strip(),
+                    "3B": cells[7].text.strip(),
+                    "HR": cells[8].text.strip(),
+                    "BB": cells[9].text.strip(),
+                    "SO": cells[10].text.strip(),
+                    "AVG": cells[11].text.strip(),
+                    "OBP": cells[12].text.strip(),
+                    "SLG": cells[13].text.strip()
+                }
+                
+                data.append({
+                    "batter": batter,
+                    "batter_team": batter_team,
+                    "pitcher": pitcher,
+                    "pitcher_team": pitcher_team,
+                    "stats": stats
+                })
+
+    except Exception as e:
+        data = {"error": f"Failed to scrape data: {str(e)}"}
 
     driver.quit()
     return data
