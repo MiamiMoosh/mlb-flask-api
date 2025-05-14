@@ -2,8 +2,8 @@
 apt update
 apt install -y wget curl
 
-# Install Google Chrome via a Debian package
-wget https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_123.0.1234.56-1_amd64.deb -O chrome.deb
+# Install Google Chrome the official way
+wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -O chrome.deb
 apt install -y ./chrome.deb
 
 # Verify installation

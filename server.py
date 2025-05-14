@@ -85,9 +85,25 @@ def stats():
 @app.route("/debug")
 def debug():
     import subprocess
-    chrome_path = subprocess.run(["which", "google-chrome"], capture_output=True, text=True).stdout.strip()
-    chrome_version = subprocess.run(["google-chrome", "--version"], capture_output=True, text=True).stdout.strip()
-    return jsonify({"chrome_path": chrome_path, "chrome_version": chrome_version})
+
+    # Check installed packages
+    packages = subprocess.run(["dpkg", "--list"], capture_output=True, text=True).stdout.strip()
+
+    # Check available Chrome paths
+    chrome_path_google = subprocess.run(["which", "google-chrome"], capture_output=True, text=True).stdout.strip()
+    chrome_path_chromium = subprocess.run(["which", "chromium"], capture_output=True, text=True).stdout.strip()
+
+    # Check Chrome version if installed
+    chrome_version_google = subprocess.run(["google-chrome", "--version"], capture_output=True, text=True).stdout.strip()
+    chrome_version_chromium = subprocess.run(["chromium", "--version"], capture_output=True, text=True).stdout.strip()
+
+    return jsonify({
+        "google_chrome_path": chrome_path_google,
+        "chromium_path": chrome_path_chromium,
+        "google_chrome_version": chrome_version_google,
+        "chromium_version": chrome_version_chromium,
+        "installed_packages": packages[:5000]  # Limit package list for readability
+    })
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
