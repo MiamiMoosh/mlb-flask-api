@@ -77,5 +77,4 @@ def stats():
     return jsonify(asyncio.run(scrape_data()))
 
 if __name__ == "__main__":
-    print("[DEBUG] Starting Flask server...")
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000)  # Ensures public access
