@@ -50,9 +50,14 @@ async def scrape_data():
         rows_data = await page.eval_on_selector_all("table tbody tr", """
             rows => rows.map(row => {
                 let cells = row.querySelectorAll("td");
+                let teamImgs = row.querySelectorAll("td img[alt]");  // Select team images
+
                 if (cells.length < 14) return null;
+
                 return {
+                    team_batter: teamImgs[0] ? teamImgs[0].alt.trim() : "Unknown",
                     batter: cells[0].innerText.trim(),
+                    team_pitcher: teamImgs[1] ? teamImgs[1].alt.trim() : "Unknown",
                     pitcher: cells[1].innerText.trim(),
                     stats: {
                         PA: cells[2].innerText.trim(),
@@ -71,6 +76,7 @@ async def scrape_data():
                 };
             }).filter(row => row !== null)
         """)
+
 
         print(f"[DEBUG] Batch data extraction completed in {time.time() - extract_start:.2f} seconds")
 
