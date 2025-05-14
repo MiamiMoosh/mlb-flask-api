@@ -50,28 +50,24 @@ async def scrape_data():
         rows_data = await page.eval_on_selector_all("table tbody tr", """
             rows => rows.map(row => {
                 let cells = row.querySelectorAll("td");
-                let teamImgs = row.querySelectorAll("td img[alt]");  // Select team images
-
                 if (cells.length < 14) return null;
-
                 return {
-                    team_batter: teamImgs[0] ? teamImgs[0].alt.trim() : "Unknown",
                     batter: cells[0].innerText.trim(),
-                    team_pitcher: teamImgs[1] ? teamImgs[1].alt.trim() : "Unknown",
-                    pitcher: cells[1].innerText.trim(),
+                    team: cells[1].innerText.trim(),  // Double-check this index
+                    pitcher: cells[2].innerText.trim(),
                     stats: {
-                        PA: cells[2].innerText.trim(),
-                        AB: cells[3].innerText.trim(),
-                        H: cells[4].innerText.trim(),
-                        '1B': cells[5].innerText.trim(),
-                        '2B': cells[6].innerText.trim(),
-                        '3B': cells[7].innerText.trim(),
-                        HR: cells[8].innerText.trim(),
-                        BB: cells[9].innerText.trim(),
-                        SO: cells[10].innerText.trim(),
-                        AVG: cells[11].innerText.trim(),
-                        OBP: cells[12].innerText.trim(),
-                        SLG: cells[13].innerText.trim()
+                        PA: cells[3].innerText.trim(),
+                        AB: cells[4].innerText.trim(),
+                        H: cells[5].innerText.trim(),
+                        '1B': cells[6].innerText.trim(),
+                        '2B': cells[7].innerText.trim(),
+                        '3B': cells[8].innerText.trim(),
+                        HR: cells[9].innerText.trim(),
+                        BB: cells[10].innerText.trim(),
+                        SO: cells[11].innerText.trim(),
+                        AVG: cells[12].innerText.trim(),
+                        OBP: cells[13].innerText.trim(),
+                        SLG: cells[14].innerText.trim()
                     }
                 };
             }).filter(row => row !== null)
