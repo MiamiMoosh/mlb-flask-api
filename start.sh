@@ -1,10 +1,10 @@
 #!/bin/bash
 apt update
-apt install -y chromium
+apt install -y wget curl
 
-# Verify installation
-which chromium
-chromium --version
+# Install Playwright browsers
+pip install --upgrade playwright
+playwright install --with-deps
 
 # Start Flask
 python server.py
