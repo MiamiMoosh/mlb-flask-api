@@ -14,10 +14,11 @@ def scrape_data():
 
     # Set up Selenium WebDriver
     options = Options()
+    options.binary_location = "/usr/bin/chromium-browser"  # Ensure Render uses the correct Chromium binary
     options.add_argument("--headless")  # Run without opening a browser window
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
-    
+
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
 
@@ -40,10 +41,9 @@ def scrape_data():
                 batter_team = batter_img.get_attribute("alt")  # Extract team name
                 pitcher_team = pitcher_img.get_attribute("alt")
 
-                # If alt is empty, try extracting the filename from the image URL
+                # If alt is empty, extract team name from filename in src URL
                 if not batter_team:
                     batter_team = batter_img.get_attribute("src").split("/")[-1].split(".")[0]
-
                 if not pitcher_team:
                     pitcher_team = pitcher_img.get_attribute("src").split("/")[-1].split(".")[0]
 
