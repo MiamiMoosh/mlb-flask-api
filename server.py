@@ -16,12 +16,8 @@ def scrape_data():
 
     options = webdriver.ChromeOptions()
 
-    # Check available binary paths and set the correct one
-    binary_paths = ["/usr/bin/chromium", "/usr/bin/google-chrome"]
-    for path in binary_paths:
-        if os.path.exists(path):
-            options.binary_location = path
-            break
+    # Set the correct binary path for Google Chrome
+    options.binary_location = "/usr/bin/google-chrome"
 
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
