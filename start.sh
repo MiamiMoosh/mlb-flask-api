@@ -2,9 +2,9 @@
 apt update
 apt install -y wget curl
 
-# Ensure Playwright browsers are installed
+# Install Playwright and browsers before starting the app
 pip install --upgrade playwright
-playwright install --with-deps
+playwright install chromium --with-deps
 
 # Verify Playwright installation
 playwright --version
