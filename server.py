@@ -6,18 +6,17 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
+import os
 
 app = Flask(__name__)
 
 def scrape_data():
     url = "https://swishanalytics.com/optimus/mlb/batter-vs-pitcher-stats?date=2025-05-14"
 
-    import os
-
-    options = webdriver.ChromeOptions()
+    # Set up Selenium WebDriver
+    options = Options()
     options.binary_location = "/usr/bin/google-chrome"  # Use Google Chrome instead of Chromium
-
-    options.add_argument("--headless")
+    options.add_argument("--headless")  # Run without opening a browser window
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
 
@@ -82,16 +81,16 @@ def scrape_data():
     driver.quit()
     return data
 
-@app.route("/debug")
-def debug():
-    import subprocess
-    chrome_path = subprocess.run(["which", "chromium-browser"], capture_output=True, text=True).stdout.strip()
-    chrome_version = subprocess.run(["chromium-browser", "--version"], capture_output=True, text=True).stdout.strip()
-    return jsonify({"chromium_path": chrome_path, "chromium_version": chrome_version})
-
 @app.route("/stats")
 def stats():
     return jsonify(scrape_data())
+
+@app.route("/debug")
+def debug():
+    import subprocess
+    chrome_path = subprocess.run(["which", "google-chrome"], capture_output=True, text=True).stdout.strip()
+    chrome_version = subprocess.run(["google-chrome", "--version"], capture_output=True, text=True).stdout.strip()
+    return jsonify({"chrome_path": chrome_path, "chrome_version": chrome_version})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
