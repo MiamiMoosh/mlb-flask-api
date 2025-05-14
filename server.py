@@ -12,7 +12,7 @@ def scrape_data():
 
     # Set up Selenium WebDriver
     options = webdriver.ChromeOptions()
-    options.binary_location = "/usr/bin/google-chrome"  # Explicit path to Chrome
+    options.binary_location = "/usr/bin/chromium"  # Use Chromium instead of Google Chrome
 
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
