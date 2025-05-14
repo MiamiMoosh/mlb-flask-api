@@ -16,8 +16,8 @@ def scrape_data():
 
     options = webdriver.ChromeOptions()
 
-    # Check which binary exists and set it accordingly
-    binary_paths = ["/usr/bin/chromium-browser", "/usr/bin/chromium"]
+    # Check available binary paths and set the correct one
+    binary_paths = ["/usr/bin/chromium", "/usr/bin/google-chrome"]
     for path in binary_paths:
         if os.path.exists(path):
             options.binary_location = path
