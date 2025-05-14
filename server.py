@@ -12,19 +12,23 @@ app = Flask(__name__)
 def scrape_data():
     url = "https://swishanalytics.com/optimus/mlb/batter-vs-pitcher-stats?date=2025-05-14"
 
-    import os
+import os
 
-    options = webdriver.ChromeOptions()
+options = webdriver.ChromeOptions()
 
-    # Set the correct binary path for Google Chrome
-    options.binary_location = "/usr/bin/google-chrome"
+# Check for available Chrome binaries and set one
+binary_paths = ["/usr/bin/chromium", "/usr/bin/google-chrome"]
+for path in binary_paths:
+    if os.path.exists(path):
+        options.binary_location = path
+        break
 
-    options.add_argument("--headless")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--no-sandbox")
+options.add_argument("--headless")
+options.add_argument("--disable-gpu")
+options.add_argument("--no-sandbox")
 
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=options)
+service = Service(ChromeDriverManager().install())
+driver = webdriver.Chrome(service=service, options=options)
 
     driver.get(url)
 
