@@ -11,8 +11,9 @@ def scrape_data():
     url = "https://swishanalytics.com/optimus/mlb/batter-vs-pitcher-stats?date=2025-05-14"
 
     # Set up Selenium WebDriver
-    options = Options()
-    options.binary_location = "/usr/bin/google-chrome-stable"  # Use Chrome instead of Chromium
+    options = webdriver.ChromeOptions()
+    options.binary_location = "/usr/bin/google-chrome"  # Explicit path to Chrome
+
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
