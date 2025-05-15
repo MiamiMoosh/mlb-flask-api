@@ -1,97 +1,106 @@
 import os
 import time
 import asyncio
-from flask import Flask, jsonify
+import datetime
+from flask import Flask, jsonify, render_template, request
 from playwright.async_api import async_playwright
 
-app = Flask(__name__)
+# Initialize Flask app, updating template folder
+app = Flask(__name__, template_folder="pages")  
 
-# Ensure Railway uses the correct port
 port = int(os.environ.get("PORT", 8080))
 
-# Automatically install Playwright's dependencies and browsers at startup
-os.system("playwright install-deps")
-os.system("playwright install chromium")
+# Dictionary for correct team abbreviations
+team_abbreviations = {
+    "whitesox": "CWS", "guardians": "CLE", "tigers": "DET", "royals": "KC", "twins": "MIN",
+    "orioles": "BAL", "redsox": "BOS", "yankees": "NYY", "rays": "TB", "bluejays": "TOR",
+    "athletics": "OAK", "astros": "HOU", "angels": "LAA", "mariners": "SEA", "rangers": "TEX",
+    "cubs": "CHC", "reds": "CIN", "brewers": "MIL", "pirates": "PIT", "cardinals": "STL",
+    "braves": "ATL", "marlins": "MIA", "mets": "NYM", "phillies": "PHI", "nationals": "WAS",
+    "diamondbacks": "ARI", "rockies": "COL", "dodgers": "LAD", "padres": "SD", "giants": "SF"
+}
 
-async def scrape_data():
-    url = "https://swishanalytics.com/optimus/mlb/batter-vs-pitcher-stats?date=2025-05-14"
-    start_time = time.time()  # Start timing
-    
+async def scrape_data(date):
+    url = f"https://swishanalytics.com/optimus/mlb/batter-vs-pitcher-stats?date={date}"
     async with async_playwright() as p:
-        print(f"[DEBUG] Starting Playwright at {time.strftime('%H:%M:%S')}")
-        browser = await p.chromium.launch(headless=True, args=[
-            "--disable-dev-shm-usage",
-            "--no-sandbox",
-            "--disable-background-networking",
-            "--disable-gpu",
-            "--single-process",
-            "--disable-software-rasterizer"
-        ])
-        print(f"[DEBUG] Browser launched in {time.time() - start_time:.2f} seconds")
-
+        browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
-        await page.set_extra_http_headers({"ngrok-skip-browser-warning": "true"})
+        await page.goto(url, timeout=15000, wait_until="domcontentloaded")
 
-        print(f"[DEBUG] Navigating to {url}...")
-        nav_start = time.time()
+        print(f"[DEBUG] Scraping data for {date} from {url}")
+
+        # Explicitly wait for the table before extracting rows
         try:
-            await page.goto(url, timeout=5000)
+            await page.wait_for_selector("table tbody tr", timeout=10000)
         except Exception:
-            print(f"[ERROR] Page load timeout at {time.strftime('%H:%M:%S')}, retrying...")
-            await page.goto(url, timeout=2000, wait_until="domcontentloaded")
-        print(f"[DEBUG] Page loaded in {time.time() - nav_start:.2f} seconds")
+            print("[ERROR] Table not found or took too long to load!")
+            return []
 
-        wait_start = time.time()
-        await page.wait_for_selector("table tbody tr img[alt]", timeout=7000)
-        print(f"[DEBUG] Table appeared in {time.time() - wait_start:.2f} seconds")
-
-        extract_start = time.time()
-
-        # Extract all rows' data, including **team names from image alt tags**
+        # Extract table data with correct abbreviations
         rows_data = await page.eval_on_selector_all("table tbody tr", """
-            rows => rows.map(row => {
-                let cells = row.querySelectorAll("td");
-                let teamImgs = row.querySelectorAll("td img[alt]");  // Select team images
-
-                if (cells.length < 14 || teamImgs.length < 2) return null;
-
-                return {
-                    team_batter: teamImgs[0].alt.trim(),
-                    batter: cells[0].innerText.trim(),
-                    team_pitcher: teamImgs[1].alt.trim(),
-                    pitcher: cells[1].innerText.trim(),
-                    stats: {
-                        PA: cells[2].innerText.trim(),
-                        AB: cells[3].innerText.trim(),
-                        H: cells[4].innerText.trim(),
-                        '1B': cells[5].innerText.trim(),
-                        '2B': cells[6].innerText.trim(),
-                        '3B': cells[7].innerText.trim(),
-                        HR: cells[8].innerText.trim(),
-                        BB: cells[9].innerText.trim(),
-                        SO: cells[10].innerText.trim(),
-                        AVG: cells[11].innerText.trim(),
-                        OBP: cells[12].innerText.trim(),
-                        SLG: cells[13].innerText.trim()
-                    }
+            rows => {
+                console.log("[DEBUG] Extracting Rows...");
+                const teamAbbreviations = {
+                    "whitesox": "CWS", "guardians": "CLE", "tigers": "DET", "royals": "KC", "twins": "MIN",
+                    "orioles": "BAL", "redsox": "BOS", "yankees": "NYY", "rays": "TB", "bluejays": "TOR",
+                    "athletics": "OAK", "astros": "HOU", "angels": "LAA", "mariners": "SEA", "rangers": "TEX",
+                    "cubs": "CHC", "reds": "CIN", "brewers": "MIL", "pirates": "PIT", "cardinals": "STL",
+                    "braves": "ATL", "marlins": "MIA", "mets": "NYM", "phillies": "PHI", "nationals": "WAS",
+                    "diamondbacks": "ARI", "rockies": "COL", "dodgers": "LAD", "padres": "SD", "giants": "SF"
                 };
-            }).filter(row => row !== null)
+
+                return rows.map(row => {
+                    let cells = row.querySelectorAll("td");
+                    let teamImgs = row.querySelectorAll("td img");
+
+                    if (cells.length < 14 || teamImgs.length < 2) return null;
+
+                    let batterTeam = teamImgs[0]?.src?.split('/').pop().replace('.png', '').toLowerCase();
+                    let pitcherTeam = teamImgs[1]?.src?.split('/').pop().replace('.png', '').toLowerCase();
+
+                    return {
+                        team_batter: teamAbbreviations[batterTeam] || "Unknown",
+                        batter: cells[0]?.querySelector(".batter-name")?.innerText?.trim() || "Unknown",
+                        team_pitcher: teamAbbreviations[pitcherTeam] || "Unknown",
+                        pitcher: cells[1]?.querySelector(".pitcher-name")?.innerText?.trim() || "Unknown",
+                        stats: {
+                            PA: cells[2]?.innerText?.trim(),
+                            AB: cells[3]?.innerText?.trim(),
+                            H: cells[4]?.innerText?.trim(),
+                            '1B': cells[5]?.innerText?.trim(),
+                            '2B': cells[6]?.innerText?.trim(),
+                            '3B': cells[7]?.innerText?.trim(),
+                            HR: cells[8]?.innerText?.trim(),
+                            BB: cells[9]?.innerText?.trim(),
+                            SO: cells[10]?.innerText?.trim(),
+                            AVG: cells[11]?.innerText?.trim(),
+                            OBP: cells[12]?.innerText?.trim(),
+                            SLG: cells[13]?.innerText?.trim()
+                        }
+                    };
+                }).filter(row => row !== null);
+            }
         """)
 
-        print(f"[DEBUG] Batch data extraction completed in {time.time() - extract_start:.2f} seconds")
-
+        print("[DEBUG] Final Extracted Data:", rows_data)
         await browser.close()
-        print(f"[DEBUG] Browser closed at {time.strftime('%H:%M:%S')}")
 
     return rows_data
 
 @app.route("/")
 def home():
-    return jsonify({"message": "Welcome to the MLB Stats API!"})
+    date = request.args.get("date", datetime.date.today().strftime("%Y-%m-%d"))
+    return render_template("MyBatterVsPitcher.html", date=date)
 
 @app.route("/stats")
 def stats():
-    return jsonify(asyncio.run(scrape_data()))
+    date = request.args.get("date", datetime.date.today().strftime("%Y-%m-%d"))
+    print(f"[DEBUG] Fetching stats for {date}...")
+
+    data = asyncio.run(scrape_data(date))
+    print("[DEBUG] Flask Returned Data:", data)
+
+    return jsonify(data)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=port)  # Ensures Railway exposes the app publicly
+    app.run(host="0.0.0.0", port=port)
