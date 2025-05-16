@@ -11,7 +11,7 @@ Search works
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>MLB Stats Tracker</title>
+    <title>MLB Batter Vs. Pitcher</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
@@ -21,7 +21,7 @@ Search works
         .nav-link { text-decoration: none; font-size: 16px; font-weight: bold; padding: 6px; color: #007bff; transition: all 0.3s ease-in-out; }
         .nav-link:hover { text-decoration: underline; font-weight: bold; color: #0056b3; }
         .current-date { font-size: 18px; font-weight: bold; margin: 0 15px; }
-        table { width: 90%; border-collapse: collapse; margin: 10px auto; opacity: 0; animation: fadeIn 1s forwards; }
+        table { width: 90%; table-layout: fixed; border-collapse: collapse; margin: 10px auto; opacity: 0; animation: fadeIn 1s forwards; }
         th, td { text-align: center; padding: 6px; border: 1px solid #ddd; font-size: 11px; }
         .star { cursor: pointer; font-size: 16px; padding-left: 5px; transition: all 0.2s ease-in-out; color: gray; }
         .star.selected { color: gold; }
@@ -34,11 +34,55 @@ Search works
 		#togglePlayersBtn { display: block; margin: 10px auto 20px; padding: 6px 12px; border: none; background-color: #007bff; color: white; border-radius: 5px; cursor: pointer; transition: 0.3s; }
         #togglePlayersBtn:hover { background-color: #0056b3; }
         #player-list span { display: inline-block; margin-right: 10px; }
+        #stats-container { width: 90%; margin: 0 auto; overflow-y: auto; }
 
+		/* Style the search box */
+		.dataTables_filter input {
+			width: 200px;  /* Adjust width */
+			padding: 3px;  /* Add padding */
+			margin: 15px 0;
+			border: 2px solid #007bff; /* Change border color */
+			border-radius: 5px; /* Rounded corners */
+			background-color: #f8f9fa; /* Light gray background */
+			font-size: 10px; /* Adjust text size */
+			color: #333; /* Change text color */
+		}
+
+		/* Change placeholder text color */
+		.dataTables_filter input::placeholder {
+			color: #888;
+			font-style: italic;
+		}
+
+		/* Add hover effect */
+		.dataTables_filter input:hover {
+			border-color: #0056b3;
+			background-color: #e9ecef;
+		}
+
+		/* Add focus effect */
+		.dataTables_filter input:focus {
+			outline: none;
+			border-color: #004085;
+			box-shadow: 0 0 5px #007bff;
+		}
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
         }
+		/* Ensure Batter & Pitcher names take up 40% */
+		td:nth-child(2), td:nth-child(4) {
+			text-align: left;
+			width: 20%; /* Each gets 20%, totaling 40% */
+		}
+
+		/* Compress less important columns */
+		td:nth-child(5), td:nth-child(6), td:nth-child(7), td:nth-child(8),
+		td:nth-child(9), td:nth-child(10), td:nth-child(11), td:nth-child(12),
+		td:nth-child(13), td:nth-child(14), td:nth-child(15), td:nth-child(16) {
+			width: 5%;
+		}
+
     </style>
 </head>
 <body>
@@ -98,8 +142,8 @@ Search works
                     <table id="stats-table">
                         <thead>
                             <tr>
-                                <th>Team Batter</th><th>Batter</th>
-                                <th>Team Pitcher</th><th>Pitcher</th>
+                                <th>Team</th><th>Batter</th>
+                                <th>Team</th><th>Pitcher</th>
                                 <th>PA</th><th>AB</th><th>H</th><th>1B</th><th>2B</th><th>3B</th><th>HR</th>
                                 <th>BB</th><th>SO</th><th>AVG</th><th>OBP</th><th>SLG</th>
                             </tr>
@@ -113,7 +157,10 @@ Search works
                     "paging": false, 
                     "scrollY": "600px", 
                     "ordering": true, 
-                    "info": false 
+                    "info": false,
+					"language": {
+						"search": "Search Players:"  /* Changes the default label */
+					}
                 });
 
                 data.forEach(row => {
@@ -157,14 +204,21 @@ Search works
         }
 		
         function toggleFavorites() {
-            showingFavorites = !showingFavorites;
-            $("#togglePlayersBtn").text(showingFavorites ? "Show All Players" : "Show My Players");
-            $("#stats-table").DataTable().rows().every(function() {
-                let row = this.node();
-                let playerName = $(row).find(".star").data("player");
-                $(row).toggle(showingFavorites ? favoritePlayers.includes(playerName) : true);
-            });
-        }
+			showingFavorites = !showingFavorites;
+			$("#togglePlayersBtn").text(showingFavorites ? "Show All Players" : "Show My Players");
+
+			$("#stats-table tbody tr").each(function() {
+				let batterName = $(this).find("td:nth-child(2)").text().trim().replace(/^✩\s*/, "");
+				let pitcherName = $(this).find("td:nth-child(4)").text().trim().replace(/^✩\s*/, "");
+
+				let isFavorited = favoritePlayers.includes(batterName) || favoritePlayers.includes(pitcherName);
+
+				$(this).css("display", showingFavorites && !isFavorited ? "none" : "table-row");
+			});
+
+			// Force table headers to remain correctly aligned
+			$("#stats-table").DataTable().columns.adjust();
+		}
 		
 		function clearFavorites() {
             favoritePlayers = [];
@@ -173,9 +227,17 @@ Search works
             $(".star").removeClass("selected");
         }
 		
+		function adjustTableWidth() {
+			let table = $("#stats-table");
+			let hasScrollbar = table.get(0).scrollHeight > table.get(0).clientHeight;
+			
+			table.css("width", hasScrollbar ? "calc(100% - 16px)" : "100%"); /* Adjust for scrollbar */
+		}
         $(document).ready(() => {
             loadStats();
-            updateFavoriteList();
+            updateFavoriteList();			
+			$("#stats-table").on("draw.dt", adjustTableWidth);
+			adjustTableWidth();
         });
     </script>
 </body>
