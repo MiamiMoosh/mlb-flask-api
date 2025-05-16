@@ -58,27 +58,53 @@ async def scrape_data(date):
                     let batterTeam = teamImgs[0]?.src?.split('/').pop().replace('.png', '').toLowerCase();
                     let pitcherTeam = teamImgs[1]?.src?.split('/').pop().replace('.png', '').toLowerCase();
 
+                    let batterElement = cells[0]?.querySelector(".batter-name");
+                    let pitcherElement = cells[1]?.querySelector(".pitcher-name");
+
+                    let batterName = batterElement?.innerText?.trim() || "Unknown";
+                    let pitcherName = pitcherElement?.innerText?.trim() || "Unknown";
+
+                    let batterHandedness = batterElement?.nextSibling?.textContent?.trim() || "";
+                    let batterPosition = batterElement?.nextSibling?.nextSibling?.textContent?.trim() || "";
+                    let pitcherHandedness = pitcherElement?.nextSibling?.textContent?.trim() || "";
+
+                    // ✅ Cleanup function to remove unwanted "$N/A" values and trim spaces
+                    const removeNA = (text) => text.replace(/\$?N\/A/g, "").trim();
+
+                    batterHandedness = removeNA(batterHandedness) ? `(${removeNA(batterHandedness)})` : "";
+                    batterPosition = removeNA(batterPosition);
+                    pitcherHandedness = removeNA(pitcherHandedness) ? `(${removeNA(pitcherHandedness)})` : "";
+
+                    // ✅ Remove double parentheses only from handedness fields
+                    const fixParentheses = (text) => text.replace(/[()]+/g, "").trim();
+
+                    batterHandedness = batterHandedness ? `(${fixParentheses(batterHandedness)})` : "";
+                    pitcherHandedness = pitcherHandedness ? `(${fixParentheses(pitcherHandedness)})` : "";
+
+
                     return {
-                        team_batter: teamAbbreviations[batterTeam] || "Unknown",
-                        batter: cells[0]?.querySelector(".batter-name")?.innerText?.trim() || "Unknown",
-                        team_pitcher: teamAbbreviations[pitcherTeam] || "Unknown",
-                        pitcher: cells[1]?.querySelector(".pitcher-name")?.innerText?.trim() || "Unknown",
-                        stats: {
-                            PA: cells[2]?.innerText?.trim(),
-                            AB: cells[3]?.innerText?.trim(),
-                            H: cells[4]?.innerText?.trim(),
-                            '1B': cells[5]?.innerText?.trim(),
-                            '2B': cells[6]?.innerText?.trim(),
-                            '3B': cells[7]?.innerText?.trim(),
-                            HR: cells[8]?.innerText?.trim(),
-                            BB: cells[9]?.innerText?.trim(),
-                            SO: cells[10]?.innerText?.trim(),
-                            AVG: cells[11]?.innerText?.trim(),
-                            OBP: cells[12]?.innerText?.trim(),
-                            SLG: cells[13]?.innerText?.trim()
-                        }
+                    team_batter: teamAbbreviations[batterTeam] || "Unknown",
+                    batter: batterName,
+                    batter_info: `${batterHandedness} ${batterPosition}`.trim(),
+                    team_pitcher: teamAbbreviations[pitcherTeam] || "Unknown",
+                    pitcher: pitcherName,
+                    pitcher_hand: pitcherHandedness,
+                    stats: {
+                        PA: cells[2]?.innerText?.trim(),
+                        AB: cells[3]?.innerText?.trim(),
+                        H: cells[4]?.innerText?.trim(),
+                        '1B': cells[5]?.innerText?.trim(),
+                        '2B': cells[6]?.innerText?.trim(),
+                        '3B': cells[7]?.innerText?.trim(),
+                        HR: cells[8]?.innerText?.trim(),
+                        BB: cells[9]?.innerText?.trim(),
+                        SO: cells[10]?.innerText?.trim(),
+                        AVG: cells[11]?.innerText?.trim(),
+                        OBP: cells[12]?.innerText?.trim(),
+                        SLG: cells[13]?.innerText?.trim()
+                    }
                     };
-                }).filter(row => row !== null);
+                    }).filter(row => row !== null);
             }
         """)
 

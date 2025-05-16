@@ -21,7 +21,7 @@ Search works
         .nav-link { text-decoration: none; font-size: 16px; font-weight: bold; padding: 6px; color: #007bff; transition: all 0.3s ease-in-out; }
         .nav-link:hover { text-decoration: underline; font-weight: bold; color: #0056b3; }
         .current-date { font-size: 18px; font-weight: bold; margin: 0 15px; }
-        table { width: 90%; table-layout: fixed; border-collapse: collapse; margin: 10px auto; opacity: 0; animation: fadeIn 1s forwards; }
+        table { width: 90%; border-collapse: collapse; margin: 10px auto; opacity: 0; animation: fadeIn 1s forwards; }
         th, td { text-align: center; padding: 6px; border: 1px solid #ddd; font-size: 11px; }
         .star { cursor: pointer; font-size: 16px; padding-left: 5px; transition: all 0.2s ease-in-out; color: gray; }
         .star.selected { color: gold; }
@@ -29,7 +29,7 @@ Search works
         .favorite-container { margin-top: 15px; font-size: 14px; font-weight: bold; }
         .remove-btn { font-size: 14px; cursor: pointer; color: red; margin-right: 4px; }
         .header-container { display: flex; justify-content: center; align-items: center; position: relative; }
-        .clear-btn { position: absolute; right: 20%; padding: 6px 12px; border: 1px solid #ccc; background-color: #f8f9fa; color: #333; border-radius: 5px; cursor: pointer; transition: 0.3s; }
+        .clear-btn { position: absolute; right: 10%; padding: 6px 12px; border: 1px solid #ccc; background-color: #f8f9fa; color: #333; border-radius: 5px; cursor: pointer; transition: 0.3s; }
         .clear-btn:hover { background-color: #e2e6ea; }
 		#togglePlayersBtn { display: block; margin: 10px auto 20px; padding: 6px 12px; border: none; background-color: #007bff; color: white; border-radius: 5px; cursor: pointer; transition: 0.3s; }
         #togglePlayersBtn:hover { background-color: #0056b3; }
@@ -40,7 +40,7 @@ Search works
 		.dataTables_filter input {
 			width: 200px;  /* Adjust width */
 			padding: 3px;  /* Add padding */
-			margin: 15px 0;
+			margin: 15px 15px;
 			border: 2px solid #007bff; /* Change border color */
 			border-radius: 5px; /* Rounded corners */
 			background-color: #f8f9fa; /* Light gray background */
@@ -70,17 +70,24 @@ Search works
             from { opacity: 0; }
             to { opacity: 1; }
         }
-		/* Ensure Batter & Pitcher names take up 40% */
+		
+		.player-details {
+			font-size: 10px;
+			color: #888; /* Light gray */
+			margin-left: 4px; /* Adds spacing */
+		}
+
+		/* Ensure Batter & Pitcher names take up 64% */
 		td:nth-child(2), td:nth-child(4) {
 			text-align: left;
-			width: 20%; /* Each gets 20%, totaling 40% */
+			width: 32%; /* Each gets 32%, totaling 64% */
 		}
 
 		/* Compress less important columns */
 		td:nth-child(5), td:nth-child(6), td:nth-child(7), td:nth-child(8),
 		td:nth-child(9), td:nth-child(10), td:nth-child(11), td:nth-child(12),
 		td:nth-child(13), td:nth-child(14), td:nth-child(15), td:nth-child(16) {
-			width: 5%;
+			width: 3%;
 		}
 
     </style>
@@ -172,12 +179,11 @@ Search works
                     let pitcherStar = `<span class='star ${favoritePlayers.includes(row.pitcher) ? "selected" : ""}' data-player="${row.pitcher}" onclick='toggleFavorite("${row.pitcher}")'>✩</span>`;
 
                     table.row.add([
-                        row.team_batter, `${batterStar} ${row.batter}`,
-                        row.team_pitcher, `${pitcherStar} ${row.pitcher}`,
-                        row.stats.PA, row.stats.AB, row.stats.H,
-                        row.stats['1B'], row.stats['2B'], row.stats['3B'], row.stats.HR,
-                        row.stats.BB, row.stats.SO, row.stats.AVG, row.stats.OBP, row.stats.SLG
-                    ]);
+						row.team_batter, `${batterStar} ${row.batter} <span class='player-details'>${row.batter_info || ""}</span>`,
+						row.team_pitcher, `${pitcherStar} ${row.pitcher} <span class='player-details'>${row.pitcher_hand || ""}</span>`,
+						row.stats.PA, row.stats.AB, row.stats.H, row.stats['1B'], row.stats['2B'], row.stats['3B'], row.stats.HR,
+						row.stats.BB, row.stats.SO, row.stats.AVG, row.stats.OBP, row.stats.SLG
+					]);
                 });
 
                 table.draw();
