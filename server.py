@@ -4,13 +4,20 @@ import asyncio
 import datetime
 from flask import Flask, jsonify, render_template, request
 from playwright.async_api import async_playwright
+from pymongo import MongoClient
 
-# Initialize Flask app, updating template folder
-app = Flask(__name__, template_folder="pages")  
+# ✅ Initialize Flask app
+app = Flask(__name__, template_folder="pages")
 
 port = int(os.environ.get("PORT", 8080))
 
-# Dictionary for correct team abbreviations
+# ✅ Connect to MongoDB using Railway-provided URI
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://mongo:MXQDxgcJWYBgTFtLPiwGdsnRXTIONzNc@trolley.proxy.rlwy.net:25766")
+client = MongoClient(MONGO_URI)
+db = client["mlb_stats"]
+collection = db["batter_vs_pitcher"]
+
+# ✅ Dictionary for correct team abbreviations
 team_abbreviations = {
     "whitesox": "CWS", "guardians": "CLE", "tigers": "DET", "royals": "KC", "twins": "MIN",
     "orioles": "BAL", "redsox": "BOS", "yankees": "NYY", "rays": "TB", "bluejays": "TOR",
@@ -29,17 +36,14 @@ async def scrape_data(date):
 
         print(f"[DEBUG] Scraping data for {date} from {url}")
 
-        # Explicitly wait for the table before extracting rows
         try:
             await page.wait_for_selector("table tbody tr", timeout=10000)
         except Exception:
             print("[ERROR] Table not found or took too long to load!")
             return []
 
-        # Extract table data with correct abbreviations
         rows_data = await page.eval_on_selector_all("table tbody tr", """
             rows => {
-                console.log("[DEBUG] Extracting Rows...");
                 const teamAbbreviations = {
                     "whitesox": "CWS", "guardians": "CLE", "tigers": "DET", "royals": "KC", "twins": "MIN",
                     "orioles": "BAL", "redsox": "BOS", "yankees": "NYY", "rays": "TB", "bluejays": "TOR",
@@ -68,50 +72,55 @@ async def scrape_data(date):
                     let batterPosition = batterElement?.nextSibling?.nextSibling?.textContent?.trim() || "";
                     let pitcherHandedness = pitcherElement?.nextSibling?.textContent?.trim() || "";
 
-                    // ✅ Cleanup function to remove unwanted "$N/A" values and trim spaces
                     const removeNA = (text) => text.replace(/\$?N\/A/g, "").trim();
-
-                    batterHandedness = removeNA(batterHandedness) ? `(${removeNA(batterHandedness)})` : "";
-                    batterPosition = removeNA(batterPosition);
-                    pitcherHandedness = removeNA(pitcherHandedness) ? `(${removeNA(pitcherHandedness)})` : "";
-
-                    // ✅ Remove double parentheses only from handedness fields
                     const fixParentheses = (text) => text.replace(/[()]+/g, "").trim();
 
-                    batterHandedness = batterHandedness ? `(${fixParentheses(batterHandedness)})` : "";
-                    pitcherHandedness = pitcherHandedness ? `(${fixParentheses(pitcherHandedness)})` : "";
-
+                    batterHandedness = removeNA(batterHandedness) ? `(${fixParentheses(removeNA(batterHandedness))})` : "";
+                    batterPosition = removeNA(batterPosition);
+                    pitcherHandedness = removeNA(pitcherHandedness) ? `(${fixParentheses(removeNA(pitcherHandedness))})` : "";
 
                     return {
-                    team_batter: teamAbbreviations[batterTeam] || "Unknown",
-                    batter: batterName,
-                    batter_info: `${batterHandedness} ${batterPosition}`.trim(),
-                    team_pitcher: teamAbbreviations[pitcherTeam] || "Unknown",
-                    pitcher: pitcherName,
-                    pitcher_hand: pitcherHandedness,
-                    stats: {
-                        PA: cells[2]?.innerText?.trim(),
-                        AB: cells[3]?.innerText?.trim(),
-                        H: cells[4]?.innerText?.trim(),
-                        '1B': cells[5]?.innerText?.trim(),
-                        '2B': cells[6]?.innerText?.trim(),
-                        '3B': cells[7]?.innerText?.trim(),
-                        HR: cells[8]?.innerText?.trim(),
-                        BB: cells[9]?.innerText?.trim(),
-                        SO: cells[10]?.innerText?.trim(),
-                        AVG: cells[11]?.innerText?.trim(),
-                        OBP: cells[12]?.innerText?.trim(),
-                        SLG: cells[13]?.innerText?.trim()
-                    }
+                        team_batter: teamAbbreviations[batterTeam] || "Unknown",
+                        batter: batterName,
+                        batter_info: `${batterHandedness} ${batterPosition}`.trim(),
+                        team_pitcher: teamAbbreviations[pitcherTeam] || "Unknown",
+                        pitcher: pitcherName,
+                        pitcher_hand: pitcherHandedness,
+                        stats: {
+                            PA: cells[2]?.innerText?.trim(),
+                            AB: cells[3]?.innerText?.trim(),
+                            H: cells[4]?.innerText?.trim(),
+                            '1B': cells[5]?.innerText?.trim(),
+                            '2B': cells[6]?.innerText?.trim(),
+                            '3B': cells[7]?.innerText?.trim(),
+                            HR: cells[8]?.innerText?.trim(),
+                            BB: cells[9]?.innerText?.trim(),
+                            SO: cells[10]?.innerText?.trim(),
+                            AVG: cells[11]?.innerText?.trim(),
+                            OBP: cells[12]?.innerText?.trim(),
+                            SLG: cells[13]?.innerText?.trim()
+                        }
                     };
-                    }).filter(row => row !== null);
+                }).filter(row => row !== null);
             }
         """)
 
-        print("[DEBUG] Final Extracted Data:", rows_data)
         await browser.close()
+        return rows_data
 
-    return rows_data
+def store_data(date, data):
+    collection.delete_many({"date": date})  # ✅ Remove previous entries
+
+    for record in data:
+        record["date"] = date  # Add date field
+        collection.insert_one(record)
+    
+    print(f"[DEBUG] Stored data for {date}")
+
+
+def get_data(date):
+    return list(collection.find({"date": date}, {"_id": 0}))  # ✅ Excludes MongoDB ObjectId
+
 
 @app.route("/")
 def home():
@@ -121,12 +130,16 @@ def home():
 @app.route("/stats")
 def stats():
     date = request.args.get("date", datetime.date.today().strftime("%Y-%m-%d"))
-    print(f"[DEBUG] Fetching stats for {date}...")
 
-    data = asyncio.run(scrape_data(date))
-    print("[DEBUG] Flask Returned Data:", data)
+    cached_data = get_data(date)
+    print("[DEBUG] Cached Data:", cached_data)  # ✅ Check data format
 
-    return jsonify(data)
+    if cached_data:
+        return jsonify(cached_data)
+
+    scraped_data = asyncio.run(scrape_data(date))
+    store_data(date, scraped_data)
+    return jsonify(scraped_data)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=port)
