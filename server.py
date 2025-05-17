@@ -42,7 +42,7 @@ async def scrape_data(date):
             print("[ERROR] Table not found or took too long to load!")
             return []
 
-        rows_data = await page.eval_on_selector_all("table tbody tr", """
+        rows_data = await page.eval_on_selector_all("table tbody tr", r"""
             rows => {
                 const teamAbbreviations = {
                     "whitesox": "CWS", "guardians": "CLE", "tigers": "DET", "royals": "KC", "twins": "MIN",
