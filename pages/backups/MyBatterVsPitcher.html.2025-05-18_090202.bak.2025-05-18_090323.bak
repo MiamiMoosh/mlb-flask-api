@@ -334,27 +334,31 @@ All functions are working propely
 		}
 		
 		document.addEventListener("DOMContentLoaded", function () {
-			let urlParams = new URLSearchParams(window.location.search);
-			let selectedDate = urlParams.get("date");
+				console.log("🚀 Monitoring changes to date elements...");
 
-			if (!selectedDate) {
-				selectedDate = new Date().toISOString().split("T")[0]; // ✅ Default to today (YYYY-MM-DD)
-			}
+			let observer = new MutationObserver((mutations) => {
+				mutations.forEach((mutation) => {
+					console.log(`⚠ Element ${mutation.target.id} changed to:`, mutation.target.textContent);
+				});
+			});
+
+			observer.observe(document.getElementById("date-display"), { childList: true, subtree: true });
+			observer.observe(document.getElementById("prev-date"), { childList: true, subtree: true });
+			observer.observe(document.getElementById("next-date"), { childList: true, subtree: true });
+
+			let urlParams = new URLSearchParams(window.location.search);
+			let selectedDate = urlParams.get("date") || new Date().toISOString().split("T")[0];
 
 			console.log("🔎 Extracted Date from URL:", selectedDate);
 
-			// ✅ Parse date manually WITHOUT time zone shifts
-			let dateParts = selectedDate.split("-");
-			let currentDateObj = new Date(Date.UTC(Number(dateParts[0]), Number(dateParts[1]) - 1, Number(dateParts[2])));
+			let currentDateObj = new Date(selectedDate);
 
-			console.log("✅ Corrected Date (No Time Zone Shift):", currentDateObj.toISOString());
-
-			// ✅ Calculate previous and next days AFTER confirming correct reference date
+			// ✅ Calculate previous and next days AFTER establishing the correct reference date
 			let prevDay = new Date(currentDateObj);
-			prevDay.setUTCDate(currentDateObj.getUTCDate() - 1);
+			prevDay.setDate(currentDateObj.getDate() - 1);
 
 			let nextDay = new Date(currentDateObj);
-			nextDay.setUTCDate(currentDateObj.getUTCDate() + 1);
+			nextDay.setDate(currentDateObj.getDate() + 1);
 
 			// ✅ Ensure elements exist before modifying them
 			let prevDateElem = document.getElementById("prev-date");
@@ -385,7 +389,7 @@ All functions are working propely
 			let options = { year: "numeric", month: "long", day: "numeric" };
 			let formattedDate = dateObj.toLocaleDateString("en-US", options);
 
-			let day = dateObj.getUTCDate();
+			let day = dateObj.getDate();
 			let suffix = (day === 1 || day === 21 || day === 31) ? "st" :
 						 (day === 2 || day === 22) ? "nd" :
 						 (day === 3 || day === 23) ? "rd" : "th";

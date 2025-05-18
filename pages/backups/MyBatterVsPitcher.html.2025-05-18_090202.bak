@@ -1,5 +1,5 @@
 <!-- In this version:
-All functions are working properly
+All functions are working propely
 -->
 
 <!DOCTYPE html>
@@ -155,41 +155,6 @@ All functions are working properly
 			padding-left: 6px !important; /* Maintain left spacing */
 		}
 		
-		document.addEventListener("DOMContentLoaded", function () {
-			let dateDisplay = document.getElementById("date-display");
-			let prevDate = document.getElementById("prev-date");
-			let nextDate = document.getElementById("next-date");
-
-			if (!dateDisplay || !prevDate || !nextDate) return; // Ensure elements exist
-
-			// Get current time in EST
-			let options = { timeZone: "America/New_York", year: "numeric", month: "long", day: "numeric" };
-			let today = new Date();
-			let formattedDate = today.toLocaleString("en-US", options);
-
-			// Format date as "May 16th, 2025"
-			function formatDate(date) {
-				let day = date.getDate();
-				let suffix = (day === 1 || day === 21 || day === 31) ? "st" :
-							 (day === 2 || day === 22) ? "nd" :
-							 (day === 3 || day === 23) ? "rd" : "th";
-				return `${date.toLocaleString("en-US", { month: "long" })} ${day}${suffix}, ${date.getFullYear()}`;
-			}
-
-			// Convert EST time to a Date object
-			let estDate = new Date(today.toLocaleString("en-US", { timeZone: "America/New_York" }));
-
-			// Calculate previous and next days
-			let prevDay = new Date(estDate);
-			prevDay.setDate(estDate.getDate() - 1);
-			let nextDay = new Date(estDate);
-			nextDay.setDate(estDate.getDate() + 1);
-
-			// Inject formatted dates
-			dateDisplay.textContent = formatDate(estDate);
-			prevDate.textContent = formatDate(prevDay);
-			nextDate.textContent = formatDate(nextDay);
-		});
     </style>
 </head>
 <body>
@@ -216,51 +181,7 @@ All functions are working properly
     </div>
 
     <script>
-		window.onload = function () {
-			let urlParams = new URLSearchParams(window.location.search);
-			let selectedDate = urlParams.get("date") || new Date().toISOString().split("T")[0];  // ✅ Use today if no parameter exists
-
-			let currentDateObj = new Date(selectedDate);
-
-			// ✅ Calculate previous and next days
-			let prevDay = new Date(currentDateObj);
-			prevDay.setDate(currentDateObj.getDate() - 1);
-
-			let nextDay = new Date(currentDateObj);
-			nextDay.setDate(currentDateObj.getDate() + 1);
-
-			// ✅ Ensure elements exist before modifying them
-			let dateDisplay = document.getElementById("date-display");
-			let prevDate = document.getElementById("prev-date");
-			let nextDate = document.getElementById("next-date");
-
-			if (!dateDisplay || !prevDate || !nextDate) {
-				console.error("❌ One or more date elements were not found.");
-				return;
-			}
-
-			function formatDate(date) {
-				let day = date.getDate();
-				let suffix = (day === 1 || day === 21 || day === 31) ? "st" :
-							 (day === 2 || day === 22) ? "nd" :
-							 (day === 3 || day === 23) ? "rd" : "th";
-				return `${date.toLocaleString("en-US", { month: "long" })} ${day}${suffix}, ${date.getFullYear()}`;
-			}
-
-			// ✅ Inject formatted dates
-			dateDisplay.textContent = formatDate(currentDateObj);
-			prevDate.textContent = formatDate(prevDay);
-			nextDate.textContent = formatDate(nextDay);
-
-			// ✅ Update navigation URLs
-			document.getElementById("prev-day").href = `/?date=${prevDay.toISOString().split("T")[0]}`;
-			document.getElementById("next-day").href = `/?date=${nextDay.toISOString().split("T")[0]}`;
-
-			console.log("🔄 Navigation Set at Page Load:");
-			console.log("⬅ Previous Date:", prevDate.textContent);
-			console.log("📅 Current Date:", dateDisplay.textContent);
-			console.log("➡ Next Date:", nextDate.textContent);
-		};
+		
         function setCookie(name, value, days) {
             let expires = "";
             if (days) {
@@ -414,16 +335,26 @@ All functions are working properly
 		
 		document.addEventListener("DOMContentLoaded", function () {
 			let urlParams = new URLSearchParams(window.location.search);
-			let selectedDate = urlParams.get("date") || new Date().toISOString().split("T")[0]; // ✅ Use today's date if no parameter exists
+			let selectedDate = urlParams.get("date");
 
-			let currentDateObj = new Date(selectedDate);
+			if (!selectedDate) {
+				selectedDate = new Date().toISOString().split("T")[0]; // ✅ Default to today (YYYY-MM-DD)
+			}
 
-			// ✅ Calculate previous and next dates based on the current page's date
+			console.log("🔎 Extracted Date from URL:", selectedDate);
+
+			// ✅ Parse date manually WITHOUT time zone shifts
+			let dateParts = selectedDate.split("-");
+			let currentDateObj = new Date(Date.UTC(Number(dateParts[0]), Number(dateParts[1]) - 1, Number(dateParts[2])));
+
+			console.log("✅ Corrected Date (No Time Zone Shift):", currentDateObj.toISOString());
+
+			// ✅ Calculate previous and next days AFTER confirming correct reference date
 			let prevDay = new Date(currentDateObj);
-			prevDay.setDate(currentDateObj.getDate() - 1);
+			prevDay.setUTCDate(currentDateObj.getUTCDate() - 1);
 
 			let nextDay = new Date(currentDateObj);
-			nextDay.setDate(currentDateObj.getDate() + 1);
+			nextDay.setUTCDate(currentDateObj.getUTCDate() + 1);
 
 			// ✅ Ensure elements exist before modifying them
 			let prevDateElem = document.getElementById("prev-date");
@@ -435,11 +366,11 @@ All functions are working properly
 				return;
 			}
 
-			// ✅ Set initial navigation link URLs
+			// ✅ Set navigation URLs using the correct reference point
 			document.getElementById("prev-day").href = `/?date=${prevDay.toISOString().split("T")[0]}`;
 			document.getElementById("next-day").href = `/?date=${nextDay.toISOString().split("T")[0]}`;
 
-			// ✅ Set visible navigation text based on loaded date
+			// ✅ Set visible navigation text to match the correct parsed date
 			prevDateElem.textContent = formatReadableDate(prevDay);
 			currentDateElem.textContent = formatReadableDate(currentDateObj);
 			nextDateElem.textContent = formatReadableDate(nextDay);
@@ -454,17 +385,13 @@ All functions are working properly
 			let options = { year: "numeric", month: "long", day: "numeric" };
 			let formattedDate = dateObj.toLocaleDateString("en-US", options);
 
-			let day = dateObj.getDate();
+			let day = dateObj.getUTCDate();
 			let suffix = (day === 1 || day === 21 || day === 31) ? "st" :
 						 (day === 2 || day === 22) ? "nd" :
 						 (day === 3 || day === 23) ? "rd" : "th";
 
 			return formattedDate.replace(/(\d+)/, `${day}${suffix}`);
 		}
-
-
-
-
         $(document).ready(() => {
             loadStats();
             updateFavoriteList();			
