@@ -1,4 +1,6 @@
-
+<!-- In this version:
+All functions are working properly
+-->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -9,11 +11,38 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
     <style>
         body { font-family: Arial, sans-serif; text-align: center; font-size: 12px; }
-        .nav-container { display: flex; justify-content: center; align-items: center; margin: 10px 0; }
-        .nav-link { text-decoration: none; font-size: 16px; font-weight: bold; padding: 6px; color: #007bff; transition: all 0.3s ease-in-out; }
-        .nav-link:hover { text-decoration: underline; font-weight: bold; color: #0056b3; }
-        .current-date { font-size: 18px; font-weight: bold; margin: 0 15px; }
-        table { width: 90%; border-collapse: collapse; margin: 10px auto; opacity: 0; animation: fadeIn 1s forwards; }
+        /* Style the current date */
+		.current-date {
+			font-size: 13px; /* Slightly fancy */
+			font-weight: 500; /* A lighter weight for elegance */
+			color: #888; /* Light gray */
+			font-style: italic;
+			letter-spacing: 0.5px; /* Slight spacing for a sleek look */
+			margin: 0 25px; /* Extra space between arrows */
+		}
+
+		/* Refine navigation spacing */
+		.nav-container {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			margin: 15px 0;
+		}
+
+		/* Update arrow styling */
+		.nav-link {
+			text-decoration: none;
+			font-size: 13px;
+			font-weight: bold;
+			padding: 10px;
+			color: #888;
+			transition: all 0.3s ease-in-out;
+		}
+		.nav-link:hover {
+			text-decoration: underline;
+			color: #555;
+		}
+		table { width: 90%; border-collapse: collapse; margin: 10px auto; opacity: 0; animation: fadeIn 1s forwards; }
         th, td { text-align: left; padding: 6px; border: 1px solid #ddd; font-size: 11px; }
         .star { cursor: pointer; font-size: 16px; padding-left: 5px; transition: all 0.2s ease-in-out; color: gray; }
         .star.selected { color: gold; }
@@ -93,8 +122,8 @@
 		}
 
 		table.dataTable th, table.dataTable td {
-			padding: 2px 2px; /* Reduce padding for a tighter fit */
-			font-size: 9px; /* Smaller font size */
+			padding: 3px 2px; /* Reduce padding for a tighter fit */
+			font-size: 10px; /* Smaller font size */
 			vertical-align: middle; /* Ensure text aligns properly */
 			text-align: left;
 		}
@@ -125,9 +154,49 @@
 			text-align: left !important;
 			padding-left: 6px !important; /* Maintain left spacing */
 		}
+		
+		document.addEventListener("DOMContentLoaded", function () {
+			let dateDisplay = document.getElementById("date-display");
+			let prevDate = document.getElementById("prev-date");
+			let nextDate = document.getElementById("next-date");
+
+			if (!dateDisplay || !prevDate || !nextDate) return; // Ensure elements exist
+
+			// Get current time in EST
+			let options = { timeZone: "America/New_York", year: "numeric", month: "long", day: "numeric" };
+			let today = new Date();
+			let formattedDate = today.toLocaleString("en-US", options);
+
+			// Format date as "May 16th, 2025"
+			function formatDate(date) {
+				let day = date.getDate();
+				let suffix = (day === 1 || day === 21 || day === 31) ? "st" :
+							 (day === 2 || day === 22) ? "nd" :
+							 (day === 3 || day === 23) ? "rd" : "th";
+				return `${date.toLocaleString("en-US", { month: "long" })} ${day}${suffix}, ${date.getFullYear()}`;
+			}
+
+			// Convert EST time to a Date object
+			let estDate = new Date(today.toLocaleString("en-US", { timeZone: "America/New_York" }));
+
+			// Calculate previous and next days
+			let prevDay = new Date(estDate);
+			prevDay.setDate(estDate.getDate() - 1);
+			let nextDay = new Date(estDate);
+			nextDay.setDate(estDate.getDate() + 1);
+
+			// Inject formatted dates
+			dateDisplay.textContent = formatDate(estDate);
+			prevDate.textContent = formatDate(prevDay);
+			nextDate.textContent = formatDate(nextDay);
+		});
     </style>
 </head>
 <body>
+	<script>
+        let selectedDate = "{{ date }}";  // ✅ Fetch date from Flask
+    </script>
+
     <div class="header-container">
         <h2>Manage My Players</h2>
         <button class="clear-btn" onclick="clearFavorites()">Clear My Players</button>
@@ -140,13 +209,58 @@
         <a id="next-day" class="nav-link" href="#"><span id="next-date"></span> »</a>
     </div>
     
-    <button id="togglePlayersBtn" onclick="toggleFavorites()">Show Only My Players</button>
+    <button id="togglePlayersBtn" onclick="toggleFavorites()">Show My Players Only</button>
 
     <div id="stats-container">
         <strong class='loading-message'>⏳ Loading Data...</strong>
     </div>
 
     <script>
+		window.onload = function () {
+			let urlParams = new URLSearchParams(window.location.search);
+			let selectedDate = urlParams.get("date") || new Date().toISOString().split("T")[0];  // ✅ Use today if no parameter exists
+
+			let currentDateObj = new Date(selectedDate);
+
+			// ✅ Calculate previous and next days
+			let prevDay = new Date(currentDateObj);
+			prevDay.setDate(currentDateObj.getDate() - 1);
+
+			let nextDay = new Date(currentDateObj);
+			nextDay.setDate(currentDateObj.getDate() + 1);
+
+			// ✅ Ensure elements exist before modifying them
+			let dateDisplay = document.getElementById("date-display");
+			let prevDate = document.getElementById("prev-date");
+			let nextDate = document.getElementById("next-date");
+
+			if (!dateDisplay || !prevDate || !nextDate) {
+				console.error("❌ One or more date elements were not found.");
+				return;
+			}
+
+			function formatDate(date) {
+				let day = date.getDate();
+				let suffix = (day === 1 || day === 21 || day === 31) ? "st" :
+							 (day === 2 || day === 22) ? "nd" :
+							 (day === 3 || day === 23) ? "rd" : "th";
+				return `${date.toLocaleString("en-US", { month: "long" })} ${day}${suffix}, ${date.getFullYear()}`;
+			}
+
+			// ✅ Inject formatted dates
+			dateDisplay.textContent = formatDate(currentDateObj);
+			prevDate.textContent = formatDate(prevDay);
+			nextDate.textContent = formatDate(nextDay);
+
+			// ✅ Update navigation URLs
+			document.getElementById("prev-day").href = `/?date=${prevDay.toISOString().split("T")[0]}`;
+			document.getElementById("next-day").href = `/?date=${nextDay.toISOString().split("T")[0]}`;
+
+			console.log("🔄 Navigation Set at Page Load:");
+			console.log("⬅ Previous Date:", prevDate.textContent);
+			console.log("📅 Current Date:", dateDisplay.textContent);
+			console.log("➡ Next Date:", nextDate.textContent);
+		};
         function setCookie(name, value, days) {
             let expires = "";
             if (days) {
@@ -169,80 +283,83 @@
         let favoritePlayers = getCookie("favoritePlayers");
         let showingFavorites = false;
 
-        function loadStats() {
-            $("#stats-container").html("<strong class='loading-message'>⏳ Loading Data...</strong>");
+        function loadStats(selectedDate) {
+			if (!selectedDate) {
+				let urlParams = new URLSearchParams(window.location.search);
+				selectedDate = urlParams.get("date") || new Date().toISOString().split("T")[0];  // ✅ Default to today if no date is provided
+				console.warn("⚠ No date found, defaulting to:", selectedDate);
+			}
 
-            $.getJSON("/stats", function(data) {
-                $("#stats-container").empty();
+			$("#stats-container").html("<strong class='loading-message'>⏳ Loading Data...</strong>");
 
-                if (!data || data.length === 0) {
-                    $("#stats-container").html("<div class='error-message'>⚠ No data available for this date.</div>");
-                    return;
-                }
+			$.getJSON(`/stats?date=${selectedDate}`, function(data) {  // ✅ Fetch stats for the selected date
+				$("#stats-container").empty();
 
-                let tableHTML = `
-                    <table id="stats-table">
-                        <thead>
-                            <tr>
-                                <th style="text-align: left;">Team</th>
+				if (!data || data.length === 0) {
+					$("#stats-container").html("<div class='error-message'>⚠ No data available for this date.</div>");
+					return;
+				}
+
+				let tableHTML = `
+					<table id="stats-table">
+						<thead>
+							<tr>
+								<th style="text-align: left;">Team</th>
 								<th style="text-align: left;">Batter</th>
 								<th style="text-align: left;">Team</th>
 								<th style="text-align: left;">Pitcher</th>
-                                <th style="text-align: left;">PA</th>
+								<th style="text-align: left;">PA</th>
 								<th style="text-align: left;">AB</th>
 								<th style="text-align: left;">H</th>
 								<th style="text-align: left;">1B</th>
 								<th style="text-align: left;">2B</th>
 								<th style="text-align: left;">3B</th>
 								<th style="text-align: left;">HR</th>
-                                <th style="text-align: left;">BB</th>
+								<th style="text-align: left;">BB</th>
 								<th style="text-align: left;">SO</th>
 								<th style="text-align: left;">AVG</th>
 								<th style="text-align: left;">OBP</th>
 								<th style="text-align: left;">SLG</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                `;
-                $("#stats-container").html(tableHTML);
+							</tr>
+						</thead>
+						<tbody></tbody>
+					</table>
+				`;
+				$("#stats-container").html(tableHTML);
 
-                let table = $("#stats-table").DataTable({
+				let table = $("#stats-table").DataTable({
 					"paging": false,
 					"scrollY": "600px",
 					"ordering": true,
 					"info": false,
-					"language": {
-						"search": "Search Players:"
-					},
-					"autoWidth": false, /* Prevent automatic width adjustments */
+					"language": { "search": "Search Players:" },
+					"autoWidth": false,
 					"columnDefs": [
 						{ "width": "20%", "targets": [1, 3] }, /* Batter & Pitcher columns */
 						{ "width": "4%", "targets": [0, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] } /* Stat columns */
 					]
 				});
 
+				data.forEach(row => {
+					if (showingFavorites && !favoritePlayers.includes(row.batter) && !favoritePlayers.includes(row.pitcher)) {
+						return;
+					}
 
-                data.forEach(row => {
-                    if (showingFavorites && !favoritePlayers.includes(row.batter) && !favoritePlayers.includes(row.pitcher)) {
-                        return;
-                    }
+					let batterStar = `<span class='star ${favoritePlayers.includes(row.batter) ? "selected" : ""}' data-player="${row.batter}" onclick='toggleFavorite("${row.batter}")'>✩</span>`;
+					let pitcherStar = `<span class='star ${favoritePlayers.includes(row.pitcher) ? "selected" : ""}' data-player="${row.pitcher}" onclick='toggleFavorite("${row.pitcher}")'>✩</span>`;
 
-                    let batterStar = `<span class='star ${favoritePlayers.includes(row.batter) ? "selected" : ""}' data-player="${row.batter}" onclick='toggleFavorite("${row.batter}")'>✩</span>`;
-                    let pitcherStar = `<span class='star ${favoritePlayers.includes(row.pitcher) ? "selected" : ""}' data-player="${row.pitcher}" onclick='toggleFavorite("${row.pitcher}")'>✩</span>`;
-
-                    table.row.add([
+					table.row.add([
 						row.team_batter, `${batterStar} ${row.batter} <span class='player-details'>${row.batter_info || ""}</span>`,
 						row.team_pitcher, `${pitcherStar} ${row.pitcher} <span class='player-details'>${row.pitcher_hand || ""}</span>`,
-						row.stats.PA, row.stats.AB, row.stats.H, row.stats['1B'], row.stats['2B'], row.stats['3B'], row.stats.HR,
+						row.stats.PA, row.stats.AB, row.stats.H, row.stats["1B"], row.stats["2B"], row.stats["3B"], row.stats.HR,
 						row.stats.BB, row.stats.SO, row.stats.AVG, row.stats.OBP, row.stats.SLG
 					]);
-                });
+				});
 
-                table.draw();
-                updateFavoriteList();
-            });
-        }
+				table.draw();
+				updateFavoriteList();
+			});
+		}
 
         function toggleFavorite(player) {
             if (favoritePlayers.includes(player)) {
@@ -294,6 +411,60 @@
 			
 			table.css("width", hasScrollbar ? "calc(100% - 16px)" : "100%"); /* Adjust for scrollbar */
 		}
+		
+		document.addEventListener("DOMContentLoaded", function () {
+			let urlParams = new URLSearchParams(window.location.search);
+			let selectedDate = urlParams.get("date") || new Date().toISOString().split("T")[0]; // ✅ Use today's date if no parameter exists
+
+			let currentDateObj = new Date(selectedDate);
+
+			// ✅ Calculate previous and next dates based on the current page's date
+			let prevDay = new Date(currentDateObj);
+			prevDay.setDate(currentDateObj.getDate() - 1);
+
+			let nextDay = new Date(currentDateObj);
+			nextDay.setDate(currentDateObj.getDate() + 1);
+
+			// ✅ Ensure elements exist before modifying them
+			let prevDateElem = document.getElementById("prev-date");
+			let currentDateElem = document.getElementById("date-display");
+			let nextDateElem = document.getElementById("next-date");
+
+			if (!prevDateElem || !currentDateElem || !nextDateElem) {
+				console.error("❌ Navigation elements not found.");
+				return;
+			}
+
+			// ✅ Set initial navigation link URLs
+			document.getElementById("prev-day").href = `/?date=${prevDay.toISOString().split("T")[0]}`;
+			document.getElementById("next-day").href = `/?date=${nextDay.toISOString().split("T")[0]}`;
+
+			// ✅ Set visible navigation text based on loaded date
+			prevDateElem.textContent = formatReadableDate(prevDay);
+			currentDateElem.textContent = formatReadableDate(currentDateObj);
+			nextDateElem.textContent = formatReadableDate(nextDay);
+
+			console.log("🔄 Navigation Set at Page Load:");
+			console.log("⬅ Previous Date:", prevDateElem.textContent);
+			console.log("📅 Current Date:", currentDateElem.textContent);
+			console.log("➡ Next Date:", nextDateElem.textContent);
+		});
+
+		function formatReadableDate(dateObj) {
+			let options = { year: "numeric", month: "long", day: "numeric" };
+			let formattedDate = dateObj.toLocaleDateString("en-US", options);
+
+			let day = dateObj.getDate();
+			let suffix = (day === 1 || day === 21 || day === 31) ? "st" :
+						 (day === 2 || day === 22) ? "nd" :
+						 (day === 3 || day === 23) ? "rd" : "th";
+
+			return formattedDate.replace(/(\d+)/, `${day}${suffix}`);
+		}
+
+
+
+
         $(document).ready(() => {
             loadStats();
             updateFavoriteList();			
