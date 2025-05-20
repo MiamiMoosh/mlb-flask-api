@@ -5,7 +5,7 @@ All functions are working propely
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Daily MLB Batter Vs. Pitcher History</title>
+    <title>MLB Batter Vs. Pitcher History</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
@@ -30,8 +30,8 @@ All functions are working propely
 		.date-nav-container {background-color: #F8F9FA; padding: 10px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); display: flex; align-items: center; justify-content: center; gap: 15px; border-top: 2px solid #C0C8B6; padding-top: 8px;}
 		.date-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); width: fit-content; margin: auto; text-align: center; }
 		.card-header { font-weight: bold; font-size: 16px; color: #333; margin-bottom: 8px; }
-		.header-container { display: flex; align-items: center; justify-content: flex-start; gap: 12px; }
 		.header-content { display: flex; flex-direction: column; align-items: flex-start; }
+		.header-container { display: flex; align-items: center; gap: 10px; }
 		.date-navigation { background-color: #F8F9FA; padding: 8px 12px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); width: fit-content; margin-top: 8px; }
 		.date-label { font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
 		.date-options { display: flex; gap: 10px; align-items: center; }
@@ -101,9 +101,10 @@ All functions are working propely
 		.info-note { font-size: 12px; color: #556B2F; margin-bottom: 10px; text-align: left; }
 
 		/* Ad sections */
-		.ad-container { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; margin-left: auto; }
-		.ad-box { width: 160px; height: 100px; background: #EEE; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #555; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); }
-	</style>
+		.ad-container { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; width: 200px; }
+		.ad-box { width: 100%; height: 100px; background: #EEE; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #555; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); }
+
+    </style>
 </head>
 <body>
 	<script>
@@ -114,7 +115,7 @@ All functions are working propely
 		<div class="header-container">
 			<img id="logo" src="{{ url_for('static', filename='images/bvpLogo.png') }}" alt="BvP Logo">
 			<div class="header-content">
-				<h1>Daily MLB Batter vs. Pitcher History</h1>
+				<h1>MLB Batter vs. Pitcher History</h1>
 				<div class="date-navigation">
 					<div class="date-label">📅 Select Date</div>
 					<div class="date-options">
@@ -125,23 +126,8 @@ All functions are working propely
 				</div>
 			</div>
 			<div class="ad-container">
-				<div class="ad-box">				
-					<script type="text/javascript">
-						var bamAdspace = '682d12d3c664a';
-						var bamWidth = 300;
-						var bamHeight = 250;
-					</script>
-					<script type="text/javascript" src="https://www.bamifyads.com/ads.js"></script>
-				</div>
-				<div class="ad-box">
-					<script type="text/javascript">
-						/* Home 2 | Medium Rectangle | BVP Railway */
-						var bamAdspace = '682d13507ac09';
-						var bamWidth = 300;
-						var bamHeight = 250;
-					</script>
-					<script type="text/javascript" src="https://www.bamifyads.com/ads.js"></script>	
-				</div>
+				<div class="ad-box">Ad Slot 1</div>
+				<div class="ad-box">Ad Slot 2</div>
 			</div>
 		</div>
 	</div>

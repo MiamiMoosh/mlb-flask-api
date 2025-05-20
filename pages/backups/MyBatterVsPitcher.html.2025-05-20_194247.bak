@@ -125,23 +125,8 @@ All functions are working propely
 				</div>
 			</div>
 			<div class="ad-container">
-				<div class="ad-box">				
-					<script type="text/javascript">
-						var bamAdspace = '682d12d3c664a';
-						var bamWidth = 300;
-						var bamHeight = 250;
-					</script>
-					<script type="text/javascript" src="https://www.bamifyads.com/ads.js"></script>
-				</div>
-				<div class="ad-box">
-					<script type="text/javascript">
-						/* Home 2 | Medium Rectangle | BVP Railway */
-						var bamAdspace = '682d13507ac09';
-						var bamWidth = 300;
-						var bamHeight = 250;
-					</script>
-					<script type="text/javascript" src="https://www.bamifyads.com/ads.js"></script>	
-				</div>
+				<div class="ad-box"></div>
+				<div class="ad-box"></div>
 			</div>
 		</div>
 	</div>
