@@ -288,8 +288,8 @@ All functions are working propely
 			background-color: #f8f9fa;
 		}
 		#logo {
-    width: 55px;  /* Adjust size as needed */
-    height: 55px;
+    width: 80px;  /* Adjust size as needed */
+    height: auto;
     margin-right: 10px; /* Space between logo and text */
 }
 

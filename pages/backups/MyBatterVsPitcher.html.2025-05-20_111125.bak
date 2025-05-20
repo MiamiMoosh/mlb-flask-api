@@ -288,8 +288,8 @@ All functions are working propely
 			background-color: #f8f9fa;
 		}
 		#logo {
-    width: 55px;  /* Adjust size as needed */
-    height: 55px;
+    width: 80px;  /* Adjust size as needed */
+    height: auto;
     margin-right: 10px; /* Space between logo and text */
 }
 
@@ -302,7 +302,7 @@ All functions are working propely
 
 	<div id="header-nav-panel" class="dashboard-panel">
 		<div class="header-container">
-			<img id="logo" src="{{ url_for('static', filename='images/bvpLogo.png') }}" alt="BvP Logo"><h1>MLB Batter vs. Pitcher Stats</h1>
+			<img id="logo" src="{{ url_for('static', filename='images/bvpLogo.png') }}" alt="BvP Logo"><h2>MLB Batter vs. Pitcher Stats</h2>
 		</div>
 
 		<div class="nav-container">

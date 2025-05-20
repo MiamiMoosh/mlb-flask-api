@@ -10,7 +10,7 @@ All functions are working propely
     <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
     <style>
-        body { background-color: #E0E8D6; font-family: Arial, sans-serif; text-align: center; font-size: 12px; }
+        body { font-family: Arial, sans-serif; text-align: center; font-size: 12px; }
         /* Style the current date */
 		.current-date {
 			font-size: 13px; /* Slightly fancy */
@@ -20,46 +20,6 @@ All functions are working propely
 			letter-spacing: 0.5px; /* Slight spacing for a sleek look */
 			margin: 0 25px; /* Extra space between arrows */
 		}
-		.dashboard-panel {
-			background: white;
-			border-radius: 8px;
-			box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-			padding: 16px;
-			margin-bottom: 20px;
-		}
-
-		#header-container, #nav-container {
-			display: flex;
-			align-items: center;
-			justify-content: space-between;
-			padding: 20px;
-			background: white;
-			border-bottom: 2px solid #C0C8B6; /* Soft sage accent */
-		}
-
-		#collapsible-container, #stats-container {
-			background: white;
-			padding: 20px;
-			border-radius: 8px;
-			box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-		}
-		
-		#header-nav-panel {
-			display: flex;
-			flex-direction: column;
-			background: white;
-			padding: 20px;
-			border-radius: 8px;
-		}
-
-		#stats-panel {
-			display: flex;
-			flex-direction: column;
-			background: white;
-			padding: 20px;
-			border-radius: 8px;
-		}
-
 
 		/* Refine navigation spacing */
 		.nav-container {
@@ -89,7 +49,7 @@ All functions are working propely
         .star:hover { text-shadow: 0px 0px 5px gold; }
         .favorite-container { margin-top: 15px; font-size: 14px; font-weight: bold; }
         .remove-btn { font-size: 14px; cursor: pointer; color: red; margin-right: 4px; }
-        .header-container { display: flex; justify-content: left; align-items: left; position: relative; }
+        .header-container { display: flex; justify-content: center; align-items: center; position: relative; }
         .clear-btn { 
 			display: block;
 			width: 80%;
@@ -198,31 +158,6 @@ All functions are working propely
 			vertical-align: middle; /* Ensure text aligns properly */
 			text-align: left;
 		}
-		#stats-table tbody tr:nth-child(odd) {
-			background-color: #ECF2E6; /* Very light sage green */
-		}
-
-		#stats-table tbody tr:nth-child(even) {
-			background-color: #F7F3E8; /* Soft warm neutral */
-		}
-		/* Styling for the table header */
-		#stats-table thead {
-			background-color: #B0C4A7; /* Muted sage */
-			color: white;
-			font-weight: bold;
-			border-bottom: 3px solid #8FA382; /* Darker sage border */
-		}
-		/* Table cell styling for clarity */
-		#stats-table td {
-			padding: 10px;
-			border-bottom: 1px solid #C0C8B6; /* Light sage border */
-		}
-		/* Hover effect for rows */
-#stats-table tbody tr:hover {
-    background-color: #D4E1CB; /* Slightly darker sage for hover */
-	border: 1px solid #C0C8B6;
-}
-
 
 		/* Ensure Batter & Pitcher names take up 64% */
 		td:nth-child(2), td:nth-child(4) {
@@ -230,12 +165,6 @@ All functions are working propely
 			width: 20% !important; /* Each gets 32%, totaling 64% */
 			padding-left: 4px;
 		}
-
-/* Table header cell borders */
-#stats-table thead th {
-    padding: 12px;
-    border: 1px solid #8FA382; /* Border for separation */
-}
 
 		/* Compress less important columns */
 		td:nth-child(1), td:nth-child(3), td:nth-child(5), td:nth-child(6), td:nth-child(7), td:nth-child(8),
@@ -287,12 +216,6 @@ All functions are working propely
 			border: 1px solid #ddd;
 			background-color: #f8f9fa;
 		}
-		#logo {
-    width: 55px;  /* Adjust size as needed */
-    height: 55px;
-    margin-right: 10px; /* Space between logo and text */
-}
-
     </style>
 </head>
 <body>
@@ -300,37 +223,33 @@ All functions are working propely
         let selectedDate = "{{ date }}";  // ✅ Fetch date from Flask
     </script>
 
-	<div id="header-nav-panel" class="dashboard-panel">
-		<div class="header-container">
-			<img id="logo" src="{{ url_for('static', filename='images/bvpLogo.png') }}" alt="BvP Logo"><h1>MLB Batter vs. Pitcher Stats</h1>
-		</div>
-
-		<div class="nav-container">
-			<a id="prev-day" class="nav-link" href="#">« <span id="prev-date"></span></a>
-			<span class="current-date" id="date-display"></span>
-			<a id="next-day" class="nav-link" href="#"><span id="next-date"></span> »</a>
-		</div>
+    <div class="header-container">
+		<h2>MLB Batter vs. Pitcher Stats</h2>
 	</div>
-	
-	<div id="stats-panel" class="dashboard-panel">
-		<div class="collapsible-container">
-			<button class="toggle-collapse" onclick="toggleCollapse()">▼ Manage My Players</button>
-			<div id="player-list-wrapper">
-				<div id="player-list"></div>
-				<div class="clear-button-container">
-					<button class="clear-btn" onclick="clearFavorites()">Clear My Players</button>
-				</div>
+
+    <div class="nav-container">
+		<a id="prev-day" class="nav-link" href="#">« <span id="prev-date"></span></a>
+		<span class="current-date" id="date-display"></span>
+		<a id="next-day" class="nav-link" href="#"><span id="next-date"></span> »</a>
+	</div>
+
+	<div class="collapsible-container">
+		<button class="toggle-collapse" onclick="toggleCollapse()">▼ Manage My Players</button>
+		<div id="player-list-wrapper">
+			<div id="player-list"></div>
+			<div class="clear-button-container">
+				<button class="clear-btn" onclick="clearFavorites()">Clear My Players</button>
 			</div>
 		</div>
-
-
-		
-		<button id="togglePlayersBtn" onclick="toggleFavorites()">Show My Players Only</button>
-
-		<div id="stats-container">
-			<strong class='loading-message'>⏳ Loading Data...</strong>
-		</div>
 	</div>
+
+
+    
+    <button id="togglePlayersBtn" onclick="toggleFavorites()">Show My Players Only</button>
+
+    <div id="stats-container">
+        <strong class='loading-message'>⏳ Loading Data...</strong>
+    </div>
 
     <script>
 		let statsLoaded = false;

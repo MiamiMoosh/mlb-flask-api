@@ -89,7 +89,7 @@ All functions are working propely
         .star:hover { text-shadow: 0px 0px 5px gold; }
         .favorite-container { margin-top: 15px; font-size: 14px; font-weight: bold; }
         .remove-btn { font-size: 14px; cursor: pointer; color: red; margin-right: 4px; }
-        .header-container { display: flex; justify-content: left; align-items: left; position: relative; }
+        .header-container { display: flex; justify-content: center; align-items: center; position: relative; }
         .clear-btn { 
 			display: block;
 			width: 80%;
@@ -198,31 +198,6 @@ All functions are working propely
 			vertical-align: middle; /* Ensure text aligns properly */
 			text-align: left;
 		}
-		#stats-table tbody tr:nth-child(odd) {
-			background-color: #ECF2E6; /* Very light sage green */
-		}
-
-		#stats-table tbody tr:nth-child(even) {
-			background-color: #F7F3E8; /* Soft warm neutral */
-		}
-		/* Styling for the table header */
-		#stats-table thead {
-			background-color: #B0C4A7; /* Muted sage */
-			color: white;
-			font-weight: bold;
-			border-bottom: 3px solid #8FA382; /* Darker sage border */
-		}
-		/* Table cell styling for clarity */
-		#stats-table td {
-			padding: 10px;
-			border-bottom: 1px solid #C0C8B6; /* Light sage border */
-		}
-		/* Hover effect for rows */
-#stats-table tbody tr:hover {
-    background-color: #D4E1CB; /* Slightly darker sage for hover */
-	border: 1px solid #C0C8B6;
-}
-
 
 		/* Ensure Batter & Pitcher names take up 64% */
 		td:nth-child(2), td:nth-child(4) {
@@ -230,12 +205,6 @@ All functions are working propely
 			width: 20% !important; /* Each gets 32%, totaling 64% */
 			padding-left: 4px;
 		}
-
-/* Table header cell borders */
-#stats-table thead th {
-    padding: 12px;
-    border: 1px solid #8FA382; /* Border for separation */
-}
 
 		/* Compress less important columns */
 		td:nth-child(1), td:nth-child(3), td:nth-child(5), td:nth-child(6), td:nth-child(7), td:nth-child(8),
@@ -287,12 +256,6 @@ All functions are working propely
 			border: 1px solid #ddd;
 			background-color: #f8f9fa;
 		}
-		#logo {
-    width: 55px;  /* Adjust size as needed */
-    height: 55px;
-    margin-right: 10px; /* Space between logo and text */
-}
-
     </style>
 </head>
 <body>
@@ -302,7 +265,7 @@ All functions are working propely
 
 	<div id="header-nav-panel" class="dashboard-panel">
 		<div class="header-container">
-			<img id="logo" src="{{ url_for('static', filename='images/bvpLogo.png') }}" alt="BvP Logo"><h1>MLB Batter vs. Pitcher Stats</h1>
+			<h2>MLB Batter vs. Pitcher Stats</h2>
 		</div>
 
 		<div class="nav-container">
