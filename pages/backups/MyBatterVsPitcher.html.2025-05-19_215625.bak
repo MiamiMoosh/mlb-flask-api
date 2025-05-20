@@ -252,9 +252,11 @@ All functions are working propely
     </div>
 
     <script>
+		// Global variables for favorite players and toggle state:
+		let favoritePlayers = [];
+		let showingFavorites = false;
 		let statsLoaded = false;
-        let favoritePlayers = getCookie("favoritePlayers");
-        let showingFavorites = false;
+
 		// MAIN INITIALIZATION
 		document.addEventListener("DOMContentLoaded", function () {
 			console.log("🚀 Adjusting date logic...");
@@ -510,43 +512,6 @@ All functions are working propely
 			$("#stats-table").on("draw.dt", adjustTableWidth);
 			adjustTableWidth();
 		});
-
-        function setCookie(name, value, days) {
-            let expires = "";
-            if (days) {
-                let date = new Date();
-                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-                expires = "; expires=" + date.toUTCString();
-            }
-            document.cookie = name + "=" + JSON.stringify(value) + expires + "; path=/";
-        }
-
-        function getCookie(name) {
-            let cookies = document.cookie.split("; ");
-            for (let cookie of cookies) {
-                let [key, value] = cookie.split("=");
-                if (key === name) return JSON.parse(value || "[]");
-            }
-            return [];
-        }
-
-
-		$(window).on("resize", function () {
-			if (statsLoaded) {
-				syncHeaderOnResize();
-			}
-			initializeStatsTable()
-		});
-		
-		function fetchStats(date) {
-			fetch("/stats?date=" + date)
-				.then(response => response.json())
-				.then(data => {
-					console.log("Stats data:", data);
-					// Process your stats data as needed...
-				})
-				.catch(error => console.error("Error fetching stats:", error));
-		}
     </script>
 </body>
 </html>

@@ -2,16 +2,16 @@ import os
 import time
 import asyncio
 import datetime
+import pytz
 from flask import Flask, jsonify, render_template, request, redirect, url_for
 from playwright.async_api import async_playwright
 from pymongo import MongoClient
 
-# ✅ Initialize Flask app
+# Initialize Flask app
 app = Flask(__name__, template_folder="pages")
-
 port = int(os.environ.get("PORT", 8080))
 
-# ✅ Connect to MongoDB using Railway-provided URI
+# Connect to MongoDB using Railway-provided URI
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://mongo:MXQDxgcJWYBgTFtLPiwGdsnRXTIONzNc@trolley.proxy.rlwy.net:25766")
 client = MongoClient(MONGO_URI)
 db = client["mlb_stats"]
@@ -23,7 +23,6 @@ async def scrape_data(date):
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
         await page.goto(url, timeout=15000, wait_until="domcontentloaded")
-
         print(f"[DEBUG] Scraping data for {date} from {url}")
 
         try:
@@ -46,18 +45,14 @@ async def scrape_data(date):
                 return rows.map(row => {
                     let cells = row.querySelectorAll("td");
                     let teamImgs = row.querySelectorAll("td img");
-
                     if (cells.length < 14 || teamImgs.length < 2) return null;
 
                     let batterTeam = teamImgs[0]?.src?.split('/').pop().replace('.png', '').toLowerCase();
                     let pitcherTeam = teamImgs[1]?.src?.split('/').pop().replace('.png', '').toLowerCase();
-
                     let batterElement = cells[0]?.querySelector(".batter-name");
                     let pitcherElement = cells[1]?.querySelector(".pitcher-name");
-
                     let batterName = batterElement?.innerText?.trim() || "Unknown";
                     let pitcherName = pitcherElement?.innerText?.trim() || "Unknown";
-
                     let batterHandedness = batterElement?.nextSibling?.textContent?.trim() || "";
                     let batterPosition = batterElement?.nextSibling?.nextSibling?.textContent?.trim() || "";
                     let pitcherHandedness = pitcherElement?.nextSibling?.textContent?.trim() || "";
@@ -94,66 +89,80 @@ async def scrape_data(date):
                 }).filter(row => row !== null);
             }
         """)
-
         await browser.close()
         return rows_data
 
 def store_data(date, data):
-    """Store scraped data in MongoDB, ensuring `_id` does NOT interfere."""
-    
-    cleaned_data = [{k: v for k, v in entry.items() if k != "_id"} for entry in data]  # ✅ Remove `_id`
-
-    collection.delete_many({"date": date})  # ✅ Remove previous entries
-    collection.insert_many(cleaned_data)  # ✅ Insert cleaned data
-
-    print(f"[DEBUG] Stored cleaned data for {date}: {cleaned_data}")  # ✅ Debugging log
-
+    """Store scraped data in MongoDB; add a 'date' field to each record."""
+    cleaned_data = [{k: v for k, v in entry.items() if k != "_id"} for entry in data]
+    for entry in cleaned_data:
+        entry["date"] = date
+    collection.delete_many({"date": date})
+    collection.insert_many(cleaned_data)
+    print(f"[DEBUG] Stored cleaned data for {date}: {cleaned_data}")
 
 def get_data(date):
-    return list(collection.find({"date": date}, {"_id": 0}))  # ✅ Excludes MongoDB ObjectId
+    return list(collection.find({"date": date}, {"_id": 0}))
 
+def get_current_est_date():
+    """
+    Return the current date in Eastern Time as a string in format YYYY-MM-DD.
+    (No after-8PM adjustment is applied here.)
+    """
+    user_timezone = pytz.timezone("America/New_York")
+    now_local = datetime.datetime.now(user_timezone)
+    return now_local.date().strftime("%Y-%m-%d")
+
+# ------------------------------
+# ROUTE DEFINITIONS
+# ------------------------------
 
 @app.route("/")
 def home():
-    """Render the main page, defaulting to today's date."""
-    date = request.args.get("date", datetime.date.today().strftime("%Y-%m-%d"))
+    """
+    Render the home page.
+    If a query parameter 'date' is provided, use that;
+    otherwise, use the current EST date.
+    """
+    query_date = request.args.get("date")
+    date = query_date if query_date else get_current_est_date()
+    print(f"[DEBUG] FINAL Date Used for Display: {date}")
+    # Pass the date to the template so the client-side nav links can be built from it.
     return render_template("MyBatterVsPitcher.html", date=date)
-
 
 @app.route("/stats")
 def stats():
-    """Fetch MLB stats for a given date. Scrape if missing."""
-    date = request.args.get("date")  # ✅ Grab date from URL
-
-    if not date:  # ✅ If no date is provided, default to today
-        date = datetime.date.today().strftime("%Y-%m-%d")
-
-    print(f"[DEBUG] Requested stats for {date}")  # Debugging log
-
+    """
+    Fetch MLB stats for the given date.
+    If no query parameter is provided, use the current EST date.
+    """
+    query_date = request.args.get("date")
+    date = query_date if query_date else get_current_est_date()
+    print(f"[DEBUG] FINAL Corrected Date Sent for Scraping: {date}")
     cached_data = get_data(date)
     if cached_data:
         return jsonify(cached_data)
-
     scraped_data = asyncio.run(scrape_data(date))
     if scraped_data:
         store_data(date, scraped_data)
-
-    return jsonify(scraped_data)
+        return jsonify(scraped_data)
+    return jsonify({"error": "No data found for this date"}), 404
 
 @app.route("/change-date")
 def change_date():
-    """Handles date selection, checks cache, scrapes if needed, then reloads."""
-    date = request.args.get("date")
-    if not date:
-        return jsonify({"error": "Missing date parameter"}), 400
-
-    # ✅ Check if data is cached
+    """
+    Handle a date selection request.
+    If data for the chosen date is not cached, scrape it.
+    Then redirect to the home page with the chosen date.
+    """
+    query_date = request.args.get("date")
+    date = query_date if query_date else get_current_est_date()
+    print(f"[DEBUG] FINAL Date Before Redirect: {date}")
     cached_data = get_data(date)
     if not cached_data:
         scraped_data = asyncio.run(scrape_data(date))
         if scraped_data:
             store_data(date, scraped_data)
-
     return redirect(url_for("home", date=date))
 
 if __name__ == "__main__":

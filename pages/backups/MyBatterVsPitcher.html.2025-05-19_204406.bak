@@ -50,10 +50,34 @@ All functions are working propely
         .favorite-container { margin-top: 15px; font-size: 14px; font-weight: bold; }
         .remove-btn { font-size: 14px; cursor: pointer; color: red; margin-right: 4px; }
         .header-container { display: flex; justify-content: center; align-items: center; position: relative; }
-        .clear-btn { position: absolute; right: 30%; padding: 6px 12px; border: 1px solid #ccc; background-color: #f8f9fa; color: #333; border-radius: 5px; cursor: pointer; transition: 0.3s; }
-        .clear-btn:hover { background-color: #e2e6ea; }
-		#togglePlayersBtn { display: block; margin: 10px auto 20px; padding: 6px 12px; border: none; background-color: #007bff; color: white; border-radius: 5px; cursor: pointer; transition: 0.3s; }
-        #togglePlayersBtn:hover { background-color: #0056b3; }
+        .clear-btn { 
+			display: block;
+			width: 80%;
+			margin: 8px auto;
+			padding: 5px;
+			border: none;
+			background-color: #f1f1f1; /* ✅ Softer gray tone */
+			color: #555; /* ✅ Muted text */
+			font-size: 11px;
+			font-weight: normal;
+			border-radius: 4px;
+			cursor: pointer;
+			transition: 0.2s ease-in-out;
+
+		 }
+        .clear-btn:hover { background-color: #e0e0e0; }
+		#togglePlayersBtn { display: block;
+			margin: 10px auto 10px;
+			padding: 6px 12px;
+			border: none;
+			background-color: #666; /* ✅ Less intrusive color */
+			color: white;
+			border-radius: 5px;
+			cursor: pointer;
+			transition: 0.3s;
+			font-size: 12px; /* ✅ Slightly smaller */
+		}
+        #togglePlayersBtn:hover { background-color: #444; }
         #player-list span { display: inline-block; margin-right: 10px; }
         #stats-container { width: 90%; margin: 0 auto; overflow-y: auto; }
 
@@ -72,13 +96,12 @@ All functions are working propely
 		
 		/* Shrink the overall table width */
 		table.dataTable {
-			width: 80%; /* Reduce from 90% to 80% */
-			margin: auto; /* Keep it centered */
-			table-layout: fixed !important; /* Prevent automatic resizing */
+			width: 100%; /* Reduce from 90% to 80% */
+			table-layout: auto !important; /* Prevent automatic resizing */
 		}
 
 		.dataTables_scrollBody {
-			  overflow-y: scroll !important;
+			  width: 100% !important;
 		  }
 
 		/* Change placeholder text color */
@@ -99,6 +122,14 @@ All functions are working propely
 			border-color: #004085;
 			box-shadow: 0 0 5px #007bff;
 		}
+		
+		.dataTables_scrollHead {
+			overflow: hidden !important; /* ✅ Prevents extra scrolling */
+		}
+		.dataTables_scrollHeadInner {
+			width: 100% !important;
+		}
+
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -154,7 +185,37 @@ All functions are working propely
 			text-align: left !important;
 			padding-left: 6px !important; /* Maintain left spacing */
 		}
-		
+		.collapsible-container {
+			width: 90%;
+			margin: 0 auto;
+			text-align: center;
+		}
+
+		.toggle-collapse {
+			display: block;
+			width: 100%;
+			padding: 8px;
+			background-color: #f8f9fa; /* ✅ Matches table aesthetics */
+			color: #333;
+			font-size: 13px;
+			font-weight: bold;
+			border: 1px solid #ddd; /* ✅ Adds a subtle border */
+			cursor: pointer;
+			border-radius: 5px;
+			transition: 0.3s ease-in-out;
+
+		}
+
+		.toggle-collapse:hover {
+			background-color: #e2e6ea;
+		}
+
+		#player-list-wrapper {
+			display: none; /* ✅ Starts collapsed */
+			padding: 10px;
+			border: 1px solid #ddd;
+			background-color: #f8f9fa;
+		}
     </style>
 </head>
 <body>
@@ -163,16 +224,26 @@ All functions are working propely
     </script>
 
     <div class="header-container">
-        <h2>Manage My Players</h2>
-        <button class="clear-btn" onclick="clearFavorites()">Clear My Players</button>
-    </div>
-    <div id="player-list"></div>
+		<h2>MLB Batter vs. Pitcher Stats</h2>
+	</div>
 
     <div class="nav-container">
-        <a id="prev-day" class="nav-link" href="#">« <span id="prev-date"></span></a>
-        <span class="current-date" id="date-display"></span>
-        <a id="next-day" class="nav-link" href="#"><span id="next-date"></span> »</a>
-    </div>
+		<a id="prev-day" class="nav-link" href="#">« <span id="prev-date"></span></a>
+		<span class="current-date" id="date-display"></span>
+		<a id="next-day" class="nav-link" href="#"><span id="next-date"></span> »</a>
+	</div>
+
+	<div class="collapsible-container">
+		<button class="toggle-collapse" onclick="toggleCollapse()">▼ Manage My Players</button>
+		<div id="player-list-wrapper">
+			<div id="player-list"></div>
+			<div class="clear-button-container">
+				<button class="clear-btn" onclick="clearFavorites()">Clear My Players</button>
+			</div>
+		</div>
+	</div>
+
+
     
     <button id="togglePlayersBtn" onclick="toggleFavorites()">Show My Players Only</button>
 
@@ -181,7 +252,7 @@ All functions are working propely
     </div>
 
     <script>
-		
+		let statsLoaded = false;
         function setCookie(name, value, days) {
             let expires = "";
             if (days) {
@@ -260,6 +331,17 @@ All functions are working propely
 						{ "width": "4%", "targets": [0, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] } /* Stat columns */
 					]
 				});
+				$(".dataTables_scrollBody").on("scroll", function () {
+					let scrollLeft = $(this).scrollLeft();
+					$(".dataTables_scrollHead").scrollLeft(scrollLeft);
+				});
+
+				setTimeout(function() {
+					let tableWidth = $(".dataTables_scrollBody table").outerWidth();
+					$(".dataTables_scrollBody").css("width", tableWidth + "px");
+					$(".dataTables_scrollHeadInner").css("width", tableWidth + "px"); // ✅ Force header to match body width
+				}, 300);
+
 
 				data.forEach(row => {
 					if (showingFavorites && !favoritePlayers.includes(row.batter) && !favoritePlayers.includes(row.pitcher)) {
@@ -279,8 +361,48 @@ All functions are working propely
 
 				table.draw();
 				updateFavoriteList();
+				statsLoaded = true;
+				syncHeaderOnResize();	
+				initializeStatsTable()
 			});
 		}
+		
+		$(window).on("resize", function () {
+			if (statsLoaded) {
+				syncHeaderOnResize();
+			}
+			initializeStatsTable()
+		});
+		
+		function initializeStatsTable() {
+			if ($.fn.DataTable.isDataTable("#stats-table")) {
+				$("#stats-table").DataTable().destroy(); // ✅ Destroy previous instance
+			}
+
+			$("#stats-table").DataTable({
+				autoWidth: false, // ✅ Prevents automatic width interference
+				paging: false,  // ✅ Removes the "Show X entries" dropdown
+				info: false,    // ✅ Hides "Showing X of Y entries" text
+				lengthChange: false // ✅ Prevents row limit selection
+			}).columns.adjust().draw();
+		}
+
+		function syncHeaderOnResize() {
+			let exactWidth = Math.min(
+				Math.floor($(".dataTables_scrollBody table").outerWidth()), 
+				Math.floor($(".dataTables_scrollHeadInner").outerWidth())
+			);
+
+			$(".dataTables_scrollHeadInner").css({
+				"width": exactWidth + "px",
+				"min-width": exactWidth + "px",
+				"max-width": exactWidth + "px"
+			});
+
+			// ✅ Recalculate DataTables column widths
+			$("#stats-table").DataTable().columns.adjust().draw();
+		}
+
 
         function toggleFavorite(player) {
             if (favoritePlayers.includes(player)) {
@@ -318,7 +440,18 @@ All functions are working propely
 			// Adjust DataTable columns after toggling rows
 			$("#stats-table").DataTable().columns.adjust();
 		}
-		
+		function toggleCollapse() {
+			let wrapper = document.getElementById("player-list-wrapper");
+			let button = document.querySelector(".toggle-collapse");
+
+			if (wrapper.style.display === "none" || wrapper.style.display === "") {
+				wrapper.style.display = "block"; // ✅ Expand section
+				button.innerHTML = "▲ Manage My Players";
+			} else {
+				wrapper.style.display = "none"; // ✅ Collapse section
+				button.innerHTML = "▼ Manage My Players";
+			}
+		}
 		function clearFavorites() {
             favoritePlayers = [];
             setCookie("favoritePlayers", favoritePlayers, 180);
@@ -334,27 +467,29 @@ All functions are working propely
 		}
 		
 		document.addEventListener("DOMContentLoaded", function () {
-			let urlParams = new URLSearchParams(window.location.search);
-			let selectedDate = urlParams.get("date");
+			console.log("🚀 Monitoring changes to date elements...");
 
-			if (!selectedDate) {
-				selectedDate = new Date().toISOString().split("T")[0]; // ✅ Default to today (YYYY-MM-DD)
-			}
+			let urlParams = new URLSearchParams(window.location.search);
+			let selectedDate = urlParams.get("date") || new Date().toISOString().split("T")[0];
 
 			console.log("🔎 Extracted Date from URL:", selectedDate);
 
-			// ✅ Parse date manually WITHOUT time zone shifts
-			let dateParts = selectedDate.split("-");
-			let currentDateObj = new Date(Date.UTC(Number(dateParts[0]), Number(dateParts[1]) - 1, Number(dateParts[2])));
+			let currentTime = new Date(); // ✅ Get current local time
+			let currentHourEST = currentTime.getUTCHours() - 4; // ✅ Convert UTC to EST
 
-			console.log("✅ Corrected Date (No Time Zone Shift):", currentDateObj.toISOString());
+			if (currentHourEST >= 20) { 
+				let adjustedDate = new Date(selectedDate);
+				adjustedDate.setDate(adjustedDate.getDate() - 1); // ✅ Subtract a day past 8 PM EST
+				selectedDate = adjustedDate.toISOString().split("T")[0];
+			}
 
-			// ✅ Calculate previous and next days AFTER confirming correct reference date
+			// ✅ Establish correct reference dates
+			let currentDateObj = new Date(selectedDate);
 			let prevDay = new Date(currentDateObj);
-			prevDay.setUTCDate(currentDateObj.getUTCDate() - 1);
+			prevDay.setDate(currentDateObj.getDate() - 1);
 
 			let nextDay = new Date(currentDateObj);
-			nextDay.setUTCDate(currentDateObj.getUTCDate() + 1);
+			nextDay.setDate(currentDateObj.getDate() + 1);
 
 			// ✅ Ensure elements exist before modifying them
 			let prevDateElem = document.getElementById("prev-date");
@@ -366,11 +501,11 @@ All functions are working propely
 				return;
 			}
 
-			// ✅ Set navigation URLs using the correct reference point
+			// ✅ Set navigation URLs using the corrected date
 			document.getElementById("prev-day").href = `/?date=${prevDay.toISOString().split("T")[0]}`;
 			document.getElementById("next-day").href = `/?date=${nextDay.toISOString().split("T")[0]}`;
 
-			// ✅ Set visible navigation text to match the correct parsed date
+			// ✅ Set visible navigation text
 			prevDateElem.textContent = formatReadableDate(prevDay);
 			currentDateElem.textContent = formatReadableDate(currentDateObj);
 			nextDateElem.textContent = formatReadableDate(nextDay);
@@ -385,18 +520,19 @@ All functions are working propely
 			let options = { year: "numeric", month: "long", day: "numeric" };
 			let formattedDate = dateObj.toLocaleDateString("en-US", options);
 
-			let day = dateObj.getUTCDate();
+			let day = dateObj.getDate();
 			let suffix = (day === 1 || day === 21 || day === 31) ? "st" :
 						 (day === 2 || day === 22) ? "nd" :
 						 (day === 3 || day === 23) ? "rd" : "th";
 
 			return formattedDate.replace(/(\d+)/, `${day}${suffix}`);
 		}
+		
         $(document).ready(() => {
             loadStats();
             updateFavoriteList();			
 			$("#stats-table").on("draw.dt", adjustTableWidth);
-			adjustTableWidth();
+			adjustTableWidth();		
         });
     </script>
 </body>

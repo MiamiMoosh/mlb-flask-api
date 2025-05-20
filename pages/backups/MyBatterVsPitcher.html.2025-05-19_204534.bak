@@ -253,264 +253,6 @@ All functions are working propely
 
     <script>
 		let statsLoaded = false;
-        let favoritePlayers = getCookie("favoritePlayers");
-        let showingFavorites = false;
-		// MAIN INITIALIZATION
-		document.addEventListener("DOMContentLoaded", function () {
-			console.log("🚀 Adjusting date logic...");
-
-			// Retrieve date from URL if provided; otherwise use the server-injected date.
-			let urlParams = new URLSearchParams(window.location.search);
-			let selectedDate = urlParams.get("date") || "{{ date }}";
-			console.log("📅 Final Selected Date:", selectedDate);
-
-			// Create a Date object at midnight for the selected date.
-			let baseDate = new Date(selectedDate + "T00:00:00");
-
-			// Compute the previous and next dates relative to the base date.
-			let prevDate = new Date(baseDate);
-			prevDate.setDate(baseDate.getDate() - 1);
-			let nextDate = new Date(baseDate);
-			nextDate.setDate(baseDate.getDate() + 1);
-
-			// Set navigation link URLs using ISO date strings.
-			document.getElementById("prev-day").href = "/?date=" + prevDate.toISOString().split("T")[0];
-			document.getElementById("next-day").href = "/?date=" + nextDate.toISOString().split("T")[0];
-
-			// Update the visible navigation labels.
-			document.getElementById("prev-date").textContent = formatReadableDate(prevDate);
-			document.getElementById("date-display").textContent = formatReadableDate(baseDate);
-			document.getElementById("next-date").textContent = formatReadableDate(nextDate);
-
-			console.log("🔄 Navigation Updated:");
-			console.log("⬅ Previous Date:", prevDate.toISOString().split("T")[0]);
-			console.log("📅 Current Date:", selectedDate);
-			console.log("➡ Next Date:", nextDate.toISOString().split("T")[0]);
-
-			// Load stats for the selected date.
-			loadStats(selectedDate);
-
-			// Initialize favorites and table adjustments.
-			updateFavoriteList();
-			$("#stats-table").on("draw.dt", adjustTableWidth);
-			adjustTableWidth();
-			initializeStatsTable();
-
-			// Re-adjust table width on window resize.
-			$(window).on("resize", function () {
-				if (statsLoaded) {
-					syncHeaderOnResize();
-				}
-				initializeStatsTable();
-			});
-		});
-
-		// FUNCTION TO LOAD STATS FOR A GIVEN DATE
-		function loadStats(selectedDate) {
-			$("#stats-container").html("<strong class='loading-message'>⏳ Loading Data...</strong>");
-			$.getJSON(`/stats?date=${selectedDate}`, function(data) {
-				$("#stats-container").empty();
-
-				if (!data || data.length === 0) {
-					$("#stats-container").html("<div class='error-message'>⚠ No data available for this date.</div>");
-					return;
-				}
-
-				// Build an HTML table for the stats.
-				let tableHTML = `
-					<table id="stats-table">
-					  <thead>
-						<tr>
-						  <th style="text-align: left;">Team</th>
-						  <th style="text-align: left;">Batter</th>
-						  <th style="text-align: left;">Team</th>
-						  <th style="text-align: left;">Pitcher</th>
-						  <th style="text-align: left;">PA</th>
-						  <th style="text-align: left;">AB</th>
-						  <th style="text-align: left;">H</th>
-						  <th style="text-align: left;">1B</th>
-						  <th style="text-align: left;">2B</th>
-						  <th style="text-align: left;">3B</th>
-						  <th style="text-align: left;">HR</th>
-						  <th style="text-align: left;">BB</th>
-						  <th style="text-align: left;">SO</th>
-						  <th style="text-align: left;">AVG</th>
-						  <th style="text-align: left;">OBP</th>
-						  <th style="text-align: left;">SLG</th>
-						</tr>
-					  </thead>
-					  <tbody></tbody>
-					</table>
-				`;
-				$("#stats-container").html(tableHTML);
-
-				// Initialize DataTable.
-				let table = $("#stats-table").DataTable({
-					"paging": false,
-					"scrollY": "600px",
-					"ordering": true,
-					"info": false,
-					"language": { "search": "Search Players:" },
-					"autoWidth": false,
-					"columnDefs": [
-						{ "width": "20%", "targets": [1, 3] },
-						{ "width": "4%", "targets": [0, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] }
-					]
-				});
-
-				// Sync horizontal scroll between header and body.
-				$(".dataTables_scrollBody").on("scroll", function () {
-					let scrollLeft = $(this).scrollLeft();
-					$(".dataTables_scrollHead").scrollLeft(scrollLeft);
-				});
-
-				setTimeout(function() {
-					let tableWidth = $(".dataTables_scrollBody table").outerWidth();
-					$(".dataTables_scrollBody").css("width", tableWidth + "px");
-					$(".dataTables_scrollHeadInner").css("width", tableWidth + "px");
-				}, 300);
-
-				// Populate the table rows.
-				data.forEach(row => {
-					// If filtering favorites is on, only add favorited players.
-					if (showingFavorites && !favoritePlayers.includes(row.batter) && !favoritePlayers.includes(row.pitcher)) {
-						return;
-					}
-					let batterStar = `<span class='star ${favoritePlayers.includes(row.batter) ? "selected" : ""}' data-player="${row.batter}" onclick='toggleFavorite("${row.batter}")'>✩</span>`;
-					let pitcherStar = `<span class='star ${favoritePlayers.includes(row.pitcher) ? "selected" : ""}' data-player="${row.pitcher}" onclick='toggleFavorite("${row.pitcher}")'>✩</span>`;
-
-					table.row.add([
-						row.team_batter,
-						`${batterStar} ${row.batter} <span class='player-details'>${row.batter_info || ""}</span>`,
-						row.team_pitcher,
-						`${pitcherStar} ${row.pitcher} <span class='player-details'>${row.pitcher_hand || ""}</span>`,
-						row.stats.PA,
-						row.stats.AB,
-						row.stats.H,
-						row.stats["1B"],
-						row.stats["2B"],
-						row.stats["3B"],
-						row.stats.HR,
-						row.stats.BB,
-						row.stats.SO,
-						row.stats.AVG,
-						row.stats.OBP,
-						row.stats.SLG
-					]);
-				});
-				table.draw();
-				updateFavoriteList();
-				statsLoaded = true;
-				syncHeaderOnResize();
-				initializeStatsTable();
-			}).fail(function(jqXHR, textStatus, errorThrown) {
-				console.error("Error fetching stats:", textStatus, errorThrown);
-				$("#stats-container").html("<div class='error-message'>⚠ Error fetching data.</div>");
-			});
-		}
-
-		// Utility to initialize (or reinitialize) the DataTable.
-		function initializeStatsTable() {
-			if ($.fn.DataTable.isDataTable("#stats-table")) {
-				$("#stats-table").DataTable().destroy();
-			}
-			$("#stats-table").DataTable({
-				autoWidth: false,
-				paging: false,
-				info: false,
-				lengthChange: false
-			}).columns.adjust().draw();
-		}
-
-		// Adjust header width to sync with table body.
-		function syncHeaderOnResize() {
-			let exactWidth = Math.min(
-				Math.floor($(".dataTables_scrollBody table").outerWidth()),
-				Math.floor($(".dataTables_scrollHeadInner").outerWidth())
-			);
-			$(".dataTables_scrollHeadInner").css({
-				"width": exactWidth + "px",
-				"min-width": exactWidth + "px",
-				"max-width": exactWidth + "px"
-			});
-			$("#stats-table").DataTable().columns.adjust().draw();
-		}
-
-		// Formats a Date object into a readable string with an ordinal suffix.
-		function formatReadableDate(dateObj) {
-			let options = { year: "numeric", month: "long", day: "numeric" };
-			let formattedDate = dateObj.toLocaleDateString("en-US", options);
-			let day = dateObj.getDate();
-			let suffix = (day % 10 === 1 && day % 100 !== 11) ? "st" :
-						 (day % 10 === 2 && day % 100 !== 12) ? "nd" :
-						 (day % 10 === 3 && day % 100 !== 13) ? "rd" : "th";
-			return formattedDate.replace(/(\d+)/, day + suffix);
-		}
-
-		// Favorite players toggling functions.
-		function toggleFavorite(player) {
-			if (favoritePlayers.includes(player)) {
-				favoritePlayers = favoritePlayers.filter(p => p !== player);
-			} else {
-				favoritePlayers.push(player);
-			}
-			setCookie("favoritePlayers", favoritePlayers, 180);
-			document.querySelectorAll(`.star[data-player="${player}"]`).forEach(el => el.classList.toggle("selected"));
-			updateFavoriteList();
-		}
-
-		function updateFavoriteList() {
-			let listContainer = $("#player-list").empty();
-			favoritePlayers.forEach(player => {
-				listContainer.append(`<span class="remove-btn" onclick="toggleFavorite('${player}')">❌</span><span> ${player}</span>`);
-			});
-		}
-
-		function toggleFavorites() {
-			showingFavorites = !showingFavorites;
-			$("#togglePlayersBtn").text(showingFavorites ? "Show All Players" : "Show My Players");
-			$("#stats-table tbody tr").each(function() {
-				let batterName = $(this).find("td:nth-child(2) span.star").data("player");
-				let pitcherName = $(this).find("td:nth-child(4) span.star").data("player");
-				let isFavorited = (batterName && favoritePlayers.includes(batterName)) ||
-								  (pitcherName && favoritePlayers.includes(pitcherName));
-				$(this).css("display", showingFavorites && !isFavorited ? "none" : "table-row");
-			});
-			$("#stats-table").DataTable().columns.adjust();
-		}
-
-		function toggleCollapse() {
-			let wrapper = document.getElementById("player-list-wrapper");
-			let button = document.querySelector(".toggle-collapse");
-			if (wrapper.style.display === "none" || wrapper.style.display === "") {
-				wrapper.style.display = "block";
-				button.innerHTML = "▲ Manage My Players";
-			} else {
-				wrapper.style.display = "none";
-				button.innerHTML = "▼ Manage My Players";
-			}
-		}
-
-		function clearFavorites() {
-			favoritePlayers = [];
-			setCookie("favoritePlayers", favoritePlayers, 180);
-			updateFavoriteList();
-			$(".star").removeClass("selected");
-		}
-
-		function adjustTableWidth() {
-			let table = $("#stats-table");
-			let hasScrollbar = table.get(0).scrollHeight > table.get(0).clientHeight;
-			table.css("width", hasScrollbar ? "calc(100% - 16px)" : "100%");
-		}
-
-		// In case another jQuery ready-handler is needed.
-		$(document).ready(() => {
-			updateFavoriteList();
-			$("#stats-table").on("draw.dt", adjustTableWidth);
-			adjustTableWidth();
-		});
-
         function setCookie(name, value, days) {
             let expires = "";
             if (days) {
@@ -530,7 +272,101 @@ All functions are working propely
             return [];
         }
 
+        let favoritePlayers = getCookie("favoritePlayers");
+        let showingFavorites = false;
 
+        function loadStats(selectedDate) {
+			if (!selectedDate) {
+				let urlParams = new URLSearchParams(window.location.search);
+				selectedDate = urlParams.get("date") || new Date().toISOString().split("T")[0];  // ✅ Default to today if no date is provided
+				console.warn("⚠ No date found, defaulting to:", selectedDate);
+			}
+
+			$("#stats-container").html("<strong class='loading-message'>⏳ Loading Data...</strong>");
+
+			$.getJSON(`/stats?date=${selectedDate}`, function(data) {  // ✅ Fetch stats for the selected date
+				$("#stats-container").empty();
+
+				if (!data || data.length === 0) {
+					$("#stats-container").html("<div class='error-message'>⚠ No data available for this date.</div>");
+					return;
+				}
+
+				let tableHTML = `
+					<table id="stats-table">
+						<thead>
+							<tr>
+								<th style="text-align: left;">Team</th>
+								<th style="text-align: left;">Batter</th>
+								<th style="text-align: left;">Team</th>
+								<th style="text-align: left;">Pitcher</th>
+								<th style="text-align: left;">PA</th>
+								<th style="text-align: left;">AB</th>
+								<th style="text-align: left;">H</th>
+								<th style="text-align: left;">1B</th>
+								<th style="text-align: left;">2B</th>
+								<th style="text-align: left;">3B</th>
+								<th style="text-align: left;">HR</th>
+								<th style="text-align: left;">BB</th>
+								<th style="text-align: left;">SO</th>
+								<th style="text-align: left;">AVG</th>
+								<th style="text-align: left;">OBP</th>
+								<th style="text-align: left;">SLG</th>
+							</tr>
+						</thead>
+						<tbody></tbody>
+					</table>
+				`;
+				$("#stats-container").html(tableHTML);
+
+				let table = $("#stats-table").DataTable({
+					"paging": false,
+					"scrollY": "600px",
+					"ordering": true,
+					"info": false,
+					"language": { "search": "Search Players:" },
+					"autoWidth": false,
+					"columnDefs": [
+						{ "width": "20%", "targets": [1, 3] }, /* Batter & Pitcher columns */
+						{ "width": "4%", "targets": [0, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] } /* Stat columns */
+					]
+				});
+				$(".dataTables_scrollBody").on("scroll", function () {
+					let scrollLeft = $(this).scrollLeft();
+					$(".dataTables_scrollHead").scrollLeft(scrollLeft);
+				});
+
+				setTimeout(function() {
+					let tableWidth = $(".dataTables_scrollBody table").outerWidth();
+					$(".dataTables_scrollBody").css("width", tableWidth + "px");
+					$(".dataTables_scrollHeadInner").css("width", tableWidth + "px"); // ✅ Force header to match body width
+				}, 300);
+
+
+				data.forEach(row => {
+					if (showingFavorites && !favoritePlayers.includes(row.batter) && !favoritePlayers.includes(row.pitcher)) {
+						return;
+					}
+
+					let batterStar = `<span class='star ${favoritePlayers.includes(row.batter) ? "selected" : ""}' data-player="${row.batter}" onclick='toggleFavorite("${row.batter}")'>✩</span>`;
+					let pitcherStar = `<span class='star ${favoritePlayers.includes(row.pitcher) ? "selected" : ""}' data-player="${row.pitcher}" onclick='toggleFavorite("${row.pitcher}")'>✩</span>`;
+
+					table.row.add([
+						row.team_batter, `${batterStar} ${row.batter} <span class='player-details'>${row.batter_info || ""}</span>`,
+						row.team_pitcher, `${pitcherStar} ${row.pitcher} <span class='player-details'>${row.pitcher_hand || ""}</span>`,
+						row.stats.PA, row.stats.AB, row.stats.H, row.stats["1B"], row.stats["2B"], row.stats["3B"], row.stats.HR,
+						row.stats.BB, row.stats.SO, row.stats.AVG, row.stats.OBP, row.stats.SLG
+					]);
+				});
+
+				table.draw();
+				updateFavoriteList();
+				statsLoaded = true;
+				syncHeaderOnResize();	
+				initializeStatsTable()
+			});
+		}
+		
 		$(window).on("resize", function () {
 			if (statsLoaded) {
 				syncHeaderOnResize();
@@ -538,15 +374,169 @@ All functions are working propely
 			initializeStatsTable()
 		});
 		
-		function fetchStats(date) {
-			fetch("/stats?date=" + date)
-				.then(response => response.json())
-				.then(data => {
-					console.log("Stats data:", data);
-					// Process your stats data as needed...
-				})
-				.catch(error => console.error("Error fetching stats:", error));
+		function initializeStatsTable() {
+			if ($.fn.DataTable.isDataTable("#stats-table")) {
+				$("#stats-table").DataTable().destroy(); // ✅ Destroy previous instance
+			}
+
+			$("#stats-table").DataTable({
+				autoWidth: false, // ✅ Prevents automatic width interference
+				paging: false,  // ✅ Removes the "Show X entries" dropdown
+				info: false,    // ✅ Hides "Showing X of Y entries" text
+				lengthChange: false // ✅ Prevents row limit selection
+			}).columns.adjust().draw();
 		}
+
+		function syncHeaderOnResize() {
+			let exactWidth = Math.min(
+				Math.floor($(".dataTables_scrollBody table").outerWidth()), 
+				Math.floor($(".dataTables_scrollHeadInner").outerWidth())
+			);
+
+			$(".dataTables_scrollHeadInner").css({
+				"width": exactWidth + "px",
+				"min-width": exactWidth + "px",
+				"max-width": exactWidth + "px"
+			});
+
+			// ✅ Recalculate DataTables column widths
+			$("#stats-table").DataTable().columns.adjust().draw();
+		}
+
+
+        function toggleFavorite(player) {
+            if (favoritePlayers.includes(player)) {
+                favoritePlayers = favoritePlayers.filter(p => p !== player);
+            } else {
+                favoritePlayers.push(player);
+            }
+            setCookie("favoritePlayers", favoritePlayers, 180);
+            document.querySelectorAll(`.star[data-player="${player}"]`).forEach(el => el.classList.toggle("selected"));
+            updateFavoriteList();
+        }
+
+        function updateFavoriteList() {
+            let listContainer = $("#player-list").empty();
+            favoritePlayers.forEach(player => {
+                listContainer.append(`<span class="remove-btn" onclick="toggleFavorite('${player}')">❌</span><span> ${player}</span>`);
+            });
+        }
+		
+        function toggleFavorites() {
+			showingFavorites = !showingFavorites;
+			$("#togglePlayersBtn").text(showingFavorites ? "Show All Players" : "Show My Players");
+
+			$("#stats-table tbody tr").each(function() {
+				// Use the 'data-player' attribute from the star element in each cell
+				let batterName = $(this).find("td:nth-child(2) span.star").data("player");
+				let pitcherName = $(this).find("td:nth-child(4) span.star").data("player");
+
+				let isFavorited = (batterName && favoritePlayers.includes(batterName)) ||
+								  (pitcherName && favoritePlayers.includes(pitcherName));
+
+				$(this).css("display", showingFavorites && !isFavorited ? "none" : "table-row");
+			});
+
+			// Adjust DataTable columns after toggling rows
+			$("#stats-table").DataTable().columns.adjust();
+		}
+		function toggleCollapse() {
+			let wrapper = document.getElementById("player-list-wrapper");
+			let button = document.querySelector(".toggle-collapse");
+
+			if (wrapper.style.display === "none" || wrapper.style.display === "") {
+				wrapper.style.display = "block"; // ✅ Expand section
+				button.innerHTML = "▲ Manage My Players";
+			} else {
+				wrapper.style.display = "none"; // ✅ Collapse section
+				button.innerHTML = "▼ Manage My Players";
+			}
+		}
+		function clearFavorites() {
+            favoritePlayers = [];
+            setCookie("favoritePlayers", favoritePlayers, 180);
+            updateFavoriteList();
+            $(".star").removeClass("selected");
+        }
+		
+		function adjustTableWidth() {
+			let table = $("#stats-table");
+			let hasScrollbar = table.get(0).scrollHeight > table.get(0).clientHeight;
+			
+			table.css("width", hasScrollbar ? "calc(100% - 16px)" : "100%"); /* Adjust for scrollbar */
+		}
+		
+		document.addEventListener("DOMContentLoaded", function () {
+			console.log("🚀 Monitoring changes to date elements...");
+
+			let urlParams = new URLSearchParams(window.location.search);
+			let selectedDate = urlParams.get("date") || new Date().toISOString().split("T")[0];
+
+			console.log("🔎 Extracted Date from URL:", selectedDate);
+
+			// ✅ Get current local time
+			let now = new Date();
+			let estOffset = -4;  // ✅ Convert UTC to EST
+			let currentHourEST = now.getUTCHours() + estOffset;
+
+			// ✅ If past 8 PM EST, adjust the date backward by one day
+			if (currentHourEST >= 20) {
+				let adjustedDate = new Date(selectedDate + "T00:00:00");
+				adjustedDate.setDate(adjustedDate.getDate() - 1);
+				selectedDate = adjustedDate.toISOString().split("T")[0];
+			}
+
+			// ✅ Establish correct reference dates
+			let currentDateObj = new Date(selectedDate);
+			let prevDay = new Date(currentDateObj);
+			prevDay.setDate(currentDateObj.getDate() - 1);
+
+			let nextDay = new Date(currentDateObj);
+			nextDay.setDate(currentDateObj.getDate() + 1);
+
+			// ✅ Ensure elements exist before modifying them
+			let prevDateElem = document.getElementById("prev-date");
+			let currentDateElem = document.getElementById("date-display");
+			let nextDateElem = document.getElementById("next-date");
+
+			if (!prevDateElem || !currentDateElem || !nextDateElem) {
+				console.error("❌ Navigation elements not found.");
+				return;
+			}
+
+			// ✅ Set navigation URLs using the corrected date
+			document.getElementById("prev-day").href = `/?date=${prevDay.toISOString().split("T")[0]}`;
+			document.getElementById("next-day").href = `/?date=${nextDay.toISOString().split("T")[0]}`;
+
+			// ✅ Set visible navigation text
+			prevDateElem.textContent = formatReadableDate(prevDay);
+			currentDateElem.textContent = formatReadableDate(currentDateObj);
+			nextDateElem.textContent = formatReadableDate(nextDay);
+
+			console.log("🔄 Navigation Set at Page Load:");
+			console.log("⬅ Previous Date:", prevDateElem.textContent);
+			console.log("📅 Current Date:", currentDateElem.textContent);
+			console.log("➡ Next Date:", nextDateElem.textContent);
+		});
+
+		function formatReadableDate(dateObj) {
+			let options = { year: "numeric", month: "long", day: "numeric" };
+			let formattedDate = dateObj.toLocaleDateString("en-US", options);
+
+			let day = dateObj.getDate();
+			let suffix = (day === 1 || day === 21 || day === 31) ? "st" :
+						 (day === 2 || day === 22) ? "nd" :
+						 (day === 3 || day === 23) ? "rd" : "th";
+
+			return formattedDate.replace(/(\d+)/, `${day}${suffix}`);
+		}
+		
+        $(document).ready(() => {
+            loadStats();
+            updateFavoriteList();			
+			$("#stats-table").on("draw.dt", adjustTableWidth);
+			adjustTableWidth();		
+        });
     </script>
 </body>
 </html>
