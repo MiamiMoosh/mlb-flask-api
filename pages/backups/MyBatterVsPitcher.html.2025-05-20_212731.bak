@@ -126,27 +126,20 @@ All functions are working propely
 			<div class="ad-container">
 				<div class="ad-box">
 					<script type="text/javascript">
-						atOptions = {
-							'key' : '04dfa8888228e8e7d49576590dcc2cfe',
-							'format' : 'iframe',
-							'height' : 250,
-							'width' : 300,
-							'params' : {}
-						};
+						var bamAdspace = '682d12d3c664a';
+						var bamWidth = 300;
+						var bamHeight = 250;
 					</script>
-					<script type="text/javascript" src="//www.highperformanceformat.com/04dfa8888228e8e7d49576590dcc2cfe/invoke.js"></script>
+					<script type="text/javascript" src="https://www.bamifyads.com/ads.js"></script>
 				</div>
 				<div class="ad-box">
 					<script type="text/javascript">
-						atOptions = {
-							'key' : '04dfa8888228e8e7d49576590dcc2cfe',
-							'format' : 'iframe',
-							'height' : 250,
-							'width' : 300,
-							'params' : {}
-						};
+						/* Home 2 | Medium Rectangle | BVP Railway */
+						var bamAdspace = '682d13507ac09';
+						var bamWidth = 300;
+						var bamHeight = 250;
 					</script>
-					<script type="text/javascript" src="//www.highperformanceformat.com/04dfa8888228e8e7d49576590dcc2cfe/invoke.js"></script>
+					<script type="text/javascript" src="https://www.bamifyads.com/ads.js"></script>
 				</div>
 			</div>
 		</div>
