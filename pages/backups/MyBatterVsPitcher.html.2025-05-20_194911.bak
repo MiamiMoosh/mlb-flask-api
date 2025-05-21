@@ -31,7 +31,7 @@ All functions are working propely
 		.date-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); width: fit-content; margin: auto; text-align: center; }
 		.card-header { font-weight: bold; font-size: 16px; color: #333; margin-bottom: 8px; }
 		.header-container { display: flex; align-items: center; justify-content: flex-start; gap: 12px; }
-		.header-content { display: flex; flex-direction: column; align-items: flex-start; }
+		.header-content { display: flex; flex-direction: column; align-items: center; width: 100%; }
 		.date-navigation { background-color: #F8F9FA; padding: 8px 12px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); width: fit-content; margin-top: 8px; }
 		.date-label { font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
 		.date-options { display: flex; gap: 10px; align-items: center; }
@@ -97,7 +97,7 @@ All functions are working propely
 		#player-list-wrapper { display: none; padding: 10px; border: 1px solid #ddd; background-color: #f8f9fa; }
 
 		/* 🎭 Logo & Notes */
-		#logo { width: 425px; height: 55px; margin-right: 10px; }
+		#logo { display: block; width: 55px; height: 55px; margin: 0 auto; }
 		.info-note { font-size: 12px; color: #556B2F; margin-bottom: 10px; text-align: left; }
 
 		/* Ad sections */
@@ -112,8 +112,9 @@ All functions are working propely
 
 	<div id="header-nav-panel" class="dashboard-panel">
 		<div class="header-container">
+			<img id="logo" src="{{ url_for('static', filename='images/bvpLogo.png') }}" alt="BvP Logo">
 			<div class="header-content">
-				<img id="logo" src="{{ url_for('static', filename='images/BVPHeader425x55.png') }}" alt="BvP Logo"><h1>Daily MLB Batter vs. Pitcher History</h1>
+				<h1>Daily MLB Batter vs. Pitcher History</h1>
 				<div class="date-navigation">
 					<div class="date-label">📅 Select Date</div>
 					<div class="date-options">
@@ -124,7 +125,7 @@ All functions are working propely
 				</div>
 			</div>
 			<div class="ad-container">
-				<div class="ad-box">
+				<div class="ad-box">				
 					<script type="text/javascript">
 						var bamAdspace = '682d12d3c664a';
 						var bamWidth = 300;
@@ -139,7 +140,7 @@ All functions are working propely
 						var bamWidth = 300;
 						var bamHeight = 250;
 					</script>
-					<script type="text/javascript" src="https://www.bamifyads.com/ads.js"></script>
+					<script type="text/javascript" src="https://www.bamifyads.com/ads.js"></script>	
 				</div>
 			</div>
 		</div>
