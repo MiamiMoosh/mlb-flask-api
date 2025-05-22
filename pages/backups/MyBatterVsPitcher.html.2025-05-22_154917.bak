@@ -236,7 +236,7 @@ All functions are working propely
 				if (statsLoaded) {
 					syncHeaderOnResize();
 				}
-				//initializeStatsTable();
+				initializeStatsTable();
 			});
 		});
 

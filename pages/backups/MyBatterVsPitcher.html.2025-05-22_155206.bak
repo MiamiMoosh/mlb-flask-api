@@ -82,6 +82,7 @@ All functions are working propely
 		#stats-table tbody tr:hover { background-color: #D4E1CB; border: 1px solid #C0C8B6; }
 		#stats-table thead th { padding: 12px; border: 1px solid #8FA382; }
 		#stats-container { width: 90%; margin: 0 auto; overflow-y: auto; }
+		#stats-table td, #stats-table th { font-size: 10px !important; }
 
 		/* 🔢 Column Adjustments */
 		td:nth-child(2), td:nth-child(4) { text-align: left; width: 20% !important; padding-left: 4px; }
@@ -236,7 +237,7 @@ All functions are working propely
 				if (statsLoaded) {
 					syncHeaderOnResize();
 				}
-				//initializeStatsTable();
+				initializeStatsTable();
 			});
 		});
 

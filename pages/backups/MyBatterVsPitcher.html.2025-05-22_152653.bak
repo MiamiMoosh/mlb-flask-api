@@ -236,7 +236,7 @@ All functions are working propely
 				if (statsLoaded) {
 					syncHeaderOnResize();
 				}
-				//initializeStatsTable();
+				initializeStatsTable();
 			});
 		});
 
@@ -490,31 +490,25 @@ function loadStats(selectedDate) {
 			});
 		}
 
-		// Helper to apply filtering based on showingFavorites flag:
-function applyFavoritesFilter() {
-  $("#stats-table tbody tr").each(function() {
-    if ($(this).hasClass("streak-info")) {
-      // For streak rows: keep them visible only if the preceding player row is visible.
-      let prevRow = $(this).prev();
-      $(this).css("display", (prevRow.length && prevRow.css("display") !== "none") ? "table-row" : "none");
-    } else {
-      // For regular player rows, check if they are favorited.
-      let batterName = $(this).find("td:nth-child(2) span.star").data("player");
-      let pitcherName = $(this).find("td:nth-child(4) span.star").data("player");
-      let isFavorited = (batterName && favoritePlayers.includes(batterName)) ||
-                        (pitcherName && favoritePlayers.includes(pitcherName));
-      $(this).css("display", showingFavorites && !isFavorited ? "none" : "table-row");
-    }
-  });
-  $("#stats-table").DataTable().columns.adjust();
-}
-
-// Toggle function that switches the filter mode and then applies it:
-function toggleFavorites() {
-  showingFavorites = !showingFavorites;
-  $("#togglePlayersBtn").text(showingFavorites ? "Show All Players" : "Show My Players");
-  applyFavoritesFilter();
-}
+		function toggleFavorites() {
+		  showingFavorites = !showingFavorites;
+		  $("#togglePlayersBtn").text(showingFavorites ? "Show All Players" : "Show My Players");
+		  $("#stats-table tbody tr").each(function() {
+			if ($(this).hasClass("streak-info")) {
+			  // For streak rows: display only if the previous row (the associated player row) is visible
+			  let prevRow = $(this).prev();
+			  $(this).css("display", (prevRow.length && prevRow.css("display") !== "none") ? "table-row" : "none");
+			} else {
+			  // For player rows: check for favorite flag as before  
+			  let batterName = $(this).find("td:nth-child(2) span.star").data("player");
+			  let pitcherName = $(this).find("td:nth-child(4) span.star").data("player");
+			  let isFavorited = (batterName && favoritePlayers.includes(batterName)) ||
+								(pitcherName && favoritePlayers.includes(pitcherName));
+			  $(this).css("display", showingFavorites && !isFavorited ? "none" : "table-row");
+			}
+		  });
+		  $("#stats-table").DataTable().columns.adjust();
+		}
 
 		function toggleCollapse() {
 			let wrapper = document.getElementById("player-list-wrapper");
@@ -569,13 +563,11 @@ function toggleFavorites() {
 
 
 		$(window).on("resize", function () {
-		  if (statsLoaded) { syncHeaderOnResize(); }
-		  initializeStatsTable();
-		  if (showingFavorites) {
-			applyFavoritesFilter();
-		  }
+			if (statsLoaded) {
+				syncHeaderOnResize();
+			}
+			initializeStatsTable()
 		});
-
 		
 		function fetchStats(date) {
 			fetch("/stats?date=" + date)

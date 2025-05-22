@@ -84,7 +84,7 @@ All functions are working propely
 		#stats-container { width: 90%; margin: 0 auto; overflow-y: auto; }
 
 		/* 🔢 Column Adjustments */
-		td:nth-child(2), td:nth-child(4) { text-align: left; width: 20% !important; padding-left: 4px; }
+		td:nth-child(2), td:nth-child(4) { font-size:12px !important; text-align: left; width: 20% !important; padding-left: 4px; }
 		td:nth-child(1), td:nth-child(3), td:nth-child(5), td:nth-child(6), td:nth-child(7), td:nth-child(8), td:nth-child(9), td:nth-child(10), td:nth-child(11), td:nth-child(12), td:nth-child(13), td:nth-child(14), td:nth-child(15), td:nth-child(16) { width: 3%; padding-left: 4px; }
 		table.dataTable thead th { text-align: left !important; }
 		table.dataTable thead th.sorting, table.dataTable thead th.sorting_asc, table.dataTable thead th.sorting_desc { text-align: left !important; padding-left: 6px !important; }
@@ -236,7 +236,7 @@ All functions are working propely
 				if (statsLoaded) {
 					syncHeaderOnResize();
 				}
-				//initializeStatsTable();
+				initializeStatsTable();
 			});
 		});
 
