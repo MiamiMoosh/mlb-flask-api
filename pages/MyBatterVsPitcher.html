@@ -493,29 +493,20 @@ function loadStats(selectedDate) {
 		function toggleFavorites() {
 		  showingFavorites = !showingFavorites;
 		  $("#togglePlayersBtn").text(showingFavorites ? "Show All Players" : "Show My Players");
-
 		  $("#stats-table tbody tr").each(function() {
-			let batterName = $(this).find("td:nth-child(2) span.star").data("player");
-			let pitcherName = $(this).find("td:nth-child(4) span.star").data("player");
-			let isFavorited = (batterName && favoritePlayers.includes(batterName)) || (pitcherName && favoritePlayers.includes(pitcherName));
-
-			if (showingFavorites && !isFavorited) {
-			  $(this).hide();
-			  if ($(this).next().hasClass("streak-info")) {
-				$(this).next().hide();
-			  }
+			if ($(this).hasClass("streak-info")) {
+			  // For streak rows: display only if the previous row (the associated player row) is visible
+			  let prevRow = $(this).prev();
+			  $(this).css("display", (prevRow.length && prevRow.css("display") !== "none") ? "table-row" : "none");
 			} else {
-			  $(this).show();
-			  if ($(this).attr("data-hot-streak") === "true" && hotStreakMapping[batterName]) {
-				if (!$(this).next().hasClass("streak-info")) {
-				  $(this).after(hotStreakMapping[batterName].clone(true).show());
-				} else {
-				  $(this).next().show();
-				}
-			  }
+			  // For player rows: check for favorite flag as before  
+			  let batterName = $(this).find("td:nth-child(2) span.star").data("player");
+			  let pitcherName = $(this).find("td:nth-child(4) span.star").data("player");
+			  let isFavorited = (batterName && favoritePlayers.includes(batterName)) ||
+								(pitcherName && favoritePlayers.includes(pitcherName));
+			  $(this).css("display", showingFavorites && !isFavorited ? "none" : "table-row");
 			}
 		  });
-
 		  $("#stats-table").DataTable().columns.adjust();
 		}
 
