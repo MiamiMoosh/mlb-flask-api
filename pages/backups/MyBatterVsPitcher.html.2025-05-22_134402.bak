@@ -19,7 +19,6 @@ All functions are working propely
 	
 		/* 🔷 General Page Styling */
 		body { background-color: #E0E8D6; font-family: Arial, sans-serif; text-align: center; font-size: 12px; }
-		h1 { text-align: center; flex-grow: 1; }
 		.current-date { font-size: 14px; font-weight: bold; padding: 5px 10px; background: #C0C8B6; color: white; border-radius: 6px; }
 
 		/* 🖥 Dashboard & Panel Styling */
@@ -31,8 +30,8 @@ All functions are working propely
 		.date-nav-container {background-color: #F8F9FA; padding: 10px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); display: flex; align-items: center; justify-content: center; gap: 15px; border-top: 2px solid #C0C8B6; padding-top: 8px;}
 		.date-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); width: fit-content; margin: auto; text-align: center; }
 		.card-header { font-weight: bold; font-size: 16px; color: #333; margin-bottom: 8px; }
-		.header-container { display: flex; align-items: center; justify-content: center; }
-		.header-content { display: flex; flex-direction: column; align-items: flex-start; }
+		.header-container { display: flex; align-items: center; justify-content: flex-start; flex-wrap: nowrap; gap: 10px; width: 100%; }
+		.header-content { flex: 1; display: flex; flex-direction: column; align-items: flex-start; text-align: left; }
 		.date-navigation { background-color: #F8F9FA; padding: 8px 12px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); width: fit-content; margin-top: 8px; }
 		.date-label { font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
 		.date-options { display: flex; gap: 10px; align-items: center; }
@@ -98,12 +97,28 @@ All functions are working propely
 		#player-list-wrapper { display: none; padding: 10px; border: 1px solid #ddd; background-color: #f8f9fa; }
 
 		/* 🎭 Logo & Notes */
-		#logo { width: 55px; height: 55px; margin-right: 10px; position: absolute; left: 50%; transform: translateX(-50%);}
+		#logo { width: 425px; height: 55px; margin-right: 10px; }
 		.info-note { font-size: 12px; color: #556B2F; margin-bottom: 10px; text-align: left; }
-
+		.fire-icon { font-size: 1.2em; display: inline; }
+		.hot-streak { font-size: 1.2em; display: inline-block; margin-left: 5px;}
+		.streak-info { background: linear-gradient(to right, #ff0000, #ff4500, #ff9800, #ffd700); color: white; font-weight: bold; text-align: center;   padding: 5px;border-radius: 5px; }
+		.streak-info td:first-child { background-color: white !important; border: none;}
+		
 		/* Ad sections */
-		.ad-container { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; margin-left: auto; }
-		.ad-box { width: 160px; height: 100px; background: #EEE; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #555; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); }
+		.ad-container { flex-shrink: 0; display: flex; align-items: center; justify-content: flex-end; width: 300px; height: 250px; margin-left: auto; }
+		.ad-box { width: 300px; height: 250px; display: flex; align-items: center; justify-content: center; }
+	
+		/* Mobile Users */
+		@media (max-width: 768px) {
+		  .header-container { flex-direction: column; align-items: center; text-align: center; }
+		  .header-content { align-items: center; text-align: center; }
+		  .ad-container { margin-top: 10px; justify-content: center; }
+		  #stats-container { overflow-x: auto; }
+		  table { width: 100%; font-size: 10px; }
+		  th, td { padding: 4px; }
+		  .nav-link, .clear-btn, .toggle-collapse, #togglePlayersBtn { padding: 12px; font-size: 14px; }
+		}
+
 	</style>
 </head>
 <body>
@@ -113,9 +128,8 @@ All functions are working propely
 
 	<div id="header-nav-panel" class="dashboard-panel">
 		<div class="header-container">
-			<img id="logo" src="{{ url_for('static', filename='images/bvpLogo.png') }}" alt="BvP Logo">
 			<div class="header-content">
-				<h1>Daily MLB Batter vs. Pitcher History</h1>
+				<img id="logo" src="{{ url_for('static', filename='images/BVPHeader425x55.png') }}" alt="BvP Logo"><h1>Daily MLB Batter vs. Pitcher History</h1>
 				<div class="date-navigation">
 					<div class="date-label">📅 Select Date</div>
 					<div class="date-options">
@@ -126,22 +140,29 @@ All functions are working propely
 				</div>
 			</div>
 			<div class="ad-container">
-				<div class="ad-box">				
+				<div class="ad-box">
 					<script type="text/javascript">
-						var bamAdspace = '682d12d3c664a';
-						var bamWidth = 300;
-						var bamHeight = 250;
+						atOptions = {
+							'key' : '04dfa8888228e8e7d49576590dcc2cfe',
+							'format' : 'iframe',
+							'height' : 250,
+							'width' : 300,
+							'params' : {}
+						};
 					</script>
-					<script type="text/javascript" src="https://www.bamifyads.com/ads.js"></script>
+					<script type="text/javascript" src="//www.highperformanceformat.com/04dfa8888228e8e7d49576590dcc2cfe/invoke.js"></script>
 				</div>
 				<div class="ad-box">
 					<script type="text/javascript">
-						/* Home 2 | Medium Rectangle | BVP Railway */
-						var bamAdspace = '682d13507ac09';
-						var bamWidth = 300;
-						var bamHeight = 250;
+						atOptions = {
+							'key' : '04dfa8888228e8e7d49576590dcc2cfe',
+							'format' : 'iframe',
+							'height' : 250,
+							'width' : 300,
+							'params' : {}
+						};
 					</script>
-					<script type="text/javascript" src="https://www.bamifyads.com/ads.js"></script>	
+					<script type="text/javascript" src="//www.highperformanceformat.com/04dfa8888228e8e7d49576590dcc2cfe/invoke.js"></script>
 				</div>
 			</div>
 		</div>
@@ -219,108 +240,197 @@ All functions are working propely
 		});
 
 		// FUNCTION TO LOAD STATS FOR A GIVEN DATE
-		function loadStats(selectedDate) {
-			$("#stats-container").html("<strong class='loading-message'>⏳ Loading Data...</strong>");
-			$.getJSON(`/stats?date=${selectedDate}`, function(data) {
-				$("#stats-container").empty();
+		function normalizeName(name) {
+  return name.replace(/\s+/g, " ").trim().toLowerCase();
+}
 
-				if (!data || data.length === 0) {
-					$("#stats-container").html("<div class='error-message'>⚠ No data available for this date.</div>");
-					return;
-				}
+function normalizeName(name) {
+  return name.replace(/\s+/g, " ").trim().toLowerCase();
+}
 
-				// Build an HTML table for the stats.
-				let tableHTML = `
-					<table id="stats-table">
-					  <thead>
-						<tr>
-						  <th style="text-align: left;">Team</th>
-						  <th style="text-align: left;">Batter</th>
-						  <th style="text-align: left;">Team</th>
-						  <th style="text-align: left;">Pitcher</th>
-						  <th style="text-align: left;">PA</th>
-						  <th style="text-align: left;">AB</th>
-						  <th style="text-align: left;">H</th>
-						  <th style="text-align: left;">1B</th>
-						  <th style="text-align: left;">2B</th>
-						  <th style="text-align: left;">3B</th>
-						  <th style="text-align: left;">HR</th>
-						  <th style="text-align: left;">BB</th>
-						  <th style="text-align: left;">SO</th>
-						  <th style="text-align: left;">AVG</th>
-						  <th style="text-align: left;">OBP</th>
-						  <th style="text-align: left;">SLG</th>
-						</tr>
-					  </thead>
-					  <tbody></tbody>
-					</table>
-				`;
-				$("#stats-container").html(tableHTML);
+function normalizeName(name) {
+  return name.replace(/\s+/g, " ").trim().toLowerCase();
+}
 
-				// Initialize DataTable.
-				let table = $("#stats-table").DataTable({
-					"paging": false,
-					"scrollY": "600px",
-					"ordering": true,
-					"info": false,
-					"language": { "search": "Search Players:" },
-					"autoWidth": false,
-					"columnDefs": [
-						{ "width": "20%", "targets": [1, 3] },
-						{ "width": "4%", "targets": [0, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] }
-					]
-				});
+function loadStats(selectedDate) {
+  $("#stats-container").html("<strong class='loading-message'>⏳ Loading Data...</strong>");
 
-				// Sync horizontal scroll between header and body.
-				$(".dataTables_scrollBody").on("scroll", function () {
-					let scrollLeft = $(this).scrollLeft();
-					$(".dataTables_scrollHead").scrollLeft(scrollLeft);
-				});
+  $.when(
+    $.getJSON(`/stats?date=${selectedDate}`),
+    $.getJSON(`/streak-data`)
+  ).done(function(statsResponse, streakResponse) {
+    let statsData = statsResponse[0];
+    let streakData = streakResponse[0];
 
-				setTimeout(function() {
-					let tableWidth = $(".dataTables_scrollBody table").outerWidth();
-					$(".dataTables_scrollBody").css("width", tableWidth + "px");
-					$(".dataTables_scrollHeadInner").css("width", tableWidth + "px");
-				}, 300);
+    console.log("[DEBUG] Loaded API data:", statsData);
+    console.log("[DEBUG] Streak Data:", streakData);
 
-				// Populate the table rows.
-				data.forEach(row => {
-					// If filtering favorites is on, only add favorited players.
-					if (showingFavorites && !favoritePlayers.includes(row.batter) && !favoritePlayers.includes(row.pitcher)) {
-						return;
-					}
-					let batterStar = `<span class='star ${favoritePlayers.includes(row.batter) ? "selected" : ""}' data-player="${row.batter}" onclick='toggleFavorite("${row.batter}")'>✩</span>`;
-					let pitcherStar = `<span class='star ${favoritePlayers.includes(row.pitcher) ? "selected" : ""}' data-player="${row.pitcher}" onclick='toggleFavorite("${row.pitcher}")'>✩</span>`;
+    window.statsData = statsData;
+    window.streakData = streakData;
 
-					table.row.add([
-						row.team_batter,
-						`${batterStar} ${row.batter} <span class='player-details'>${row.batter_info || ""}</span>`,
-						row.team_pitcher,
-						`${pitcherStar} ${row.pitcher} <span class='player-details'>${row.pitcher_hand || ""}</span>`,
-						row.stats.PA,
-						row.stats.AB,
-						row.stats.H,
-						row.stats["1B"],
-						row.stats["2B"],
-						row.stats["3B"],
-						row.stats.HR,
-						row.stats.BB,
-						row.stats.SO,
-						row.stats.AVG,
-						row.stats.OBP,
-						row.stats.SLG
-					]);
-				});
-				table.draw();
-				updateFavoriteList();
-				statsLoaded = true;
-				syncHeaderOnResize();
-				initializeStatsTable();
-			}).fail(function(jqXHR, textStatus, errorThrown) {
-				console.error("Error fetching stats:", textStatus, errorThrown);
-				$("#stats-container").html("<div class='error-message'>⚠ Error fetching data.</div>");
-			});
-		}
+    $("#stats-container").empty();
+    if (!statsData || statsData.length === 0) {
+      $("#stats-container").html("<div class='error-message'>⚠ No data available for this date.</div>");
+      return;
+    }
+
+    let tableHTML = `
+      <table id="stats-table">
+        <thead>
+          <tr>
+            <th style="text-align: left;">Team</th>
+            <th style="text-align: left;">Batter</th>
+            <th style="text-align: left;">Team</th>
+            <th style="text-align: left;">Pitcher</th>
+            <th style="text-align: left;">PA</th>
+            <th style="text-align: left;">AB</th>
+            <th style="text-align: left;">H</th>
+            <th style="text-align: left;">1B</th>
+            <th style="text-align: left;">2B</th>
+            <th style="text-align: left;">3B</th>
+            <th style="text-align: left;">HR</th>
+            <th style="text-align: left;">BB</th>
+            <th style="text-align: left;">SO</th>
+            <th style="text-align: left;">AVG</th>
+            <th style="text-align: left;">OBP</th>
+            <th style="text-align: left;">SLG</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>`;
+    $("#stats-container").html(tableHTML);
+
+    var streakMapping = {};
+    if (streakData && streakData.players) {
+      streakData.players.forEach(function(player) {
+        let normalizedName = normalizeName(player.player);
+        streakMapping[normalizedName] = player;
+      });
+    }
+    console.log("[DEBUG] Streak Mapping:", streakMapping);
+
+    var hotStreakMapping = {};
+
+    var dt = $("#stats-table").DataTable({
+      paging: false,
+      scrollY: "600px",
+      ordering: true,
+      info: false,
+      language: { search: "Search Players:" },
+      autoWidth: false,
+      columnDefs: [
+        { width: "20%", targets: [1, 3] },
+        { width: "4%", targets: [0, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] }
+      ]
+    });
+
+    console.log("[DEBUG] DataTable instance confirmed:", dt);
+
+    dt.on("draw.dt", function() {
+      dt.rows({ page: "current" }).nodes().each(function(rowNode) {
+        var $row = $(rowNode);
+        var batter = $row.attr("data-batter");
+
+        if ($row.attr("data-hot-streak") === "true" && !$row.find(".hot-streak").length) {
+          console.log("[DEBUG] Re-adding fire icon for", batter);
+          let iconHtml = `<span class='hot-streak'>🔥</span>`;
+          $row.find("td:nth-child(2)").append(iconHtml);
+        }
+
+        if (batter && hotStreakMapping[batter]) {
+          if (!$row.next().hasClass("streak-info")) {
+            $row.after(hotStreakMapping[batter].clone(true));
+            console.log("[DEBUG] draw.dt: Inserted streak row for " + batter);
+          }
+        }
+      });
+    });
+
+    $(".dataTables_scrollBody").on("scroll", function() {
+      $(".dataTables_scrollHead").scrollLeft($(this).scrollLeft());
+    });
+
+    setTimeout(function() {
+      let tableWidth = $(".dataTables_scrollBody table").outerWidth();
+      $(".dataTables_scrollBody").css("width", tableWidth + "px");
+      $(".dataTables_scrollHeadInner").css("width", tableWidth + "px");
+    }, 300);
+
+    statsData.forEach(function(row) {
+      console.log("[DEBUG] Processing row for:", row.batter);
+
+      let batterStar = `<span class='star ${favoritePlayers.includes(row.batter) ? "selected" : ""}' data-player='${row.batter}' onclick='toggleFavorite("${row.batter}")'>✩</span>`;
+      let pitcherStar = `<span class='star ${favoritePlayers.includes(row.pitcher) ? "selected" : ""}' data-player='${row.pitcher}' onclick='toggleFavorite("${row.pitcher}")'>✩</span>`;
+      let batterName = `${batterStar} ${row.batter} <span class='player-details'>${row.batter_info || ""}</span>`;
+      let pitcherName = `${pitcherStar} ${row.pitcher} <span class='player-details'>${row.pitcher_hand || ""}</span>`;
+
+      let normalizedBatterName = normalizeName(row.batter);
+      let streakData = streakMapping[normalizedBatterName];
+
+      var playerRowNode = dt.row.add([
+        row.team_batter,
+        batterName,
+        row.team_pitcher,
+        pitcherName,
+        row.stats.PA,
+        row.stats.AB,
+        row.stats.H,
+        row.stats["1B"],
+        row.stats["2B"],
+        row.stats["3B"],
+        row.stats.HR,
+        row.stats.BB,
+        row.stats.SO,
+        row.stats.AVG,
+        row.stats.OBP,
+        row.stats.SLG
+      ]).node();
+
+      $(playerRowNode).attr("data-batter", row.batter);
+
+      if (streakData) {
+        let streakGames = streakData.games || "N/A";
+        let streakAvg   = streakData.ba || "N/A";
+        let streakHR    = streakData.hr || "N/A";
+        let streakRBI   = streakData.rbi || "N/A";
+
+        console.log("[DEBUG] Found streak data for", row.batter, ":", streakGames, streakAvg, streakHR, streakRBI);
+
+        $(playerRowNode).attr("data-hot-streak", "true");
+
+        if (batterName.indexOf('<span class="hot-streak">🔥</span>') === -1) { 
+          batterName += ` <span class='hot-streak'>🔥</span>`;
+          console.log("[DEBUG] Fire icon added for", row.batter);
+        }
+
+        let streakRowContent = `
+		  <tr class="streak-info">
+			<td style="background-color: white;"></td>
+			<td colspan="15">
+			  <strong>${row.batter} is on a ${streakGames}-game hit streak, hitting ${streakAvg} with ${streakHR} HRs and ${streakRBI} RBIs.</strong>
+			</td>
+		  </tr>`;
+
+        hotStreakMapping[row.batter] = $(streakRowContent);
+      } else {
+        $(playerRowNode).attr("data-hot-streak", "false");
+        console.log("[DEBUG] No streak data found for", row.batter);
+      }
+    });
+
+    dt.draw(false);
+    dt.columns.adjust();
+    console.log("[DEBUG] Table drawn and columns adjusted.");
+
+    updateFavoriteList();
+    statsLoaded = true;
+    syncHeaderOnResize();
+    initializeStatsTable();
+  }).fail(function(jqXHR, textStatus, errorThrown) {
+    console.error("Error fetching stats:", textStatus, errorThrown);
+    $("#stats-container").html("<div class='error-message'>⚠ Error fetching data.</div>");
+  });
+}
 
 		// Utility to initialize (or reinitialize) the DataTable.
 		function initializeStatsTable() {
@@ -459,6 +569,48 @@ All functions are working propely
 					// Process your stats data as needed...
 				})
 				.catch(error => console.error("Error fetching stats:", error));
+			fetch('/streak-data')
+		.then(response => response.json())
+		.then(jsonData => {
+		console.log("Raw streak data:", jsonData);
+		// Now we'll process the players array.
+
+		// Step 2: Inspect and Filter the Players Array
+		if (!jsonData.players || !Array.isArray(jsonData.players)) {
+		  console.error("The 'players' property is missing or not an array!");
+		  return;
+		}
+		console.log("Full players array:", jsonData.players);
+
+		// Often scraping adds a header row in the first element.
+		// Filter out any record that looks like header text.
+		const validPlayers = jsonData.players.filter(item => {
+		  // If the player's name includes a lot of header info (e.g., "Player\tGames" or newline characters), skip it.
+		  return item.player && !item.player.includes("Player") && !item.player.includes("Games\t");
+		});
+
+		console.log("Valid players array:", validPlayers);
+
+		// Step 3: For each valid player, examine the details.
+		validPlayers.forEach(player => {
+		  console.log("Player Record:", player);
+		  // Depending on your scraping, further info might be embedded as text.
+		  // For instance, you might see a string: "Cody Bellinger\t14\t57\t11\t21\t4\t12\t7\t10\t.368\t.438\t.649\t2025-05-20"
+		  // If this is the case, you can split it on TAB characters to extract missing fields.
+		  
+		  // Example (if needed):
+		  if (player.player && player.player.includes("\t")) {
+			const parts = player.player.split("\t");
+			console.log("Extracted data parts:", parts);
+			// You might assign: 
+			// let name = parts[0];
+			// let games = parts[1]; etc.
+		  }
+		});
+		})
+		.catch(err => {
+		console.error("Error fetching streak data:", err);
+		});
 		}
     </script>
 </body>
