@@ -30,7 +30,7 @@ All functions are working propely
 		.date-nav-container {background-color: #F8F9FA; padding: 10px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); display: flex; align-items: center; justify-content: center; gap: 15px; border-top: 2px solid #C0C8B6; padding-top: 8px;}
 		.date-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); width: fit-content; margin: auto; text-align: center; }
 		.card-header { font-weight: bold; font-size: 16px; color: #333; margin-bottom: 8px; }
-		.header-container { display: flex; align-items: center; justify-content: flex-start; flex-wrap: nowrap; gap: 10px; width: 100%; }
+		.header-container { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; width: 100%; } 
 		.header-content { flex: 1; display: flex; flex-direction: column; align-items: flex-start; text-align: left; }
 		.date-navigation { background-color: #F8F9FA; padding: 8px 12px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); width: fit-content; margin-top: 8px; }
 		.date-label { font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
@@ -105,9 +105,21 @@ All functions are working propely
 		.streak-info td:first-child { background-color: white !important; border: none;}
 		
 		/* Ad sections */
-		.ad-container { flex-shrink: 0; display: flex; align-items: center; justify-content: flex-end; width: 300px; height: 250px; margin-left: auto; }
-		.ad-box { width: 300px; height: 250px; display: flex; align-items: center; justify-content: center; }
+		.ad-container { flex-shrink: 0; display: flex; align-items: center; justify-content: center; width: 100%; max-width: 600px; height: auto; overflow: hidden; } 
+		.ad-box { width: 100%; height: auto; max-height: 250px; }
 	
+		/* Mobile Users */
+		@media (max-width: 768px) {
+		  .header-container { flex-direction: column; align-items: center; text-align: center; } 
+		  .header-content { align-items: center; text-align: center; } 
+		  .ad-container { width: 100%; justify-content: center; margin-top: 10px; } 
+		  .ad-box { width: 100%; height: auto; max-height: 250px; }
+		  #stats-container { overflow-x: auto; }
+		  table { width: 100%; font-size: 10px; }
+		  th, td { padding: 4px; }
+		  .nav-link, .clear-btn, .toggle-collapse, #togglePlayersBtn { padding: 12px; font-size: 14px; }
+		}
+
 	</style>
 </head>
 <body>
@@ -479,16 +491,32 @@ function loadStats(selectedDate) {
 		}
 
 		function toggleFavorites() {
-			showingFavorites = !showingFavorites;
-			$("#togglePlayersBtn").text(showingFavorites ? "Show All Players" : "Show My Players");
-			$("#stats-table tbody tr").each(function() {
-				let batterName = $(this).find("td:nth-child(2) span.star").data("player");
-				let pitcherName = $(this).find("td:nth-child(4) span.star").data("player");
-				let isFavorited = (batterName && favoritePlayers.includes(batterName)) ||
-								  (pitcherName && favoritePlayers.includes(pitcherName));
-				$(this).css("display", showingFavorites && !isFavorited ? "none" : "table-row");
-			});
-			$("#stats-table").DataTable().columns.adjust();
+		  showingFavorites = !showingFavorites;
+		  $("#togglePlayersBtn").text(showingFavorites ? "Show All Players" : "Show My Players");
+
+		  $("#stats-table tbody tr").each(function() {
+			let batterName = $(this).find("td:nth-child(2) span.star").data("player");
+			let pitcherName = $(this).find("td:nth-child(4) span.star").data("player");
+			let isFavorited = (batterName && favoritePlayers.includes(batterName)) || (pitcherName && favoritePlayers.includes(pitcherName));
+
+			if (showingFavorites && !isFavorited) {
+			  $(this).hide();
+			  if ($(this).next().hasClass("streak-info")) {
+				$(this).next().hide();
+			  }
+			} else {
+			  $(this).show();
+			  if ($(this).attr("data-hot-streak") === "true" && hotStreakMapping[batterName]) {
+				if (!$(this).next().hasClass("streak-info")) {
+				  $(this).after(hotStreakMapping[batterName].clone(true).show());
+				} else {
+				  $(this).next().show();
+				}
+			  }
+			}
+		  });
+
+		  $("#stats-table").DataTable().columns.adjust();
 		}
 
 		function toggleCollapse() {
