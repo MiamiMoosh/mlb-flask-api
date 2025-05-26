@@ -13,19 +13,15 @@
   <link rel="manifest" href="{{ url_for('static', filename='images/site.webmanifest') }}" />
   <style>
     /* 🔷 General Page Styling */
-    body { background: url("{{ url_for('static', filename='images/firststring_bg.png') }}") no-repeat center center fixed; background-color: #000; background-size: cover; font-family: Arial, sans-serif; text-align: center; font-size: 12px; color: #FFFFFF; }
-    .current-date { font-size: 12px; font-weight: bold; padding: 5px 10px; background: #C0C8B6; color: white; border-radius: 6px; }
+    body { background: url("{{ url_for('static', filename='images/first-string_bg.png') }}") no-repeat center center fixed; background-color: #000; background-size: cover; font-family: Arial, sans-serif; text-align: center; font-size: 12px; color: #FFFFFF; }
+    .current-date { font-size: 14px; font-weight: bold; padding: 5px 10px; background: #C0C8B6; color: white; border-radius: 6px; }
     
     /* 🖥 Dashboard & Panel Styling */
-    .dashboard-panel { background: transparent; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
-    #nav-container { display: flex; align-items: center; justify-content: space-between; padding: 20px; background: transparent; border-bottom: 2px solid #C0C8B6; }
-    #collapsible-container, #stats-container { background: transparent; padding: 20px; border-radius: 0px; }
-    .wrapper { display: flex; width: 100vw; }
-	.empty-container { flex: 1; background-color: transparent; }
-	.stats-panel { flex: 1; display: flex; flex-direction: column; padding: 20px; }
-	#stats-container { display: flex; justify-content: flex-end; padding-right: 100px; }
-	#stats-table { width: 50%; }
-	.date-nav-container { background-color: #F8F9FA; padding: 10px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); display: flex; align-items: center; justify-content: center; gap: 15px; border-top: 2px solid #C0C8B6; padding-top: 8px; }
+    .dashboard-panel { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); padding: 16px; margin-bottom: 20px; }
+    #nav-container { display: flex; align-items: center; justify-content: space-between; padding: 20px; background: white; border-bottom: 2px solid #C0C8B6; }
+    #collapsible-container, #stats-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
+    #stats-panel { display: flex; flex-direction: column; background: transparent; padding: 20px; border-radius: 8px; }
+    .date-nav-container { background-color: #F8F9FA; padding: 10px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); display: flex; align-items: center; justify-content: center; gap: 15px; border-top: 2px solid #C0C8B6; padding-top: 8px; }
     .date-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); width: fit-content; margin: auto; text-align: center; }
     .card-header { font-weight: bold; font-size: 16px; color: #333; margin-bottom: 8px; }
     .date-navigation { background-color: #F8F9FA; padding: 8px 12px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); width: fit-content; margin-top: 8px; }
@@ -37,15 +33,12 @@
 	.nav-link { text-decoration: none; font-size: 13px; font-weight: bold; padding: 10px; color: #888; transition: all 0.3s ease-in-out; }
 	.nav-link:hover { text-decoration: underline; color: #555; }
 	.date-tabs { gap: 4px; margin-top: 5px; border-bottom: 2px solid #AA0000; align-self: flex-start; white-space: nowrap; }
-	.date-tab { padding: 10px 25px; background-color: #1D1F21; color: #FFFFFF; text-decoration: none; border: 1px solid #AA0000; border-bottom: none; border-radius: 5px 5px 0 0; }
+	.date-tab { padding: 10px 12px; background-color: #1D1F21; color: #FFFFFF; text-decoration: none; border: 1px solid #AA0000; border-bottom: none; border-radius: 5px 5px 0 0; }
 	.date-tab:hover { background-color: #50555C; }
 	.date-tab.current-date { background-color: #AA0000; }
-	.tabs-search-container { display: flex; flex-direction: row; align-items: stretch; width: 98%; background-color: #2e2e2e; border: 1px solid #AA0000; }
-	#date-nav-overlay { display: flex; align-items: center; justify-content: center; width: 98%; padding: 0 !important; margin-bottom: 0px; }
-	#tabs-controls { display: flex; gap: 10px; padding-left: 10px; }
-	#tabs-controls button { background-color: #50555C; color: #FFFFFF; border: 1px solid #AA0000; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
-	#tabs-controls button:hover { background-color: #AA0000; }
-	#search-container { flex-grow: 1; margin: 0 !important; padding: 5px 10px !important; background-color: #2e2e2e !important; border: none !important; display: flex; align-items: center; overflow: hidden; }
+	.tabs-search-container { display: flex; flex-direction: row; align-items: stretch; width:98%;}
+	#date-nav-overlay { order: 0; display: flex; align-items: center; background-color: #2e2e2e; border: 1px solid #AA0000; padding: 5px 10px; }
+	#search-container { flex-grow: 1; margin: 0 !important; padding: 5px 10px !important; background-color: #2e2e2e !important; border: 2px solid #AA0000 !important; display: flex; align-items: center; overflow: hidden; }
 	#date-nav-overlay,#search-container {   position: relative;   top: 0; }
 
 
@@ -76,7 +69,7 @@
 	.dataTables_filter input { width: 100% !important; padding: 0 !important; margin: 0 !important; box-sizing: border-box; background: #f8f9fa; height: 100% !important; border: 2px solid #AA0000; border-radius: 0; font-size: 26px; color: #333; }
 	.dataTables_filter input::placeholder { color: #888; font-style: italic; }
 	.dataTables_filter input:hover { border-color: #0056b3; background-color: #e9ecef; }
-	.dataTables_filter input:focus { outline: none; border-color: #004085;}
+	.dataTables_filter input:focus { outline: none; border-color: #004085; box-shadow: 0 0 5px #007bff; }
 	.dataTables_scrollHead { overflow: hidden !important; }
 	.dataTables_scrollHeadInner { width: 100% !important; }
 	.dataTables_scrollHeadInner table thead th { background-color: #1D1F21 !important; color: #FFFFFF !important; font-weight: bold !important; padding: 12px !important; border: 1px solid #AA0000 !important; }
@@ -108,10 +101,10 @@
     table.dataTable th { text-align: left !important; }
     
     /* 📎 Collapsible Sections */
-    .collapsible-container { width: 98%; text-align: center; }
-    .toggle-collapse { display: block; width: 100%; background-color: #f8f9fa; color: #333; font-size: 13px; font-weight: bold; border: 1px solid #ddd; cursor: pointer; transition: 0.3s ease-in-out; }
+    .collapsible-container { width: 90%; margin: 0 auto; text-align: center; }
+    .toggle-collapse { display: block; width: 100%; padding: 8px; background-color: #f8f9fa; color: #333; font-size: 13px; font-weight: bold; border: 1px solid #ddd; cursor: pointer; border-radius: 5px; transition: 0.3s ease-in-out; }
     .toggle-collapse:hover { background-color: #e2e6ea; }
-    #player-list-wrapper { display: none; padding: 10px; border: 1px solid #ddd; background-color: #f8f9fa; color: #556B2F;}
+    #player-list-wrapper { display: none; padding: 10px; border: 1px solid #ddd; background-color: #f8f9fa; }
     
     /* 🎭 Notes */
     .info-note { font-size: 12px; color: #556B2F; margin-bottom: 10px; text-align: left; }
@@ -131,15 +124,6 @@
 	@media (max-width: 480px) {
 	  .date-tab {font-size: 10px;  /* Adjust font size as necessary */  }
 	}
-	@media (max-width: 768px) { .wrapper { flex-direction: column; } }
-	@media (max-width: 768px) { .empty-container, .stats-panel { width: 100%; padding-right: 0; } }
-	@media (max-width: 768px) { #stats-table { width: 100%; } }
-	@media (max-width: 768px) { #stats-container { overflow-x: auto; } }
-	@media (max-width: 768px) { table { width: 100%; font-size: 10px; } }
-	@media (max-width: 768px) { th, td { padding: 4px; } }
-	@media (max-width: 768px) { .nav-link, .clear-btn, .toggle-collapse, #togglePlayersBtn { padding: 12px; font-size: 14px; } }
-	@media (max-width: 480px) { .date-tab { font-size: 10px; } }
-
 
   </style>
 </head>
@@ -149,12 +133,22 @@
   </script>
 
   
-	<div class="wrapper">
-	  <div class="empty-container"></div>
-	  <div id="stats-panel" class="dashboard-panel">
-		<div id="stats-container"></div>
-	  </div>
-	</div>
+  <div id="stats-panel" class="dashboard-panel">
+    <div class="collapsible-container">
+      <button class="toggle-collapse" onclick="toggleCollapse()">▼ Manage My Players</button>
+      <div id="player-list-wrapper">
+        <p class="info-note">⭐ Click the star icon next to a player's name to add them to this list.</p>
+        <div id="player-list"></div>
+        <div class="clear-button-container">
+          <button class="clear-btn" onclick="clearFavorites()">Clear My Players</button>
+        </div>
+      </div>
+    </div>
+    <div id="togglePlayersContainer">
+      <button id="togglePlayersBtn" onclick="toggleFavorites()">Show My Players Only</button>
+    </div>
+    <div id="stats-container"></div>
+  </div>
   
   <script>
     // Global variables
@@ -277,6 +271,7 @@ function adjustStatsTableColumns() {
 
     // Build table HTML with a tabs-search container.
     let tableHTML = `
+      <div class="tabs-search-container">
         <div id="date-nav-overlay">
           <a id="prev-day-tab" class="date-tab" href="#">← <span id="prev-date-tab"></span></a>
           <a id="current-day-tab" class="date-tab current-date" href="#">
@@ -285,23 +280,8 @@ function adjustStatsTableColumns() {
           <a id="next-day-tab" class="date-tab" href="#">
             <span id="next-date-tab"></span> →</a>
         </div>
-		<div class="collapsible-container">
-		  <button class="toggle-collapse" onclick="toggleCollapse()">▼ Manage My Players</button>
-		  <div id="player-list-wrapper">
-			<p class="info-note">⭐ Click the star icon next to a player's name to add them to this list.</p>
-			<div id="player-list"></div>
-			<div class="clear-button-container">
-			  <button class="clear-btn" onclick="clearFavorites()">Clear My Players</button>
-			</div>
-		  </div>
-		</div>
-		<div class="tabs-search-container">
-			<div id="tabs-controls">
-				<button id="togglePlayersBtn" onclick="toggleFavorites()">Show My Players Only</button>
-			</div>
-			<div id="search-container"></div>
-		</div>
-	 
+        <div id="search-container"></div>
+      </div>
       <table id="stats-table">
         <thead>
           <tr>
@@ -338,9 +318,7 @@ function adjustStatsTableColumns() {
 			initComplete: function(settings, json) {
 				var filterElem = $(".dataTables_filter").detach();
 				var tscontainerWidth = $("#stats-table").outerWidth() - 15;		
-				$(".tabs-search-container").css({"width": tscontainerWidth + "px"});				
-				$(".date-nav-overlay").css({"width": tscontainerWidth + "px"});				
-				$(".collapsible-container").css({"width": tscontainerWidth + "px"});
+				$(".tabs-search-container").css({"width": tscontainerWidth + "px"});
 				$("#search-container").empty().append(filterElem);
 				$("#search-container").css({"flex-grow": "1",	"padding": "0",	"margin": "0", "background": "transparent",	"border": "none"  });
 				filterElem.css({"display": "flex","align-items": "center", "justify-content": "flex-end",	"width": "100%", "margin": "0",	"padding": "0",	"background": "transparent", "border": "none"  });
@@ -412,18 +390,6 @@ function adjustStatsTableColumns() {
 	  playerRow.child(streakRowContent).show(); // Explicitly show child row
 	  console.log("[DEBUG] ✅ Streak child row displayed for:", row.batter);
 	}
-	
-	clearTimeout(window.resizeTimer);
-      window.resizeTimer = setTimeout(function () {
-        if (statsLoaded) {
-			dt.columns.adjust();
-			var tscontainerWidth = $("#stats-table").outerWidth();
-			$(".tabs-search-container").css({"width": tscontainerWidth + "px"});
-			$(".date-nav-overlay").css({"width": tscontainerWidth + "px"});		
-			$(".collapsible-container").css({"width": tscontainerWidth + "px"});
-
-        }
-      }, 200);
 });
 
 dt.draw(false);
@@ -455,9 +421,7 @@ console.log("[DEBUG] Table drawn and columns adjusted.");
         if (statsLoaded) {
 			dt.columns.adjust();
 			var tscontainerWidth = $("#stats-table").outerWidth();
-			$(".tabs-search-container").css({"width": tscontainerWidth + "px"});			
-			$(".date-nav-overlay").css({"width": tscontainerWidth + "px"});		
-			$(".collapsible-container").css({"width": tscontainerWidth + "px"});
+			$(".tabs-search-container").css({"width": tscontainerWidth + "px"});
 
         }
       }, 200);
@@ -518,8 +482,9 @@ function initializeStatsTable() {
 		  let suffix = (day % 10 === 1 && day % 100 !== 11) ? "st" :
 					   (day % 10 === 2 && day % 100 !== 12) ? "nd" :
 					   (day % 10 === 3 && day % 100 !== 13) ? "rd" : "th";
-		  let month = dateObj.toLocaleString("en-US", { month: "short" });
-		  return month + " " + day + suffix;
+		  let month = dateObj.toLocaleString("en-US", { month: "long" });
+		  let year = dateObj.getFullYear();
+		  return month + " " + day + suffix + ", " + year;
 		}
 
 		function toggleFavorite(player) {
@@ -573,9 +538,7 @@ function initializeStatsTable() {
 		applyFavoritesFilter();
 		
 		var tscontainerWidth = $("#stats-table").outerWidth();		
-		$(".tabs-search-container").css({"width": tscontainerWidth + "px"});		
-		$(".date-nav-overlay").css({"width": tscontainerWidth + "px"});		
-		$(".collapsible-container").css({"width": tscontainerWidth + "px"});
+		$(".tabs-search-container").css({"width": tscontainerWidth + "px"});
 	}
 
 		function toggleCollapse() {

@@ -111,7 +111,7 @@
     .collapsible-container { width: 98%; text-align: center; }
     .toggle-collapse { display: block; width: 100%; background-color: #f8f9fa; color: #333; font-size: 13px; font-weight: bold; border: 1px solid #ddd; cursor: pointer; transition: 0.3s ease-in-out; }
     .toggle-collapse:hover { background-color: #e2e6ea; }
-    #player-list-wrapper { display: none; padding: 10px; border: 1px solid #ddd; background-color: #f8f9fa; color: #556B2F;}
+    #player-list-wrapper { display: none; padding: 10px; border: 1px solid #ddd; background-color: #f8f9fa; }
     
     /* 🎭 Notes */
     .info-note { font-size: 12px; color: #556B2F; margin-bottom: 10px; text-align: left; }

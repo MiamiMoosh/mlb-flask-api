@@ -13,7 +13,7 @@
   <link rel="manifest" href="{{ url_for('static', filename='images/site.webmanifest') }}" />
   <style>
     /* 🔷 General Page Styling */
-    body { background: url("{{ url_for('static', filename='images/firststring_bg.png') }}") no-repeat center center fixed; background-color: #000; background-size: cover; font-family: Arial, sans-serif; text-align: center; font-size: 12px; color: #FFFFFF; }
+    body { background: url("{{ url_for('static', filename='images/firststring_bg.png') }}") no-repeat center center fixed; background-color: #000; background-size: cover; font-family: Arial, sans-serif; text-align: center; font-size: 12px; color: #FFFFFF; overflow-x: hidden;}
     .current-date { font-size: 12px; font-weight: bold; padding: 5px 10px; background: #C0C8B6; color: white; border-radius: 6px; }
     
     /* 🖥 Dashboard & Panel Styling */
@@ -150,7 +150,9 @@
 
   
 	<div class="wrapper">
-	  <div class="empty-container"></div>
+	  <div class="empty-container">
+		<img src="{{url_for('static', filename='images/firststring_logo.png')}">
+	  </div>
 	  <div id="stats-panel" class="dashboard-panel">
 		<div id="stats-container"></div>
 	  </div>
@@ -544,24 +546,30 @@ function initializeStatsTable() {
 		}
 
 		function applyFavoritesFilter() {
-		$("#stats-table tbody tr").each(function() {
-		if ($(this).hasClass("streak-info")) {
-		  let prevRow = $(this).prev();
-		  $(this).css("display", prevRow.length && prevRow.css("display") !== "none" ? "table-row" : "none");
-		} else {
-		  let batterName = $(this).find("td:nth-child(2) span.star")?.data("player");
-		  let pitcherName = $(this).find("td:nth-child(4) span.star")?.data("player");
+  let dt = $("#stats-table").DataTable();
 
-		  let isFavorited = (batterName && favoritePlayers.includes(batterName)) || 
-							(pitcherName && favoritePlayers.includes(pitcherName));
+  dt.rows().every(function () {
+    let row = this;
+    let rowNode = $(row.node());
 
-		  $(this).css("display", showingFavorites && !isFavorited ? "none" : "table-row");
-		}
-		});
+    let batterName = rowNode.find("td:nth-child(2) .star").data("player");
+    let pitcherName = rowNode.find("td:nth-child(4) .star").data("player");
 
-		$("#stats-table").DataTable().columns.adjust();
-		}
-    
+    let isFavorited = favoritePlayers.includes(batterName) || favoritePlayers.includes(pitcherName);
+
+    // Show favorite player rows, hide others
+    rowNode.css("display", showingFavorites && !isFavorited ? "none" : "table-row");
+
+    // Ensure streak rows stay visible if the parent row is visible
+    if (row.child.isShown()) {
+      row.child(showingFavorites && isFavorited ? row.child() : false).show();
+      console.log(`[DEBUG] ${showingFavorites && isFavorited ? "✅ Showing" : "❌ Hiding"} streak row for:`, batterName);
+    }
+  });
+
+  dt.columns.adjust();
+}
+
     function toggleFavorites() {
 		if (typeof applyFavoritesFilter !== "function") {
 		console.warn("⚠️ applyFavoritesFilter() is not defined.");

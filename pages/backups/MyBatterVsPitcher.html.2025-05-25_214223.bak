@@ -17,7 +17,7 @@
     .current-date { font-size: 12px; font-weight: bold; padding: 5px 10px; background: #C0C8B6; color: white; border-radius: 6px; }
     
     /* 🖥 Dashboard & Panel Styling */
-    .dashboard-panel { background: transparent; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+    .dashboard-panel { background: transparent; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); padding: 16px; margin-bottom: 20px; }
     #nav-container { display: flex; align-items: center; justify-content: space-between; padding: 20px; background: transparent; border-bottom: 2px solid #C0C8B6; }
     #collapsible-container, #stats-container { background: transparent; padding: 20px; border-radius: 0px; }
     .wrapper { display: flex; width: 100vw; }
@@ -76,7 +76,7 @@
 	.dataTables_filter input { width: 100% !important; padding: 0 !important; margin: 0 !important; box-sizing: border-box; background: #f8f9fa; height: 100% !important; border: 2px solid #AA0000; border-radius: 0; font-size: 26px; color: #333; }
 	.dataTables_filter input::placeholder { color: #888; font-style: italic; }
 	.dataTables_filter input:hover { border-color: #0056b3; background-color: #e9ecef; }
-	.dataTables_filter input:focus { outline: none; border-color: #004085;}
+	.dataTables_filter input:focus { outline: none; border-color: #004085; box-shadow: 0 0 5px #007bff; }
 	.dataTables_scrollHead { overflow: hidden !important; }
 	.dataTables_scrollHeadInner { width: 100% !important; }
 	.dataTables_scrollHeadInner table thead th { background-color: #1D1F21 !important; color: #FFFFFF !important; font-weight: bold !important; padding: 12px !important; border: 1px solid #AA0000 !important; }
@@ -108,10 +108,10 @@
     table.dataTable th { text-align: left !important; }
     
     /* 📎 Collapsible Sections */
-    .collapsible-container { width: 98%; text-align: center; }
-    .toggle-collapse { display: block; width: 100%; background-color: #f8f9fa; color: #333; font-size: 13px; font-weight: bold; border: 1px solid #ddd; cursor: pointer; transition: 0.3s ease-in-out; }
+    .collapsible-container { width: 90%; margin: 0 auto; text-align: center; }
+    .toggle-collapse { display: block; width: 100%; padding: 8px; background-color: #f8f9fa; color: #333; font-size: 13px; font-weight: bold; border: 1px solid #ddd; cursor: pointer; border-radius: 5px; transition: 0.3s ease-in-out; }
     .toggle-collapse:hover { background-color: #e2e6ea; }
-    #player-list-wrapper { display: none; padding: 10px; border: 1px solid #ddd; background-color: #f8f9fa; color: #556B2F;}
+    #player-list-wrapper { display: none; padding: 10px; border: 1px solid #ddd; background-color: #f8f9fa; }
     
     /* 🎭 Notes */
     .info-note { font-size: 12px; color: #556B2F; margin-bottom: 10px; text-align: left; }
@@ -339,8 +339,7 @@ function adjustStatsTableColumns() {
 				var filterElem = $(".dataTables_filter").detach();
 				var tscontainerWidth = $("#stats-table").outerWidth() - 15;		
 				$(".tabs-search-container").css({"width": tscontainerWidth + "px"});				
-				$(".date-nav-overlay").css({"width": tscontainerWidth + "px"});				
-				$(".collapsible-container").css({"width": tscontainerWidth + "px"});
+				$(".date-nav-overlay").css({"width": tscontainerWidth + "px"});
 				$("#search-container").empty().append(filterElem);
 				$("#search-container").css({"flex-grow": "1",	"padding": "0",	"margin": "0", "background": "transparent",	"border": "none"  });
 				filterElem.css({"display": "flex","align-items": "center", "justify-content": "flex-end",	"width": "100%", "margin": "0",	"padding": "0",	"background": "transparent", "border": "none"  });
@@ -419,8 +418,7 @@ function adjustStatsTableColumns() {
 			dt.columns.adjust();
 			var tscontainerWidth = $("#stats-table").outerWidth();
 			$(".tabs-search-container").css({"width": tscontainerWidth + "px"});
-			$(".date-nav-overlay").css({"width": tscontainerWidth + "px"});		
-			$(".collapsible-container").css({"width": tscontainerWidth + "px"});
+			$(".date-nav-overlay").css({"width": tscontainerWidth + "px"});
 
         }
       }, 200);
@@ -456,8 +454,7 @@ console.log("[DEBUG] Table drawn and columns adjusted.");
 			dt.columns.adjust();
 			var tscontainerWidth = $("#stats-table").outerWidth();
 			$(".tabs-search-container").css({"width": tscontainerWidth + "px"});			
-			$(".date-nav-overlay").css({"width": tscontainerWidth + "px"});		
-			$(".collapsible-container").css({"width": tscontainerWidth + "px"});
+			$(".date-nav-overlay").css({"width": tscontainerWidth + "px"});
 
         }
       }, 200);
@@ -574,8 +571,7 @@ function initializeStatsTable() {
 		
 		var tscontainerWidth = $("#stats-table").outerWidth();		
 		$(".tabs-search-container").css({"width": tscontainerWidth + "px"});		
-		$(".date-nav-overlay").css({"width": tscontainerWidth + "px"});		
-		$(".collapsible-container").css({"width": tscontainerWidth + "px"});
+		$(".date-nav-overlay").css({"width": tscontainerWidth + "px"});
 	}
 
 		function toggleCollapse() {

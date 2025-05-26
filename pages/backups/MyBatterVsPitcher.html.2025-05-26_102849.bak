@@ -544,24 +544,22 @@ function initializeStatsTable() {
 		}
 
 		function applyFavoritesFilter() {
-		$("#stats-table tbody tr").each(function() {
-		if ($(this).hasClass("streak-info")) {
-		  let prevRow = $(this).prev();
-		  $(this).css("display", prevRow.length && prevRow.css("display") !== "none" ? "table-row" : "none");
-		} else {
-		  let batterName = $(this).find("td:nth-child(2) span.star")?.data("player");
-		  let pitcherName = $(this).find("td:nth-child(4) span.star")?.data("player");
+  let dt = $("#stats-table").DataTable();
 
-		  let isFavorited = (batterName && favoritePlayers.includes(batterName)) || 
-							(pitcherName && favoritePlayers.includes(pitcherName));
+  dt.rows().every(function () {
+    let row = this;
+    let rowNode = $(row.node());
 
-		  $(this).css("display", showingFavorites && !isFavorited ? "none" : "table-row");
-		}
-		});
+    if (row.child()) {
+      let parentVisible = rowNode.css("display") !== "none";
+      row.child(parentVisible ? row.child() : false).show();
+      console.log(`[DEBUG] ${parentVisible ? "✅ Showing" : "❌ Hiding"} streak row for:`, rowNode.find("td:nth-child(2)").text());
+    }
+  });
 
-		$("#stats-table").DataTable().columns.adjust();
-		}
-    
+  dt.columns.adjust();
+}
+
     function toggleFavorites() {
 		if (typeof applyFavoritesFilter !== "function") {
 		console.warn("⚠️ applyFavoritesFilter() is not defined.");

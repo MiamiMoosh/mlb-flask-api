@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Daily MLB Batter Vs. Pitcher History</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon-96x96.png') }}" sizes="96x96">
+  <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.ico') }}" />
+  <meta name="apple-mobile-web-app-title" content="BvP" />
+  <link rel="manifest" href="{{ url_for('static', filename='images/site.webmanifest') }}" />
+  <style>
+    /* General Styling */
+    body { background-color: #E0E8D6; font-family: Arial, sans-serif; text-align: center; font-size: 12px; }
+
+    /* Table Styling */
+    table { width: 90%; border-collapse: collapse; margin: auto; }
+    th, td { text-align: left; padding: 6px; border: 1px solid #ddd; font-size: 11px; }
+    table.dataTable { width: 100%; table-layout: auto !important; }
+    .dataTables_scrollBody { width: 100% !important; }
+    
+    /* Header Styling */
+    #header-nav-panel, #stats-panel { background: white; padding: 20px; border-radius: 8px; }
+
+    /* Navigation Styling */
+    .nav-link { text-decoration: none; font-size: 13px; font-weight: bold; padding: 10px; color: #888; transition: 0.3s ease-in-out; }
+    .nav-link:hover { text-decoration: underline; color: #555; }
+
+  </style>
+</head>
+<body>
+  <script>
+    let selectedDate = "{{ date }}";  // Fetched from Flask
+  </script>
+
+  <div id="header-nav-panel">
+    <h1>Daily MLB Batter vs. Pitcher History</h1>
+  </div>
+
+  <div id="stats-panel">
+    <div id="stats-container"></div>
+  </div>
+
+  <script>
+    function loadStats(selectedDate) {
+      console.log("Inside loadStats, selectedDate:", selectedDate);
+      $("#stats-container").html("<strong class='loading-message'>⏳ Loading Data...</strong>");
+
+      $.when(
+        $.getJSON(`/stats?date=${selectedDate}`),
+        $.getJSON(`/streak-data`)
+      ).done(function (statsResponse, streakResponse) {
+        let statsData = statsResponse[0];
+        let streakData = streakResponse[0];
+        console.log("[DEBUG] Loaded API data:", statsData);
+        console.log("[DEBUG] Streak Data:", streakData);
+
+        $("#stats-container").empty();
+        if (!statsData || statsData.length === 0) {
+          $("#stats-container").html("<div class='error-message'>⚠ No data available for this date.</div>");
+          return;
+        }
+
+        // Destroy existing DataTables instance before reinitializing
+        if ($.fn.DataTable.isDataTable("#stats-table")) {
+          $("#stats-table").DataTable().destroy();
+        }
+
+        // Inject new table HTML
+        let tableHTML = `<table id="stats-table">
+          <thead>
+            <tr>
+              <th>TM</th>
+              <th>Batter</th>
+              <th>TM</th>
+              <th>Pitcher</th>
+              <th>PA</th>
+              <th>AVG</th>
+              <th>HR</th>
+              <th>SO</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>`;
+        $("#stats-container").html(tableHTML);
+
+        // Initialize DataTables with correct column mappings
+        var dt = $("#stats-table").DataTable({
+          paging: false,
+          scrollY: "600px",
+          ordering: true,
+          info: false,
+          language: { search: "Search Players:" },
+          autoWidth: false,
+          columns: [
+            { data: "team_batter", title: "TM" },
+            { data: "batter", title: "Batter" },
+            { data: "team_pitcher", title: "TM" },
+            { data: "pitcher", title: "Pitcher" },
+            { data: "pa", title: "PA" },
+            { data: "avg", title: "AVG" },
+            { data: "hr", title: "HR" },
+            { data: "so", title: "SO" }
+          ]
+        });
+
+        console.log("DataTables initialized.");
+
+        // Ensure columns adjust properly
+        setTimeout(() => {
+          dt.columns.adjust().draw();
+          console.log("[DEBUG] Table columns adjusted.");
+        }, 200);
+
+        $("#stats-container").on("resize", function () {
+          dt.columns.adjust();
+        });
+
+      }).fail(function (jqXHR, textStatus, errorThrown) {
+        console.error("Error fetching stats:", textStatus, errorThrown);
+        $("#stats-container").html("<div class='error-message'>⚠ Error fetching data.</div>");
+      });
+    }
+
+    $(document).ready(function () {
+      let urlParams = new URLSearchParams(window.location.search);
+      let selectedDate = urlParams.get("date") || "{{ date }}";
+      loadStats(selectedDate);
+    });
+
+  </script>
+</body>
+</html>

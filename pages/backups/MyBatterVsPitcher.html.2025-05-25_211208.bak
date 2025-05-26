@@ -17,9 +17,9 @@
     .current-date { font-size: 12px; font-weight: bold; padding: 5px 10px; background: #C0C8B6; color: white; border-radius: 6px; }
     
     /* 🖥 Dashboard & Panel Styling */
-    .dashboard-panel { background: transparent; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+    .dashboard-panel { background: transparent; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); padding: 16px; margin-bottom: 20px; }
     #nav-container { display: flex; align-items: center; justify-content: space-between; padding: 20px; background: transparent; border-bottom: 2px solid #C0C8B6; }
-    #collapsible-container, #stats-container { background: transparent; padding: 20px; border-radius: 0px; }
+    #collapsible-container, #stats-container { background: transparent; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
     .wrapper { display: flex; width: 100vw; }
 	.empty-container { flex: 1; background-color: transparent; }
 	.stats-panel { flex: 1; display: flex; flex-direction: column; padding: 20px; }
@@ -37,12 +37,12 @@
 	.nav-link { text-decoration: none; font-size: 13px; font-weight: bold; padding: 10px; color: #888; transition: all 0.3s ease-in-out; }
 	.nav-link:hover { text-decoration: underline; color: #555; }
 	.date-tabs { gap: 4px; margin-top: 5px; border-bottom: 2px solid #AA0000; align-self: flex-start; white-space: nowrap; }
-	.date-tab { padding: 10px 25px; background-color: #1D1F21; color: #FFFFFF; text-decoration: none; border: 1px solid #AA0000; border-bottom: none; border-radius: 5px 5px 0 0; }
+	.date-tab { padding: 10px 5px; background-color: #1D1F21; color: #FFFFFF; text-decoration: none; border: 1px solid #AA0000; border-bottom: none; border-radius: 5px 5px 0 0; }
 	.date-tab:hover { background-color: #50555C; }
 	.date-tab.current-date { background-color: #AA0000; }
 	.tabs-search-container { display: flex; flex-direction: row; align-items: stretch; width: 98%; background-color: #2e2e2e; border: 1px solid #AA0000; }
-	#date-nav-overlay { display: flex; align-items: center; justify-content: center; width: 98%; padding: 0 !important; margin-bottom: 0px; }
-	#tabs-controls { display: flex; gap: 10px; padding-left: 10px; }
+	#date-nav-overlay { display: flex; align-items: center; justify-content: center; width: 98%; background-color: #2e2e2e; border: 1px solid #AA0000; padding: 5px 10px; margin-bottom: 5px; }
+	#tabs-controls { display: flex; gap: 10px; }
 	#tabs-controls button { background-color: #50555C; color: #FFFFFF; border: 1px solid #AA0000; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
 	#tabs-controls button:hover { background-color: #AA0000; }
 	#search-container { flex-grow: 1; margin: 0 !important; padding: 5px 10px !important; background-color: #2e2e2e !important; border: none !important; display: flex; align-items: center; overflow: hidden; }
@@ -76,7 +76,7 @@
 	.dataTables_filter input { width: 100% !important; padding: 0 !important; margin: 0 !important; box-sizing: border-box; background: #f8f9fa; height: 100% !important; border: 2px solid #AA0000; border-radius: 0; font-size: 26px; color: #333; }
 	.dataTables_filter input::placeholder { color: #888; font-style: italic; }
 	.dataTables_filter input:hover { border-color: #0056b3; background-color: #e9ecef; }
-	.dataTables_filter input:focus { outline: none; border-color: #004085;}
+	.dataTables_filter input:focus { outline: none; border-color: #004085; box-shadow: 0 0 5px #007bff; }
 	.dataTables_scrollHead { overflow: hidden !important; }
 	.dataTables_scrollHeadInner { width: 100% !important; }
 	.dataTables_scrollHeadInner table thead th { background-color: #1D1F21 !important; color: #FFFFFF !important; font-weight: bold !important; padding: 12px !important; border: 1px solid #AA0000 !important; }
@@ -108,10 +108,10 @@
     table.dataTable th { text-align: left !important; }
     
     /* 📎 Collapsible Sections */
-    .collapsible-container { width: 98%; text-align: center; }
-    .toggle-collapse { display: block; width: 100%; background-color: #f8f9fa; color: #333; font-size: 13px; font-weight: bold; border: 1px solid #ddd; cursor: pointer; transition: 0.3s ease-in-out; }
+    .collapsible-container { width: 90%; margin: 0 auto; text-align: center; }
+    .toggle-collapse { display: block; width: 100%; padding: 8px; background-color: #f8f9fa; color: #333; font-size: 13px; font-weight: bold; border: 1px solid #ddd; cursor: pointer; border-radius: 5px; transition: 0.3s ease-in-out; }
     .toggle-collapse:hover { background-color: #e2e6ea; }
-    #player-list-wrapper { display: none; padding: 10px; border: 1px solid #ddd; background-color: #f8f9fa; color: #556B2F;}
+    #player-list-wrapper { display: none; padding: 10px; border: 1px solid #ddd; background-color: #f8f9fa; }
     
     /* 🎭 Notes */
     .info-note { font-size: 12px; color: #556B2F; margin-bottom: 10px; text-align: left; }
@@ -152,6 +152,16 @@
 	<div class="wrapper">
 	  <div class="empty-container"></div>
 	  <div id="stats-panel" class="dashboard-panel">
+		<div class="collapsible-container">
+		  <button class="toggle-collapse" onclick="toggleCollapse()">▼ Manage My Players</button>
+		  <div id="player-list-wrapper">
+			<p class="info-note">⭐ Click the star icon next to a player's name to add them to this list.</p>
+			<div id="player-list"></div>
+			<div class="clear-button-container">
+			  <button class="clear-btn" onclick="clearFavorites()">Clear My Players</button>
+			</div>
+		  </div>
+		</div>
 		<div id="stats-container"></div>
 	  </div>
 	</div>
@@ -285,16 +295,6 @@ function adjustStatsTableColumns() {
           <a id="next-day-tab" class="date-tab" href="#">
             <span id="next-date-tab"></span> →</a>
         </div>
-		<div class="collapsible-container">
-		  <button class="toggle-collapse" onclick="toggleCollapse()">▼ Manage My Players</button>
-		  <div id="player-list-wrapper">
-			<p class="info-note">⭐ Click the star icon next to a player's name to add them to this list.</p>
-			<div id="player-list"></div>
-			<div class="clear-button-container">
-			  <button class="clear-btn" onclick="clearFavorites()">Clear My Players</button>
-			</div>
-		  </div>
-		</div>
 		<div class="tabs-search-container">
 			<div id="tabs-controls">
 				<button id="togglePlayersBtn" onclick="toggleFavorites()">Show My Players Only</button>
@@ -339,8 +339,7 @@ function adjustStatsTableColumns() {
 				var filterElem = $(".dataTables_filter").detach();
 				var tscontainerWidth = $("#stats-table").outerWidth() - 15;		
 				$(".tabs-search-container").css({"width": tscontainerWidth + "px"});				
-				$(".date-nav-overlay").css({"width": tscontainerWidth + "px"});				
-				$(".collapsible-container").css({"width": tscontainerWidth + "px"});
+				$(".date-nav-overlay").css({"width": tscontainerWidth + "px"});
 				$("#search-container").empty().append(filterElem);
 				$("#search-container").css({"flex-grow": "1",	"padding": "0",	"margin": "0", "background": "transparent",	"border": "none"  });
 				filterElem.css({"display": "flex","align-items": "center", "justify-content": "flex-end",	"width": "100%", "margin": "0",	"padding": "0",	"background": "transparent", "border": "none"  });
@@ -419,8 +418,7 @@ function adjustStatsTableColumns() {
 			dt.columns.adjust();
 			var tscontainerWidth = $("#stats-table").outerWidth();
 			$(".tabs-search-container").css({"width": tscontainerWidth + "px"});
-			$(".date-nav-overlay").css({"width": tscontainerWidth + "px"});		
-			$(".collapsible-container").css({"width": tscontainerWidth + "px"});
+			$(".date-nav-overlay").css({"width": tscontainerWidth + "px"});
 
         }
       }, 200);
@@ -456,8 +454,7 @@ console.log("[DEBUG] Table drawn and columns adjusted.");
 			dt.columns.adjust();
 			var tscontainerWidth = $("#stats-table").outerWidth();
 			$(".tabs-search-container").css({"width": tscontainerWidth + "px"});			
-			$(".date-nav-overlay").css({"width": tscontainerWidth + "px"});		
-			$(".collapsible-container").css({"width": tscontainerWidth + "px"});
+			$(".date-nav-overlay").css({"width": tscontainerWidth + "px"});
 
         }
       }, 200);
@@ -574,8 +571,7 @@ function initializeStatsTable() {
 		
 		var tscontainerWidth = $("#stats-table").outerWidth();		
 		$(".tabs-search-container").css({"width": tscontainerWidth + "px"});		
-		$(".date-nav-overlay").css({"width": tscontainerWidth + "px"});		
-		$(".collapsible-container").css({"width": tscontainerWidth + "px"});
+		$(".date-nav-overlay").css({"width": tscontainerWidth + "px"});
 	}
 
 		function toggleCollapse() {

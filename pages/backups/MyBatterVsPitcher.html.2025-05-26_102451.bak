@@ -544,24 +544,23 @@ function initializeStatsTable() {
 		}
 
 		function applyFavoritesFilter() {
-		$("#stats-table tbody tr").each(function() {
-		if ($(this).hasClass("streak-info")) {
-		  let prevRow = $(this).prev();
-		  $(this).css("display", prevRow.length && prevRow.css("display") !== "none" ? "table-row" : "none");
-		} else {
-		  let batterName = $(this).find("td:nth-child(2) span.star")?.data("player");
-		  let pitcherName = $(this).find("td:nth-child(4) span.star")?.data("player");
+		  $("#stats-table tbody tr").each(function () {
+			if ($(this).hasClass("streak-info")) {
+			  let prevRow = $(this).prev();
+			  let isParentVisible = prevRow.length && prevRow.css("display") !== "none";
+			  $(this).css("display", isParentVisible ? "table-row" : "none");
+			} else {
+			  let batterName = $(this).find("td:nth-child(2) .star").data("player");
+			  let pitcherName = $(this).find("td:nth-child(4) .star").data("player");
 
-		  let isFavorited = (batterName && favoritePlayers.includes(batterName)) || 
-							(pitcherName && favoritePlayers.includes(pitcherName));
+			  let isFavorited = favoritePlayers.includes(batterName) || favoritePlayers.includes(pitcherName);
+			  $(this).css("display", showingFavorites && !isFavorited ? "none" : "table-row");
+			}
+		  });
 
-		  $(this).css("display", showingFavorites && !isFavorited ? "none" : "table-row");
+		  $("#stats-table").DataTable().columns.adjust();
 		}
-		});
 
-		$("#stats-table").DataTable().columns.adjust();
-		}
-    
     function toggleFavorites() {
 		if (typeof applyFavoritesFilter !== "function") {
 		console.warn("⚠️ applyFavoritesFilter() is not defined.");

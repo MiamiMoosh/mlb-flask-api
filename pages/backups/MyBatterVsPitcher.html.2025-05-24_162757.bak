@@ -13,21 +13,20 @@
   <link rel="manifest" href="{{ url_for('static', filename='images/site.webmanifest') }}" />
   <style>
     /* 🔷 General Page Styling */
-    body { background: url("{{ url_for('static', filename='images/firststring_bg.png') }}") no-repeat center center fixed; background-color: #000; background-size: cover; font-family: Arial, sans-serif; text-align: center; font-size: 12px; color: #FFFFFF; }
-    .current-date { font-size: 12px; font-weight: bold; padding: 5px 10px; background: #C0C8B6; color: white; border-radius: 6px; }
+    body { background-color: #E0E8D6; font-family: Arial, sans-serif; text-align: center; font-size: 12px; }
+    .current-date { font-size: 14px; font-weight: bold; padding: 5px 10px; background: #C0C8B6; color: white; border-radius: 6px; }
     
     /* 🖥 Dashboard & Panel Styling */
-    .dashboard-panel { background: transparent; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
-    #nav-container { display: flex; align-items: center; justify-content: space-between; padding: 20px; background: transparent; border-bottom: 2px solid #C0C8B6; }
-    #collapsible-container, #stats-container { background: transparent; padding: 20px; border-radius: 0px; }
-    .wrapper { display: flex; width: 100vw; }
-	.empty-container { flex: 1; background-color: transparent; }
-	.stats-panel { flex: 1; display: flex; flex-direction: column; padding: 20px; }
-	#stats-container { display: flex; justify-content: flex-end; padding-right: 100px; }
-	#stats-table { width: 50%; }
-	.date-nav-container { background-color: #F8F9FA; padding: 10px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); display: flex; align-items: center; justify-content: center; gap: 15px; border-top: 2px solid #C0C8B6; padding-top: 8px; }
+    .dashboard-panel { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); padding: 16px; margin-bottom: 20px; }
+    #header-container, #nav-container { display: flex; align-items: center; justify-content: space-between; padding: 20px; background: white; border-bottom: 2px solid #C0C8B6; }
+    #collapsible-container, #stats-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
+    #header-nav-panel, #stats-panel { display: flex; flex-direction: column; background: white; padding: 20px; border-radius: 8px; }
+    #stats-panel { display: flex; flex-direction: column; background: white; padding: 20px; border-radius: 8px; }
+    .date-nav-container { background-color: #F8F9FA; padding: 10px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); display: flex; align-items: center; justify-content: center; gap: 15px; border-top: 2px solid #C0C8B6; padding-top: 8px; }
     .date-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); width: fit-content; margin: auto; text-align: center; }
     .card-header { font-weight: bold; font-size: 16px; color: #333; margin-bottom: 8px; }
+    .header-container { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; width: 100%; } 
+    .header-content { flex: 1; display: flex; flex-direction: column; align-items: flex-start; text-align: left; }
     .date-navigation { background-color: #F8F9FA; padding: 8px 12px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); width: fit-content; margin-top: 8px; }
     .date-label { font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
     .date-options { display: flex; gap: 10px; align-items: center; }
@@ -36,17 +35,14 @@
     .nav-container { display: flex; justify-content: center; align-items: center; margin: 15px 0; }
 	.nav-link { text-decoration: none; font-size: 13px; font-weight: bold; padding: 10px; color: #888; transition: all 0.3s ease-in-out; }
 	.nav-link:hover { text-decoration: underline; color: #555; }
+	.search-and-tabs { display: flex; flex-direction: column; width: 100%; margin-bottom: 10px; }
 	.date-tabs { gap: 4px; margin-top: 5px; border-bottom: 2px solid #AA0000; align-self: flex-start; white-space: nowrap; }
-	.date-tab { padding: 10px 25px; background-color: #1D1F21; color: #FFFFFF; text-decoration: none; border: 1px solid #AA0000; border-bottom: none; border-radius: 5px 5px 0 0; }
+	.date-tab { padding: 10px 12px; background-color: #1D1F21; color: #FFFFFF; text-decoration: none; border: 1px solid #AA0000; border-bottom: none; border-radius: 5px 5px 0 0; }
 	.date-tab:hover { background-color: #50555C; }
 	.date-tab.current-date { background-color: #AA0000; }
-	.tabs-search-container { display: flex; flex-direction: row; align-items: stretch; width: 98%; background-color: #2e2e2e; border: 1px solid #AA0000; }
-	#date-nav-overlay { display: flex; align-items: center; justify-content: center; width: 98%; padding: 0 !important; margin-bottom: 0px; }
-	#tabs-controls { display: flex; gap: 10px; padding-left: 10px; }
-	#tabs-controls button { background-color: #50555C; color: #FFFFFF; border: 1px solid #AA0000; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
-	#tabs-controls button:hover { background-color: #AA0000; }
-	#search-container { flex-grow: 1; margin: 0 !important; padding: 5px 10px !important; background-color: #2e2e2e !important; border: none !important; display: flex; align-items: center; overflow: hidden; }
-	#date-nav-overlay,#search-container {   position: relative;   top: 0; }
+	.tabs-search-container { display: flex; align-items: center; }
+	#date-nav-overlay { display: flex; align-items: center; background-color: #2e2e2e; border: 1px solid #AA0000; padding: 5px 10px; border-radius: 0; }
+	#search-container { display: flex; align-items: center; background-color: #2e2e2e; border: 1px solid #AA0000; padding: 5px 10px; margin-left: -1px; border-radius: 0; }
 
 
     /* 📊 Table Styling */
@@ -71,12 +67,11 @@
     #togglePlayersBtn:hover { background-color: #444; }
     
     /* 🔍 Search Box Styling */
-    .dataTables_filter { width: 96% !important; margin: 0 !important; padding: 0 !important; background: transparent !important; border: none !important; display: flex !important; align-items: center !important; text-align: right; line-height: 20px; height: 100% !important; }
-	.dataTables_filter label { width: 100% !important; margin: 0 !important; padding: 0 !important; }
-	.dataTables_filter input { width: 100% !important; padding: 0 !important; margin: 0 !important; box-sizing: border-box; background: #f8f9fa; height: 100% !important; border: 2px solid #AA0000; border-radius: 0; font-size: 26px; color: #333; }
+    .dataTables_filter { display: inline-flex !important; align-items: center !important; margin: 0 !important; text-align: right; }
+	.dataTables_filter input { width: 160px; padding: 3px; margin: 0 5px; border: 2px solid #AA0000; border-radius: 0; background-color: #f8f9fa; font-size: 10px; color: #333; }
 	.dataTables_filter input::placeholder { color: #888; font-style: italic; }
 	.dataTables_filter input:hover { border-color: #0056b3; background-color: #e9ecef; }
-	.dataTables_filter input:focus { outline: none; border-color: #004085;}
+	.dataTables_filter input:focus { outline: none; border-color: #004085; box-shadow: 0 0 5px #007bff; }
 	.dataTables_scrollHead { overflow: hidden !important; }
 	.dataTables_scrollHeadInner { width: 100% !important; }
 	.dataTables_scrollHeadInner table thead th { background-color: #1D1F21 !important; color: #FFFFFF !important; font-weight: bold !important; padding: 12px !important; border: 1px solid #AA0000 !important; }
@@ -108,38 +103,38 @@
     table.dataTable th { text-align: left !important; }
     
     /* 📎 Collapsible Sections */
-    .collapsible-container { width: 98%; text-align: center; }
-    .toggle-collapse { display: block; width: 100%; background-color: #f8f9fa; color: #333; font-size: 13px; font-weight: bold; border: 1px solid #ddd; cursor: pointer; transition: 0.3s ease-in-out; }
+    .collapsible-container { width: 90%; margin: 0 auto; text-align: center; }
+    .toggle-collapse { display: block; width: 100%; padding: 8px; background-color: #f8f9fa; color: #333; font-size: 13px; font-weight: bold; border: 1px solid #ddd; cursor: pointer; border-radius: 5px; transition: 0.3s ease-in-out; }
     .toggle-collapse:hover { background-color: #e2e6ea; }
-    #player-list-wrapper { display: none; padding: 10px; border: 1px solid #ddd; background-color: #f8f9fa; color: #556B2F;}
+    #player-list-wrapper { display: none; padding: 10px; border: 1px solid #ddd; background-color: #f8f9fa; }
     
-    /* 🎭 Notes */
+    /* 🎭 Logo & Notes */
+    #logo { width: 425px; height: 55px; margin-right: 10px; }
     .info-note { font-size: 12px; color: #556B2F; margin-bottom: 10px; text-align: left; }
     .fire-icon { font-size: 1.2em; display: inline; }
     .hot-streak { font-size: 1.2em; display: inline-block; margin-left: 5px; }
     .streak-info { background: linear-gradient(to right, #B71C1C, #D32F2F); color: #FFFFFF; font-weight: bold; text-align: center; padding: 5px; border: 1px solid #AA0000; border-radius: 5px; }
     .streak-info td:first-child { background-color: white !important; border: none; }
     
+    /* Ad sections */
+    .ad-container { flex-shrink: 0; display: flex; align-items: center; justify-content: center; width: 100%; max-width: 600px; height: auto; overflow: hidden; }
+    .ad-box { width: 100%; height: auto; max-height: 250px; }
+    
     /* Mobile Users */
     @media (max-width: 768px) {
-		#stats-container { overflow-x: auto; }
-		table { width: 100%; font-size: 10px; }
-		th, td { padding: 4px; }
-		.nav-link, .clear-btn, .toggle-collapse, #togglePlayersBtn { padding: 12px; font-size: 14px; }
-		.date-tab {font-size: 10px;  /* Adjust font size as necessary */  }
+      .header-container { flex-direction: column; align-items: center; text-align: center; }
+      .header-content { align-items: center; text-align: center; }
+      .ad-container { width: 100%; justify-content: center; margin-top: 10px; }
+      .ad-box { width: 100%; height: auto; max-height: 250px; }
+      #stats-container { overflow-x: auto; }
+      table { width: 100%; font-size: 10px; }
+      th, td { padding: 4px; }
+      .nav-link, .clear-btn, .toggle-collapse, #togglePlayersBtn { padding: 12px; font-size: 14px; }
+	  .date-tab {font-size: 10px;  /* Adjust font size as necessary */  }
     }
 	@media (max-width: 480px) {
 	  .date-tab {font-size: 10px;  /* Adjust font size as necessary */  }
 	}
-	@media (max-width: 768px) { .wrapper { flex-direction: column; } }
-	@media (max-width: 768px) { .empty-container, .stats-panel { width: 100%; padding-right: 0; } }
-	@media (max-width: 768px) { #stats-table { width: 100%; } }
-	@media (max-width: 768px) { #stats-container { overflow-x: auto; } }
-	@media (max-width: 768px) { table { width: 100%; font-size: 10px; } }
-	@media (max-width: 768px) { th, td { padding: 4px; } }
-	@media (max-width: 768px) { .nav-link, .clear-btn, .toggle-collapse, #togglePlayersBtn { padding: 12px; font-size: 14px; } }
-	@media (max-width: 480px) { .date-tab { font-size: 10px; } }
-
 
   </style>
 </head>
@@ -147,14 +142,35 @@
   <script>
     let selectedDate = "{{ date }}";  // Fetched from Flask
   </script>
-
   
-	<div class="wrapper">
-	  <div class="empty-container"></div>
-	  <div id="stats-panel" class="dashboard-panel">
-		<div id="stats-container"></div>
-	  </div>
-	</div>
+  <div id="header-nav-panel" class="dashboard-panel">
+    <div class="header-container">
+      <div class="header-content">
+        <img id="logo" src="{{ url_for('static', filename='images/BVPHeader425x55.png') }}" alt="BvP Logo">
+        <h1>Daily MLB Batter vs. Pitcher History</h1>
+      </div>
+    </div>
+  </div>
+  
+  <div id="stats-panel" class="dashboard-panel">
+    <div class="collapsible-container">
+      <button class="toggle-collapse" onclick="toggleCollapse()">▼ Manage My Players</button>
+      <div id="player-list-wrapper">
+        <p class="info-note">⭐ Click the star icon next to a player's name to add them to this list.</p>
+        <div id="player-list"></div>
+        <div class="clear-button-container">
+          <button class="clear-btn" onclick="clearFavorites()">Clear My Players</button>
+        </div>
+      </div>
+    </div>
+    <div id="togglePlayersContainer">
+      <button id="togglePlayersBtn" onclick="toggleFavorites()">Show My Players Only</button>
+    </div>
+    <div class="search-and-tabs">
+      <div id="search-container"></div>
+    </div>
+    <div id="stats-container"></div>
+  </div>
   
   <script>
     // Global variables
@@ -235,14 +251,14 @@ function adjustStatsTableColumns() {
   dt.columns.adjust().draw(); // Force redraw to apply dynamic widths
 
   console.log("Updated column widths:", $("#stats-table").DataTable().settings()[0].aoColumns.map(col => col.sWidth));
-}	
+}
+    
+	
+	
 	
 	// loadStats function - loads data and builds the table with the date navigation overlay.
     function loadStats(selectedDate) {
   console.log("Inside loadStats, selectedDate:", selectedDate);
-  
-    var streakMapping = {};
-	window.streakMapping = {};
   $("#stats-container").html("<strong class='loading-message'>⏳ Loading Data...</strong>");
 
   $.when(
@@ -263,20 +279,23 @@ function adjustStatsTableColumns() {
       return;
     }
 
-    // Pre-calculate dates for navigation
+    // Pre-calculate dates for navigation inside loadStats
     let baseDate = new Date(selectedDate + "T00:00:00");
     let prevDate = new Date(baseDate);
     prevDate.setDate(baseDate.getDate() - 1);
     let nextDate = new Date(baseDate);
     nextDate.setDate(baseDate.getDate() + 1);
 
-    // Destroy any existing DataTables instance
+    // Destroy any existing DataTables instance before reinserting table HTML
     if ($.fn.DataTable.isDataTable("#stats-table")) {
       $("#stats-table").DataTable().destroy();
     }
 
     // Build table HTML with a tabs-search container.
+    // Navigation tabs (with date links) are kept in #date-nav-overlay
+    // and the DataTables-generated search box will be moved into #search-container.
     let tableHTML = `
+      <div class="tabs-search-container">
         <div id="date-nav-overlay">
           <a id="prev-day-tab" class="date-tab" href="#">← <span id="prev-date-tab"></span></a>
           <a id="current-day-tab" class="date-tab current-date" href="#">
@@ -285,23 +304,8 @@ function adjustStatsTableColumns() {
           <a id="next-day-tab" class="date-tab" href="#">
             <span id="next-date-tab"></span> →</a>
         </div>
-		<div class="collapsible-container">
-		  <button class="toggle-collapse" onclick="toggleCollapse()">▼ Manage My Players</button>
-		  <div id="player-list-wrapper">
-			<p class="info-note">⭐ Click the star icon next to a player's name to add them to this list.</p>
-			<div id="player-list"></div>
-			<div class="clear-button-container">
-			  <button class="clear-btn" onclick="clearFavorites()">Clear My Players</button>
-			</div>
-		  </div>
-		</div>
-		<div class="tabs-search-container">
-			<div id="tabs-controls">
-				<button id="togglePlayersBtn" onclick="toggleFavorites()">Show My Players Only</button>
-			</div>
-			<div id="search-container"></div>
-		</div>
-	 
+        <div id="search-container"></div>
+      </div>
       <table id="stats-table">
         <thead>
           <tr>
@@ -320,120 +324,120 @@ function adjustStatsTableColumns() {
     $("#stats-container").html(tableHTML);
     console.log("Table HTML injected into #stats-container.");
 
-    // Initialize DataTables with our custom initComplete callback.
-    var dt = $("#stats-table").DataTable(
-		{ 
-			paging: false, scrollY: "600px", ordering: true, autoWidth: false, info: false, 
-			language: { search: "", searchPlaceholder: "Search Players" },      
-			columns: 
-			[	{ data: "team_batter", title: "TM" },
-				{ data: "batter", title: "Batter" },
-				{ data: "team_pitcher", title: "TM" },
-				{ data: "pitcher", title: "Pitcher" },
-				{ data: "stats.PA", title: "PA" },
-				{ data: "stats.AVG", title: "AVG" },
-				{ data: "stats.HR", title: "HR" },
-				{ data: "stats.SO", title: "SO" }
-			],
-			initComplete: function(settings, json) {
-				var filterElem = $(".dataTables_filter").detach();
-				var tscontainerWidth = $("#stats-table").outerWidth() - 15;		
-				$(".tabs-search-container").css({"width": tscontainerWidth + "px"});				
-				$(".date-nav-overlay").css({"width": tscontainerWidth + "px"});				
-				$(".collapsible-container").css({"width": tscontainerWidth + "px"});
-				$("#search-container").empty().append(filterElem);
-				$("#search-container").css({"flex-grow": "1",	"padding": "0",	"margin": "0", "background": "transparent",	"border": "none"  });
-				filterElem.css({"display": "flex","align-items": "center", "justify-content": "flex-end",	"width": "100%", "margin": "0",	"padding": "0",	"background": "transparent", "border": "none"  });
-			}
-		}
-	);
+    // Initialize DataTables with updated language settings.
+    // The search label is removed, and a placeholder is provided inside the search box.
+    var dt = $("#stats-table").DataTable({
+      paging: false,
+      scrollY: "600px",
+      ordering: true,
+      info: false,
+      language: {
+        search: "",
+        searchPlaceholder: "Search Players"
+      },
+      autoWidth: false,
+      columns: [
+        { data: "team_batter", title: "TM" },
+        { data: "batter", title: "Batter" },
+        { data: "team_pitcher", title: "TM" },
+        { data: "pitcher", title: "Pitcher" },
+        { data: "stats.PA", title: "PA" },
+        { data: "stats.AVG", title: "AVG" },
+        { data: "stats.HR", title: "HR" },
+        { data: "stats.SO", title: "SO" }
+      ]
+    });
     console.log("DataTables initialized.");
     dt.columns.adjust().draw();
 
-    // Build a mapping for streak data.
-    if (streakData && streakData.players) {
-	  streakData.players.forEach(function (player) {
-		if (player.player && typeof player.player === "string") {
-		  let normalizedName = normalizeName(player.player);
-		  streakMapping[normalizedName] = player;
-		}
-	  });
-	}
-	console.log("[DEBUG] ✅ Streak Mapping Initialized:", streakMapping);
+    // Move the auto-generated search input into our search container
+    // and force it to display inline with proper alignment.
+    $(".dataTables_filter").appendTo("#search-container").css({
+      "display": "inline-flex",
+      "align-items": "center",
+      "justify-content": "flex-end",
+      "width": "auto",
+      "margin": "0"
+    });
 
+    // Build a mapping for streak data.
+    var streakMapping = {};
+    if (streakData && streakData.players) {
+      streakData.players.forEach(function (player) {
+        if (player.player && typeof player.player === "string") {
+          let normalizedName = normalizeName(player.player);
+          streakMapping[normalizedName] = player;
+        }
+      });
+    }
+    console.log("[DEBUG] Streak Mapping:", streakMapping);
 
     // Add rows to the DataTable.
     statsData.forEach(function (row) {
-  console.log("[DEBUG] Processing row for:", row.batter);
+      console.log("[DEBUG] Processing row for:", row.batter);
+      let batterStar = `<span class='star ${favoritePlayers.includes(row.batter) ? "selected" : ""}' data-player='${row.batter}' onclick='toggleFavorite("${row.batter}")'>✩</span>`;
+      let pitcherStar = `<span class='star ${favoritePlayers.includes(row.pitcher) ? "selected" : ""}' data-player='${row.pitcher}' onclick='toggleFavorite("${row.pitcher}")'>✩</span>`;
+      
+      // Append Batter Info after the Batter's name.
+      let batterName = `${batterStar} ${row.batter}`;
+      if (row.batter_info) {
+        batterName += ` <span class='player-details'>${row.batter_info}</span>`;
+      }
+      
+      // Append Pitcher Hand after the Pitcher's name.
+      let pitcherName = `${pitcherStar} ${row.pitcher}`;
+      if (row.pitcher_hand) {
+        pitcherName += ` <span class='player-details'>${row.pitcher_hand}</span>`;
+      }
+      
+      let normalizedBatterName = normalizeName(row.batter);
+      let streakInfo = streakMapping[normalizedBatterName];
 
-  let batterStar = `<span class='star ${favoritePlayers.includes(row.batter) ? "selected" : ""}' data-player='${row.batter}' onclick='toggleFavorite("${row.batter}")'>✩</span>`;
-  let pitcherStar = `<span class='star ${favoritePlayers.includes(row.pitcher) ? "selected" : ""}' data-player='${row.pitcher}' onclick='toggleFavorite("${row.pitcher}")'>✩</span>`;
-
-  let batterName = `${batterStar} ${row.batter}`;
-  if (row.batter_info) {
-    batterName += ` <span class='player-details'>${row.batter_info}</span>`;
-  }
-
-  let pitcherName = `${pitcherStar} ${row.pitcher}`;
-  if (row.pitcher_hand) {
-    pitcherName += ` <span class='player-details'>${row.pitcher_hand}</span>`;
-  }
-
-  let normalizedBatterName = normalizeName(row.batter);
-  let streakInfo = streakMapping[normalizedBatterName];
-
-  // Append fire icon if player has streak data
-  if (streakInfo) {
-    batterName += ` <span class='hot-streak'>🔥</span>`;
-    console.log("[DEBUG] 🔥 Fire icon added for:", row.batter);
-  }
-
-  let playerData = {
-    team_batter: row.team_batter,
-    batter: batterName,
-    team_pitcher: row.team_pitcher,
-    pitcher: pitcherName,
-    stats: {
-      PA: row.stats.PA,
-      AVG: row.stats.AVG,
-      HR: row.stats.HR,
-      SO: row.stats.SO
-    }
-  };
-
-  var playerRow = dt.row.add(playerData);
-
-  // Append Streak Row as a Child Row
-  if (streakInfo) {
-	  let streakRowContent = `<div class="streak-info">
-		<strong>${row.batter} is on a ${streakInfo.games}-game hit streak, hitting ${streakInfo.ba} with ${streakInfo.hr} HRs and ${streakInfo.rbi} RBIs.</strong>
-	  </div>`;
-
-	  playerRow.child(streakRowContent).show(); // Explicitly show child row
-	  console.log("[DEBUG] ✅ Streak child row displayed for:", row.batter);
-	}
-	
-	clearTimeout(window.resizeTimer);
-      window.resizeTimer = setTimeout(function () {
-        if (statsLoaded) {
-			dt.columns.adjust();
-			var tscontainerWidth = $("#stats-table").outerWidth();
-			$(".tabs-search-container").css({"width": tscontainerWidth + "px"});
-			$(".date-nav-overlay").css({"width": tscontainerWidth + "px"});		
-			$(".collapsible-container").css({"width": tscontainerWidth + "px"});
-
+      let playerData = {
+        team_batter: row.team_batter,
+        batter: batterName,
+        team_pitcher: row.team_pitcher,
+        pitcher: pitcherName,
+        stats: {
+          PA: row.stats.PA,
+          AVG: row.stats.AVG,
+          HR: row.stats.HR,
+          SO: row.stats.SO
         }
-      }, 200);
-});
+      };
 
-dt.draw(false);
-dt.columns.adjust();
-console.log("[DEBUG] Table drawn and columns adjusted.");
+      var playerRowNode = dt.row.add(playerData).node();
+      $(playerRowNode).attr("data-batter", row.batter);
+      if (streakInfo) {
+        $(playerRowNode).attr("data-hot-streak", "true");
+        if (batterName.indexOf('<span class="hot-streak">🔥</span>') === -1) {
+          batterName += ` <span class='hot-streak'>🔥</span>`;
+          console.log("[DEBUG] Fire icon added for", row.batter);
+        }
+        let streakGames = streakInfo.games || "N/A";
+        let streakAvg = streakInfo.ba || "N/A";
+        let streakHR = streakInfo.hr || "N/A";
+        let streakRBI = streakInfo.rbi || "N/A";
+        let streakRowContent = `
+          <tr class="streak-info">
+            <td style="background-color: transparent; border: none;"></td>
+            <td colspan="7">
+              <strong>${row.batter} is on a ${streakGames}-game hit streak, hitting ${streakAvg} with ${streakHR} HRs and ${streakRBI} RBIs.</strong>
+            </td>
+          </tr>`;
+      } else {
+        $(playerRowNode).attr("data-hot-streak", "false");
+        console.log("[DEBUG] No streak data found for", row.batter);
+      }
+    });
 
+    dt.draw(false);
+    dt.columns.adjust();
+    console.log("[DEBUG] Table drawn and columns adjusted.");
     updateFavoriteList();
     statsLoaded = true;
 
-    // Update date navigation after a delay.
+    // Update date navigation after a delay to ensure elements exist.
     setTimeout(function () {
       let prevTab = document.getElementById("prev-day-tab");
       let nextTab = document.getElementById("next-day-tab");
@@ -453,12 +457,7 @@ console.log("[DEBUG] Table drawn and columns adjusted.");
       clearTimeout(window.resizeTimer);
       window.resizeTimer = setTimeout(function () {
         if (statsLoaded) {
-			dt.columns.adjust();
-			var tscontainerWidth = $("#stats-table").outerWidth();
-			$(".tabs-search-container").css({"width": tscontainerWidth + "px"});			
-			$(".date-nav-overlay").css({"width": tscontainerWidth + "px"});		
-			$(".collapsible-container").css({"width": tscontainerWidth + "px"});
-
+          dt.columns.adjust();
         }
       }, 200);
     });
@@ -468,7 +467,8 @@ console.log("[DEBUG] Table drawn and columns adjusted.");
   });
 }
 
-// Utility function for initializing the table
+// Utility functions
+
 function initializeStatsTable() {
   if ($.fn.DataTable.isDataTable("#stats-table")) {
     $("#stats-table").DataTable().destroy();
@@ -490,6 +490,33 @@ function initializeStatsTable() {
     ]
   }).columns.adjust().draw();
 }
+
+function initializeStatsTable() {
+  // Destroy any existing DataTables instance on #stats-table
+  if ($.fn.DataTable.isDataTable("#stats-table")) {
+    $("#stats-table").DataTable().destroy();
+  }
+
+  // Initialize DataTables with updated column definitions:
+  // Batter Info and Pitcher Hand are no longer separate columns.
+  $("#stats-table").DataTable({
+    autoWidth: false,
+    paging: false,
+    info: false,
+    lengthChange: false,
+    columns: [
+      { data: "team_batter", title: "TM" },
+      { data: "batter", title: "Batter" },
+      { data: "team_pitcher", title: "TM" },
+      { data: "pitcher", title: "Pitcher" },
+      { data: "stats.PA", title: "PA" },
+      { data: "stats.AVG", title: "AVG" },
+      { data: "stats.HR", title: "HR" },
+      { data: "stats.SO", title: "SO" }
+    ]
+  }).columns.adjust().draw();
+}
+
 		function syncHeaderOnResize() {
 		setTimeout(() => {
 		let tableWidth = $(".dataTables_scrollBody table").outerWidth();
@@ -518,8 +545,9 @@ function initializeStatsTable() {
 		  let suffix = (day % 10 === 1 && day % 100 !== 11) ? "st" :
 					   (day % 10 === 2 && day % 100 !== 12) ? "nd" :
 					   (day % 10 === 3 && day % 100 !== 13) ? "rd" : "th";
-		  let month = dateObj.toLocaleString("en-US", { month: "short" });
-		  return month + " " + day + suffix;
+		  let month = dateObj.toLocaleString("en-US", { month: "long" });
+		  let year = dateObj.getFullYear();
+		  return month + " " + day + suffix + ", " + year;
 		}
 
 		function toggleFavorite(player) {
@@ -571,12 +599,7 @@ function initializeStatsTable() {
 		showingFavorites = !showingFavorites;
 		$("#togglePlayersBtn").text(showingFavorites ? "Show All Players" : "Show My Players");
 		applyFavoritesFilter();
-		
-		var tscontainerWidth = $("#stats-table").outerWidth();		
-		$(".tabs-search-container").css({"width": tscontainerWidth + "px"});		
-		$(".date-nav-overlay").css({"width": tscontainerWidth + "px"});		
-		$(".collapsible-container").css({"width": tscontainerWidth + "px"});
-	}
+		}
 
 		function toggleCollapse() {
 		let wrapper = document.getElementById("player-list-wrapper");
