@@ -268,13 +268,35 @@ def stats():
 
     return jsonify({"error": "No data found for this date"}), 404
 
+from bson import ObjectId
+
+def convert_object_ids(obj):
+    if isinstance(obj, dict):
+        return {k: convert_object_ids(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_object_ids(i) for i in obj]
+    elif isinstance(obj, ObjectId):
+        return str(obj)  # Convert ObjectId to string
+    else:
+        return obj
+
 @app.route("/streak-data")
 def streak_data():
     data = get_streak_data()
     if data is None:
         # If no cache is available for today, force a scrape.
         data = asyncio.run(scrape_streak_data())
-    return jsonify(data)
+    
+    cleaned_data = convert_object_ids(data)  # Convert ObjectIds before returning
+    return jsonify(cleaned_data)
+
+#@app.route("/streak-data")
+#def streak_data():
+#    data = get_streak_data()
+#    if data is None:
+        # If no cache is available for today, force a scrape.
+#        data = asyncio.run(scrape_streak_data())
+#    return jsonify(data)
 
 
 @app.route("/change-date")

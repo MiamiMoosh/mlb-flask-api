@@ -13,16 +13,23 @@
   <link rel="manifest" href="{{ url_for('static', filename='images/site.webmanifest') }}" />
   <style>
     /* 🔷 General Page Styling */
-    body { background: url("{{ url_for('static', filename='images/firststring_bg.png') }}") no-repeat center center fixed; background-color: #000; background-size: cover; font-family: Arial, sans-serif; text-align: center; font-size: 12px; color: #FFFFFF; }
+    body { background: url("{{ url_for('static', filename='images/firststring_bg.png') }}") no-repeat center center fixed; background-color: #000; background-size: cover; font-family: Arial, sans-serif; text-align: center; font-size: 12px; color: #FFFFFF; overflow-x: hidden;}
     .current-date { font-size: 12px; font-weight: bold; padding: 5px 10px; background: #C0C8B6; color: white; border-radius: 6px; }
     
+	/* Fonts */
+	@font-face {  font-family: 'Canes';  src: url('{{ url_for('static', filename='fonts/Canes.otf') }}') format('opentype');  font-weight: normal;  font-style: normal;  font-display: swap;}
+	@font-face {  font-family: 'Orbitron';  src: url('{{ url_for('static', filename='fonts/Orbitron-Regular.ttf') }}') format('truetype');  font-weight: normal;  font-style: normal;  font-display: swap;}
+	@font-face {  font-family: 'Orbitron';  src: url('{{ url_for('static', filename='fonts/Orbitron-Bold.ttf') }}') format('truetype');  font-weight: bold;  font-style: normal;  font-display: swap;}
+
     /* 🖥 Dashboard & Panel Styling */
     .dashboard-panel { background: transparent; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
     #nav-container { display: flex; align-items: center; justify-content: space-between; padding: 20px; background: transparent; border-bottom: 2px solid #C0C8B6; }
     #collapsible-container, #stats-container { background: transparent; padding: 20px; border-radius: 0px; }
-    .wrapper { display: flex; width: 100vw; }
-	.empty-container { flex: 1; background-color: transparent; }
+    .wrapper { will-change: transform; margin-top: 80px; overflow: visible; display: flex; width: 100vw;  position: relative; z-index: 1; }
+	.empty-container { flex: 1; background-color: transparent; display: flex; justify-content: flex-end; align-items: flex-start; width: 100%; padding-top: 10px; }
+	.empty-container img { max-width: 100%; height: auto; width: 200px; }
 	.stats-panel { flex: 1; display: flex; flex-direction: column; padding: 20px; }
+	.stats-panel h1 { font-family: font-family: 'Orbitron', sans-serif; font-weight: bold; align-items: center; }
 	#stats-container { display: flex; justify-content: flex-end; padding-right: 100px; }
 	#stats-table { width: 50%; }
 	.date-nav-container { background-color: #F8F9FA; padding: 10px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); display: flex; align-items: center; justify-content: center; gap: 15px; border-top: 2px solid #C0C8B6; padding-top: 8px; }
@@ -31,8 +38,12 @@
     .date-navigation { background-color: #F8F9FA; padding: 8px 12px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); width: fit-content; margin-top: 8px; }
     .date-label { font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
     .date-options { display: flex; gap: 10px; align-items: center; }
-    
-    /* 🔗 Navigation Styling */
+    .header-wrapper {  display: flex;  position: fixed;  top: 0;  left: 0;  width: 100%; height: 80px;  background-image: url("{{ url_for('static', filename='images/firststring_bg.png') }}");  background-repeat: no-repeat;  z-index:9999;  background-size: cover; /* Ensures full width scaling */  background-position: inherit; /* Matches body's positioning */  background-attachment: fixed; /* Keeps image aligned on resize */ }
+	.header-left { justify-content: flex-end; padding-right: 50px;}
+	.header-left, .header-right { width: 100%; display: flex; align-items: flex-start;  font-family: 'Canes', sans-serif;}
+	.header-left img { max-width: 80%; height: auto; width: 300px; min-width: 150px; object-fit: contain;}
+
+    /* 🔗 Date Navigation Styling */
     .nav-container { display: flex; justify-content: center; align-items: center; margin: 15px 0; }
 	.nav-link { text-decoration: none; font-size: 13px; font-weight: bold; padding: 10px; color: #888; transition: all 0.3s ease-in-out; }
 	.nav-link:hover { text-decoration: underline; color: #555; }
@@ -47,6 +58,18 @@
 	#tabs-controls button:hover { background-color: #AA0000; }
 	#search-container { flex-grow: 1; margin: 0 !important; padding: 5px 10px !important; background-color: #2e2e2e !important; border: none !important; display: flex; align-items: center; overflow: hidden; }
 	#date-nav-overlay,#search-container {   position: relative;   top: 0; }
+	
+	/* Page Navigation Styling */
+	.main-menu { font-family: 'Canes', sans-serif; background: #1D1F21; }
+	.main-menu ul { list-style: none; padding: 0; margin: 0; display: flex; font-size: 16px !important;}
+	.main-menu ul li { position: relative; padding: 10px 20px; cursor: pointer; }
+	.main-menu ul li a { text-decoration: none; color: #fff; font-size: 16px ; }
+	.dropdown-content { display: none !important; position: absolute; top: 100%; left: 0; background: #1D1F21; min-width: 200px; border: 1px solid #AA0000; z-index: 1000; }
+	.submenu-content { display: none !important; position: absolute; left: 100%; top: 0; background: #1D1F21; min-width: 200px; border: 1px solid #AA0000; z-index: 1000; }
+	.dropdown-content li a, .submenu-content li a { display: block; width: 100%; padding: 10px; color: #fff; font-size: 12px; text-align: left; }.dropdown:hover > .dropdown-content { display: block !important; }
+	.submenu:hover > .submenu-content { display: block !important; }
+	.dropdown-content li a, .submenu-content li a { color: #fff; font-family: 'Orbitron', sans-serif; font-size: 10px !important; }
+	.dropdown-content li a:hover, .submenu-content li a:hover { background: #50555C; }
 
 
     /* 📊 Table Styling */
@@ -139,7 +162,8 @@
 	@media (max-width: 768px) { th, td { padding: 4px; } }
 	@media (max-width: 768px) { .nav-link, .clear-btn, .toggle-collapse, #togglePlayersBtn { padding: 12px; font-size: 14px; } }
 	@media (max-width: 480px) { .date-tab { font-size: 10px; } }
-
+	@media (max-width: 768px) { .header-left img { width: 150px; } }
+	@media (max-width: 480px) { .header-left img { width: 120px; } }
 
   </style>
 </head>
@@ -147,15 +171,41 @@
   <script>
     let selectedDate = "{{ date }}";  // Fetched from Flask
   </script>
+		<div class="header-wrapper">
+		  <div class="header-left">
+			<img src="{{ url_for('static', filename='images/firststring_logo_300x96.png') }}">
+		  </div>
+		  <div class="header-right">
+			<nav class="main-menu">
+			  <ul>
+				<li class="dropdown">
+				  <a href="#">Shop</a>
+				  <ul class="dropdown-content">
+					<li><a href="/shop/signature-collection">Mens Signature Collection</a></li>
+				  </ul>
+				</li>
+				<li class="dropdown">
+				  <a href="#">Stats</a>
+				  <ul class="dropdown-content">
+					<li class="submenu">
+					  <a href="#">MLB</a>
+					  <ul class="submenu-content">
+						<li><a href="/stats/daily-bvp">Daily Batter vs. Pitcher History</a></li>
+					  </ul>
+					</li>
+				  </ul>
+				</li>
+			  </ul>
+			</nav>
+		  </div>
+		</div>
 
-  
-	<div class="wrapper">
-	  <div class="empty-container"></div>
-	  <div id="stats-panel" class="dashboard-panel">
-		<div id="stats-container"></div>
-	  </div>
-	</div>
-  
+		<div class="wrapper">
+		  <div class="empty-container"></div>
+		  <div id="stats-panel" class="dashboard-panel">
+			<div id="stats-container"></div>
+		  </div>
+		</div>  
   <script>
     // Global variables
     let statsLoaded = false;
@@ -277,6 +327,8 @@ function adjustStatsTableColumns() {
 
     // Build table HTML with a tabs-search container.
     let tableHTML = `
+	
+		<h1>Daily MLB Batter vs. Pitcher History</h1>
         <div id="date-nav-overlay">
           <a id="prev-day-tab" class="date-tab" href="#">← <span id="prev-date-tab"></span></a>
           <a id="current-day-tab" class="date-tab current-date" href="#">
@@ -544,24 +596,34 @@ function initializeStatsTable() {
 		}
 
 		function applyFavoritesFilter() {
-		$("#stats-table tbody tr").each(function() {
-		if ($(this).hasClass("streak-info")) {
-		  let prevRow = $(this).prev();
-		  $(this).css("display", prevRow.length && prevRow.css("display") !== "none" ? "table-row" : "none");
-		} else {
-		  let batterName = $(this).find("td:nth-child(2) span.star")?.data("player");
-		  let pitcherName = $(this).find("td:nth-child(4) span.star")?.data("player");
+  let dt = $("#stats-table").DataTable();
 
-		  let isFavorited = (batterName && favoritePlayers.includes(batterName)) || 
-							(pitcherName && favoritePlayers.includes(pitcherName));
+  dt.rows().every(function () {
+    let row = this;
+    let rowNode = $(row.node());
+    let batterName = rowNode.find("td:nth-child(2) .star").data("player");
+    let pitcherName = rowNode.find("td:nth-child(4) .star").data("player");
+    let isFavorited = favoritePlayers.includes(batterName) || favoritePlayers.includes(pitcherName);
 
-		  $(this).css("display", showingFavorites && !isFavorited ? "none" : "table-row");
-		}
-		});
+    // Toggle the parent row's visibility:
+    if (showingFavorites && !isFavorited) {
+      rowNode.hide();
+      // Hide child detail if it exists
+      row.child.hide();
+      console.log(`[DEBUG] Hiding row (and streak row) for:`, batterName);
+    } else {
+      rowNode.show();
+      // If a child row exists, make sure it's shown
+      if (row.child() && !row.child.isShown()) {
+        row.child.show();
+      }
+      console.log(`[DEBUG] Showing row (and streak row if exists) for:`, batterName);
+    }
+  });
 
-		$("#stats-table").DataTable().columns.adjust();
-		}
-    
+  dt.columns.adjust();
+}
+
     function toggleFavorites() {
 		if (typeof applyFavoritesFilter !== "function") {
 		console.warn("⚠️ applyFavoritesFilter() is not defined.");
