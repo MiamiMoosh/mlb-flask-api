@@ -31,7 +31,7 @@ async def scrape_all_data(date):
     return streak_data, stats_data
 
 async def scrape_data(date):
-    url = "https://swishanalytics.com/optimus/mlb/batter-vs-pitcher-stats?date={date}"
+    url = f"https://swishanalytics.com/optimus/mlb/batter-vs-pitcher-stats?date={date}"
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
@@ -114,7 +114,7 @@ def get_streak_data():
 
 
 # Set to 1 for forced re-scraping (debug), 0 for normal behavior.
-ALWAYS_SCRAPE = 1
+ALWAYS_SCRAPE = 0
 
 async def scrape_streak_data():
     """Scrape streak data only if no cached entry exists for today's scrape date."""
@@ -268,35 +268,13 @@ def stats():
 
     return jsonify({"error": "No data found for this date"}), 404
 
-from bson import ObjectId
-
-def convert_object_ids(obj):
-    if isinstance(obj, dict):
-        return {k: convert_object_ids(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [convert_object_ids(i) for i in obj]
-    elif isinstance(obj, ObjectId):
-        return str(obj)  # Convert ObjectId to string
-    else:
-        return obj
-
 @app.route("/streak-data")
 def streak_data():
     data = get_streak_data()
     if data is None:
         # If no cache is available for today, force a scrape.
         data = asyncio.run(scrape_streak_data())
-    
-    cleaned_data = convert_object_ids(data)  # Convert ObjectIds before returning
-    return jsonify(cleaned_data)
-
-#@app.route("/streak-data")
-#def streak_data():
-#    data = get_streak_data()
-#    if data is None:
-        # If no cache is available for today, force a scrape.
-#        data = asyncio.run(scrape_streak_data())
-#    return jsonify(data)
+    return jsonify(data)
 
 
 @app.route("/change-date")

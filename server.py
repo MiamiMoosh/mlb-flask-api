@@ -114,7 +114,7 @@ def get_streak_data():
 
 
 # Set to 1 for forced re-scraping (debug), 0 for normal behavior.
-ALWAYS_SCRAPE = 0
+ALWAYS_SCRAPE = 1
 
 async def scrape_streak_data():
     """Scrape streak data only if no cached entry exists for today's scrape date."""
@@ -204,15 +204,20 @@ rows => {
         print(f"[DEBUG] Streak data extracted: {rows_data}")
         print(f"[DEBUG] Players on hot streak: {[player['player'] for player in rows_data if 'player' in player]}")
         return new_data
-    
+
 def store_data(date, data):
-    """Store scraped data in MongoDB; add a 'date' field to each record."""
+    """Deletes old data for the date if outdated, then stores fresh scraped data."""
+    current_time = datetime.datetime.utcnow()
+
+    # Add timestamp field to all entries
     cleaned_data = [{k: v for k, v in entry.items() if k != "_id"} for entry in data]
     for entry in cleaned_data:
         entry["date"] = date
-    collection.delete_many({"date": date})
+        entry["last_updated"] = current_time
+
+    collection.delete_many({"date": date})  # Clear outdated data
     collection.insert_many(cleaned_data)
-    print(f"[DEBUG] Stored cleaned data for {date}: {cleaned_data}")
+    print(f"[DEBUG] Stored updated data for {date} at {current_time}")
 
 def get_data(date):
     return list(collection.find({"date": date}, {"_id": 0}))
@@ -248,25 +253,29 @@ def stats():
     query_date = request.args.get("date") or get_current_est_date()
     print(f"[DEBUG] Fetching stats for {query_date}")
 
-    cached_data = get_data(query_date)
-    streak_data = asyncio.run(scrape_streak_data())
+    # Check if data exists and when it was last updated
+    existing_entry = collection.find_one({"date": query_date}, {"_id": 0})
+    
+    if existing_entry:
+        last_updated = existing_entry.get("last_updated")
+        if last_updated:
+            time_elapsed = datetime.datetime.utcnow() - last_updated
 
-    if cached_data:
-        # Cross-check players and add fire icon
-        streak_players = {player["player"].strip().lower() for player in streak_data["players"]}
-        
-        for entry in cached_data:
-            if entry["batter"].strip().lower() in streak_players:
-                entry["hot_streak"] = "🔥"
-        
-        return jsonify(cached_data)
+            # If data is less than 2 hours old, return cached data
+            if time_elapsed.total_seconds() < 7200:
+                print(f"[DEBUG] Using cached data for {query_date}, last updated {last_updated}")
+                return jsonify(list(collection.find({"date": query_date}, {"_id": 0})))
 
+    # Otherwise, scrape fresh data
+    print(f"[DEBUG] Data for {query_date} is outdated, refreshing now.")
     scraped_data = asyncio.run(scrape_data(query_date))
+
     if scraped_data:
         store_data(query_date, scraped_data)
         return jsonify(scraped_data)
 
     return jsonify({"error": "No data found for this date"}), 404
+
 
 from bson import ObjectId
 
