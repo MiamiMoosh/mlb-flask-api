@@ -596,6 +596,11 @@ def change_date():
             store_data(date, scraped_data)
     return redirect(url_for("home", date=date))
 
+@app.before_request
+def redirect_www():
+    if request.host.startswith("www."):
+        return redirect(request.url.replace("www.", ""), code=301)
+
 @app.route("/shop")
 def shop():
     return render_template("shop.html")
