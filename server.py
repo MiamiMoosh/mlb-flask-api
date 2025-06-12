@@ -121,10 +121,14 @@ def facebook_login():
 
 @app.route("/facebook/delete", methods=["GET", "POST"])
 def facebook_delete():
-    return {
+    user_id = request.args.get("user_id") or request.form.get("user_id") or "unknown"
+
+    # Return proper JSON with status code 200
+    return jsonify({
         "url": "mailto:firststring.biz@gmail.com",
-        "confirmation_code": request.args.get("user_id", "unknown")
-    }
+        "confirmation_code": user_id
+    }), 200
+
 
 @app.route("/cms/users")
 def manage_users():
