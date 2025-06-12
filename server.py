@@ -119,6 +119,13 @@ def facebook_login():
     session["role"] = "user"
     return redirect(url_for("user_dashboard"))
 
+@app.route("/facebook/delete", methods=["POST"])
+def facebook_delete():
+    return {
+        "url": "mailto:support@firststring.biz",
+        "confirmation_code": request.args.get("user_id", "unknown")
+    }
+
 @app.route("/cms/users")
 def manage_users():
     if session.get("role") != "admin":
