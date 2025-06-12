@@ -3,3 +3,9 @@ playwright
 gunicorn
 pymongo
 pytz
+itsdangerous
+Flask-Mail
+dnspython
+Flask-Dance
+Authlib
+Wekzeug

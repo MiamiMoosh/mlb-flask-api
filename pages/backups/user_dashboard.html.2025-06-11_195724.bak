@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard | First String</title>
+  <link rel="stylesheet" href="/static/css/dashboard.css" />
+</head>
+<body>
+  <div class="dashboard-container">
+
+    <header class="dashboard-header">
+      <h2>Welcome, {{ user.name or user.username }}!</h2>
+      <p>Plan: <strong>{{ user.plan | capitalize }}</strong></p>
+    </header>
+
+    <section class="dashboard-grid">
+
+      <div class="dashboard-card">
+        <h3>Saved Products</h3>
+        <p>Favorites coming soon.</p>
+        <a href="/shop">Browse shop</a>
+      </div>
+
+      <div class="dashboard-card">
+        <h3>Recent Activity</h3>
+        <ul>
+          <li>Viewed: Cleats of Fire Tee</li>
+          <li>Favorited: Pitcher's Nightmare</li>
+        </ul>
+      </div>
+
+      <div class="dashboard-card">
+        <h3>Account Settings</h3>
+        <ul>
+          <li><a href="/update-password">Change Password</a></li>
+          <li><a href="/update-email">Update Email</a></li>
+        </ul>
+      </div>
+
+      <div class="dashboard-card">
+        <h3>My Stats</h3>
+        <p>Track teams, streaks & performance (coming soon!)</p>
+      </div>
+
+    </section>
+
+  </div>
+</body>
+</html>

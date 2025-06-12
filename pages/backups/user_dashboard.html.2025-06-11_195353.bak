@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>User Dashboard</title>
+</head>
+<body>
+  <h2>Welcome, {{ username }}!</h2>
+  <p>This will be your personal First String dashboard.</p>
+  <p>You can save products, view stats, and upgrade your plan here.</p>
+</body>
+</html>

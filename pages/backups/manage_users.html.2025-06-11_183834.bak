@@ -1,0 +1,22 @@
+<h2>User Management</h2>
+<table>
+  <tr><th>Username</th><th>Role</th><th>Plan</th><th>Actions</th></tr>
+  {% for user in users %}
+    <tr>
+      <td>{{ user.username }}</td>
+      <td>{{ user.role }}</td>
+      <td>{{ user.plan }}</td>
+      <td>
+        <form method="POST" action="{{ url_for('update_user') }}">
+          <input type="hidden" name="username" value="{{ user.username }}">
+          <select name="plan">
+            <option value="free" {% if user.plan == 'free' %}selected{% endif %}>Free</option>
+            <option value="premium" {% if user.plan == 'premium' %}selected{% endif %}>Premium</option>
+            <option value="pro" {% if user.plan == 'pro' %}selected{% endif %}>Pro</option>
+          </select>
+          <button type="submit">Update</button>
+        </form>
+      </td>
+    </tr>
+  {% endfor %}
+</table>

@@ -1,0 +1,6 @@
+flask
+playwright
+gunicorn
+pymongo
+pytz
+itsdangerous

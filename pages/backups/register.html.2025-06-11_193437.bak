@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register | First String</title>
+  <link rel="stylesheet" href="/static/css/login.css">
+</head>
+<body>
+  <div class="login-container">
+    <h2>Create Your Account</h2>
+    <form method="POST">
+      <input type="text" name="username" placeholder="Choose a username" required />
+      <input type="password" name="password" placeholder="Create a password" required />
+      <button type="submit">Register</button>
+    </form>
+    <p>Already have an account? <a href="/login">Sign in here</a></p>
+  </div>
+</body>
+</html>

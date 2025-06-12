@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>User Dashboard</title>
+</head>
+<body>
+  <h2>Welcome back, {{ username }}!</h2>
+	<p>Current plan: <strong>{{ user.plan | capitalize }}</strong></p>
+<div class="dashboard-grid">
+
+  <!-- Saved Items -->
+  <div class="dashboard-card">
+    <h3>Saved Products</h3>
+    <p>You haven’t saved anything yet.</p>
+    <a href="/shop">Browse the shop</a>
+  </div>
+
+  <!-- Viewing History -->
+  <div class="dashboard-card">
+    <h3>Recent Activity</h3>
+    <ul>
+      <li>Viewed: Cleats of Fire Tee</li>
+      <li>Favorited: Pitcher's Nightmare</li>
+    </ul>
+  </div>
+
+  <!-- Account Settings -->
+  <div class="dashboard-card">
+    <h3>Account Settings</h3>
+    <ul>
+      <li><a href="/update-password">Change Password</a></li>
+      <li><a href="/update-email">Update Email</a></li>
+    </ul>
+  </div>
+
+  <!-- Your Stats -->
+  <div class="dashboard-card">
+    <h3>My Stats</h3>
+    <p>Coming soon: Track favorite teams, hot streaks, and more.</p>
+  </div>
+
+</div>
+</body>
+</html>
