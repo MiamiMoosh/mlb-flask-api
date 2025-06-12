@@ -119,10 +119,10 @@ def facebook_login():
     session["role"] = "user"
     return redirect(url_for("user_dashboard"))
 
-@app.route("/facebook/delete", methods=["POST"])
+@app.route("/facebook/delete", methods=["GET", "POST"])
 def facebook_delete():
     return {
-        "url": "mailto:support@firststring.biz",
+        "url": "mailto:firststring.biz@gmail.com",
         "confirmation_code": request.args.get("user_id", "unknown")
     }
 
