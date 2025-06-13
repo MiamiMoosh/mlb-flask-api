@@ -327,16 +327,18 @@ def update_role():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form["username"]
+        identity = request.form["username"]
         password = request.form["password"]
 
-        user = users_collection.find_one({"username": username})       
-        session["role"] = user["role"]
+        user = users_collection.find_one({
+            "$or": [{"username": identity}, {"email": identity}]
+        })
+
         if user and check_password_hash(user["password_hash"], password):
             session["logged_in"] = True
-            session["username"] = username
+            session["username"] = user["username"]
             session["role"] = user.get("role", "user")
-            return redirect(url_for("cms_dashboard") if user["role"] == "admin" else url_for("user_dashboard"))
+            return redirect(url_for("cms_dashboard") if user.get("role") == "admin" else url_for("user_dashboard"))
 
         return "Invalid credentials", 401
 
