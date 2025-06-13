@@ -580,7 +580,7 @@ rows => {
 
 def store_data(date, data):
     """Deletes old data for the date if outdated, then stores fresh scraped data."""
-    current_time = datetime.datetime.utcnow()
+    current_time = datetime.utcnow()
 
     # Add timestamp field to all entries
     cleaned_data = [{k: v for k, v in entry.items() if k != "_id"} for entry in data]
@@ -601,7 +601,7 @@ def get_current_est_date():
     (No after-8PM adjustment is applied here.)
     """
     user_timezone = pytz.timezone("America/New_York")
-    now_local = datetime.now(user_timezone)  # ← Fix this line
+    now_local = datetime.now(user_timezone)
     return now_local.date().strftime("%Y-%m-%d")
 
 # ------------------------------
@@ -632,7 +632,7 @@ def stats():
     if existing_entry:
         last_updated = existing_entry.get("last_updated")
         if last_updated:
-            time_elapsed = datetime.datetime.utcnow() - last_updated
+            time_elapsed = datetime.utcnow() - last_updated
 
             # If data is less than 2 hours old, return cached data
             if time_elapsed.total_seconds() < 7200:
