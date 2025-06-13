@@ -20,7 +20,6 @@ app = Flask(__name__, template_folder="pages")
 app.secret_key = "The5Weapon!33534"  # Replace this with a strong, unique string in production
 serializer = URLSafeTimedSerializer(app.secret_key)
 port = int(os.environ.get("PORT", 8080))
-session["role"] = user["role"]
 
 # Google
 google_bp = make_google_blueprint(
@@ -341,7 +340,8 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
 
-        user = users_collection.find_one({"username": username})
+        user = users_collection.find_one({"username": username})       
+        session["role"] = user["role"]
         if user and check_password_hash(user["password_hash"], password):
             session["logged_in"] = True
             session["username"] = username
