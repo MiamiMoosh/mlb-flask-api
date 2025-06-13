@@ -56,7 +56,7 @@ users = [
     {
         "username": "admin",
         "email": "firststring.biz@gmail.com",
-        "password": "MiamiCanes$1",
+        "password_hash": generate_password_hash("MiamiCanes$1"),
         "role": "admin",
     },
     {
