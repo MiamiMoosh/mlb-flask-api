@@ -601,7 +601,7 @@ def get_current_est_date():
     (No after-8PM adjustment is applied here.)
     """
     user_timezone = pytz.timezone("America/New_York")
-    now_local = datetime.datetime.now(user_timezone)
+    now_local = datetime.now(user_timezone)  # ← Fix this line
     return now_local.date().strftime("%Y-%m-%d")
 
 # ------------------------------
