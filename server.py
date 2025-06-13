@@ -46,6 +46,11 @@ collection = db["batter_vs_pitcher"]
 streak_collection = db["hot_streak_players"]
 db = client["first_string_users"]
 users_collection = db["users"]
+listings_collection = db["listings"]
+page_views = db["page_views"]
+search_logs = db["search_logs"]
+
+
 
 users = [
     {
@@ -187,12 +192,6 @@ def create_user():
 def admin_listings():
     listings = listings_collection.find()
     return render_template("listings.html", listings=listings)
-
-@app.route("/admin/listings/new", methods=["GET", "POST"])
-@admin_required
-def new_listing():
-    # handle form POST logic here
-    return render_template("listings_form.html", listing=None)
 
 @app.route("/admin/manage-users")
 @admin_required
