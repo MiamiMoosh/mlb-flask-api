@@ -709,6 +709,13 @@ def redirect_www():
 def shop():
     return render_template("shop.html")
 
+@app.route("/dev/fix-admin-role")
+def fix_admin_role():
+    result = users_collection.update_one(
+        {"username": "admin"},
+        {"$set": {"role": "admin"}}
+    )
+    return "✅ Admin role updated" if result.modified_count else "⚠️ Already admin or not found"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=port)
