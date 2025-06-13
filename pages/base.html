@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{% block title %}Admin | First String{% endblock %}</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <nav>
+    <a href="/admin/dashboard">Dashboard</a> |
+    <a href="/admin/listings">Listings</a> |
+    <a href="/admin/search-analytics">Searches</a> |
+    <a href="/admin/page-traffic">Page Traffic</a> |
+    <a href="/admin/manage-users">Users</a>
+  </nav>
+
+  <main style="padding: 2rem;">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

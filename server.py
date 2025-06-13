@@ -6,18 +6,21 @@ import pytz
 from flask import Flask, jsonify, render_template, render_template_string, request, redirect, url_for, session
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import date
+from datetime import datetime
 from playwright.async_api import async_playwright
 from pymongo import MongoClient
 from itsdangerous import URLSafeTimedSerializer
 from flask_mail import Mail, Message
 from flask_dance.contrib.google import make_google_blueprint, google
 from flask_dance.contrib.facebook import make_facebook_blueprint, facebook
+from functools import wraps
 
 # Initialize Flask app
 app = Flask(__name__, template_folder="pages")
 app.secret_key = "The5Weapon!33534"  # Replace this with a strong, unique string in production
 serializer = URLSafeTimedSerializer(app.secret_key)
 port = int(os.environ.get("PORT", 8080))
+session["role"] = user["role"]
 
 # Google
 google_bp = make_google_blueprint(
@@ -48,9 +51,9 @@ users_collection = db["users"]
 users = [
     {
         "username": "admin",
-        "password_hash": generate_password_hash("adminpass"),
+        "email": "firststring.biz@gmail.com",
+        "password": "MiamiCanes$1",
         "role": "admin",
-        "plan": "admin"
     },
     {
         "username": "testuser",
@@ -59,6 +62,20 @@ users = [
         "plan": "free"
     }
 ]
+
+{
+  "slug": "/shop/product/nike-x-lebron",
+  "hits": 104,
+  "last_viewed": "2025-06-12T20:44:00Z"
+}
+
+{
+  "query": "jordan jersey 1996",
+  "timestamp": "...",
+  "ip": "...",
+  "device": "Mozilla/5.0..."
+}
+
 
 app.config.update(
     MAIL_SERVER="smtp.gmail.com",
@@ -70,6 +87,27 @@ app.config.update(
 )
 
 mail = Mail(app)
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get("role") != "admin":
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def track_view(slug):
+    page_views.update_one(
+        {"slug": slug},
+        {"$inc": {"hits": 1}, "$set": {"last_viewed": datetime.utcnow()}},
+        upsert=True
+    )
+
+@app.route("/admin/dashboard")
+@admin_required
+def admin_dashboard():
+    return render_template("admin_dashboard.html")
 
 @app.route("/google_login")
 def google_login():
@@ -153,6 +191,80 @@ def create_user():
     })
 
     return redirect(url_for("manage_users"))
+
+@app.route("/admin/listings")
+@admin_required
+def admin_listings():
+    listings = listings_collection.find()
+    return render_template("listings.html", listings=listings)
+
+@app.route("/admin/listings/new", methods=["GET", "POST"])
+@admin_required
+def new_listing():
+    # handle form POST logic here
+    return render_template("listings_form.html", listing=None)
+
+@app.route("/admin/manage-users")
+@admin_required
+def manage_users():
+    users = users_collection.find()
+    return render_template("manage_users.html", users=users)
+
+@app.route("/admin/search-analytics")
+@admin_required
+def search_analytics():
+    top_queries = search_logs.aggregate([
+        {"$group": {"_id": "$query", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 50}
+    ])
+    return render_template("search_analytics.html", queries=top_queries)
+
+@app.route("/admin/page-traffic")
+@admin_required
+def page_traffic():
+    sort_field = request.args.get("sort", "hits")
+    pages = page_views.find().sort(sort_field, -1)
+    return render_template("traffic_report.html", pages=pages)
+
+@app.route("/admin/listings/new", methods=["GET", "POST"])
+@admin_required
+def new_listing():
+    if request.method == "POST":
+        title = request.form["title"]
+        category = request.form["category"]
+        price = float(request.form["price"])
+        description = request.form["description"]
+
+        listings_collection.insert_one({
+            "title": title,
+            "category": category,
+            "price": price,
+            "description": description,
+            "created_at": datetime.utcnow()
+        })
+
+        return redirect(url_for("admin_listings"))
+
+    return render_template("listings_form.html", listing=None)
+
+@app.route("/admin/listings/<id>/edit", methods=["GET", "POST"])
+@admin_required
+def edit_listing(id):
+    listing = listings_collection.find_one({"_id": ObjectId(id)})
+
+    if request.method == "POST":
+        listings_collection.update_one({"_id": ObjectId(id)}, {
+            "$set": {
+                "title": request.form["title"],
+                "category": request.form["category"],
+                "price": float(request.form["price"]),
+                "description": request.form["description"]
+            }
+        })
+        return redirect(url_for("admin_listings"))
+
+    return render_template("listings_form.html", listing=listing)
 
 @app.route("/forgot-password", methods=["GET", "POST"])
 def forgot_password():

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Search Analytics{% endblock %}
+{% block content %}
+  <h2>Top Search Queries</h2>
+  <table>
+    <tr><th>Query</th><th>Count</th></tr>
+    {% for q in queries %}
+      <tr><td>{{ q._id }}</td><td>{{ q.count }}</td></tr>
+    {% endfor %}
+  </table>
+{% endblock %}

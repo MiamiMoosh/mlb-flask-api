@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}All Listings{% endblock %}
+{% block content %}
+  <h2>All Listings</h2>
+  <a href="/admin/listings/new">+ New Listing</a>
+  <table>
+    <tr><th>Title</th><th>Category</th><th>Price</th><th>Actions</th></tr>
+    {% for listing in listings %}
+      <tr>
+        <td>{{ listing.title }}</td>
+        <td>{{ listing.category }}</td>
+        <td>${{ listing.price }}</td>
+        <td>
+          <a href="/admin/listings/{{ listing._id }}/edit">Edit</a> |
+          <a href="/admin/listings/{{ listing._id }}/delete">Delete</a>
+        </td>
+      </tr>
+    {% endfor %}
+  </table>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Page Traffic{% endblock %}
+{% block content %}
+  <h2>Page Views</h2>
+  <form method="get">
+    <label>Sort by:
+      <select name="sort" onchange="this.form.submit()">
+        <option value="hits">Hits</option>
+        <option value="last_viewed">Last Viewed</option>
+      </select>
+    </label>
+  </form>
+
+  <table>
+    <tr><th>Slug</th><th>Hits</th><th>Last Viewed</th></tr>
+    {% for page in pages %}
+      <tr>
+        <td>{{ page.slug }}</td>
+        <td>{{ page.hits }}</td>
+        <td>{{ page.last_viewed }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+{% endblock %}
