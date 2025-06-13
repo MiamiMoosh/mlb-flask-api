@@ -160,15 +160,6 @@ def facebook_login():
 def facebook_delete():
     return render_template("delete-my-data.html")
 
-
-@app.route("/cms/users")
-def manage_users():
-    if session.get("role") != "admin":
-        return redirect(url_for("login"))
-
-    users = list(users_collection.find({}, {"_id": 0, "password_hash": 0}))
-    return render_template("manage_users.html", users=users)
-
 @app.route("/cms/create_user", methods=["POST"])
 def create_user():
     if session.get("role") != "admin":
@@ -189,7 +180,7 @@ def create_user():
         "plan": plan
     })
 
-    return redirect(url_for("manage_users"))
+    return redirect(url_for("admin_manage_users"))
 
 @app.route("/admin/listings")
 @admin_required
@@ -205,7 +196,7 @@ def new_listing():
 
 @app.route("/admin/manage-users")
 @admin_required
-def manage_users():
+def admin_manage_users():
     users = users_collection.find()
     return render_template("manage_users.html", users=users)
 
@@ -311,7 +302,7 @@ def update_user():
     plan = request.form["plan"]
 
     users_collection.update_one({"username": username}, {"$set": {"plan": plan}})
-    return redirect(url_for("manage_users"))
+    return redirect(url_for("admin_manage_users"))
 
 @app.route("/cms/delete_user", methods=["POST"])
 def delete_user():
@@ -320,7 +311,7 @@ def delete_user():
 
     username = request.form["username"]
     users_collection.delete_one({"username": username})
-    return redirect(url_for("manage_users"))
+    return redirect(url_for("admin_manage_users"))
 
 @app.route("/cms/update_role", methods=["POST"])
 def update_role():
@@ -331,7 +322,7 @@ def update_role():
     role = request.form["role"]
 
     users_collection.update_one({"username": username}, {"$set": {"role": role}})
-    return redirect(url_for("manage_users"))
+    return redirect(url_for("admin_manage_users"))
 
 
 @app.route("/login", methods=["GET", "POST"])

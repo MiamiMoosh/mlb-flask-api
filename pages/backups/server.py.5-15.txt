@@ -3,14 +3,40 @@ import time
 import asyncio
 import datetime
 import pytz
-from flask import Flask, jsonify, render_template, request, redirect, url_for
+from flask import Flask, jsonify, render_template, render_template_string, request, redirect, url_for, session
+from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import date
+from datetime import datetime
 from playwright.async_api import async_playwright
 from pymongo import MongoClient
+from itsdangerous import URLSafeTimedSerializer
+from flask_mail import Mail, Message
+from flask_dance.contrib.google import make_google_blueprint, google
+from flask_dance.contrib.facebook import make_facebook_blueprint, facebook
+from functools import wraps
 
 # Initialize Flask app
 app = Flask(__name__, template_folder="pages")
+app.secret_key = "The5Weapon!33534"  # Replace this with a strong, unique string in production
+serializer = URLSafeTimedSerializer(app.secret_key)
 port = int(os.environ.get("PORT", 8080))
+
+# Google
+google_bp = make_google_blueprint(
+    client_id=os.environ.get("GOOGLE_CLIENT_ID"),
+    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
+    scope=["profile", "email"],
+    redirect_to="google_login"
+)
+app.register_blueprint(google_bp, url_prefix="/login")
+
+# Facebook
+facebook_bp = make_facebook_blueprint(
+    client_id=os.environ.get("FACEBOOK_CLIENT_ID"),
+    client_secret=os.environ.get("FACEBOOK_CLIENT_SECRET"),
+    redirect_to="facebook_login"
+)
+app.register_blueprint(facebook_bp, url_prefix="/login")
 
 # Connect to MongoDB using Railway-provided URI
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://mongo:MXQDxgcJWYBgTFtLPiwGdsnRXTIONzNc@trolley.proxy.rlwy.net:25766")
@@ -18,7 +44,364 @@ client = MongoClient(MONGO_URI)
 db = client["mlb_stats"]
 collection = db["batter_vs_pitcher"]
 streak_collection = db["hot_streak_players"]
+db = client["first_string_users"]
+users_collection = db["users"]
 
+users = [
+    {
+        "username": "admin",
+        "email": "firststring.biz@gmail.com",
+        "password": "MiamiCanes$1",
+        "role": "admin",
+    },
+    {
+        "username": "testuser",
+        "password_hash": generate_password_hash("userpass"),
+        "role": "user",
+        "plan": "free"
+    }
+]
+
+{
+  "slug": "/shop/product/nike-x-lebron",
+  "hits": 104,
+  "last_viewed": "2025-06-12T20:44:00Z"
+}
+
+{
+  "query": "jordan jersey 1996",
+  "timestamp": "...",
+  "ip": "...",
+  "device": "Mozilla/5.0..."
+}
+
+
+app.config.update(
+    MAIL_SERVER="smtp.gmail.com",
+    MAIL_PORT=587,
+    MAIL_USE_TLS=True,
+    MAIL_USERNAME="firststring.biz@gmail.com",
+    MAIL_PASSWORD="MiamiCanes$1",
+    MAIL_DEFAULT_SENDER="First String <noreply@firststring.com>"
+)
+
+mail = Mail(app)
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get("role") != "admin":
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def track_view(slug):
+    page_views.update_one(
+        {"slug": slug},
+        {"$inc": {"hits": 1}, "$set": {"last_viewed": datetime.utcnow()}},
+        upsert=True
+    )
+
+@app.route("/admin/dashboard")
+@admin_required
+def admin_dashboard():
+    return render_template("admin_dashboard.html")
+
+@app.route("/google_login")
+def google_login():
+    if not google.authorized:
+        return redirect(url_for("google.login"))
+
+    info = google.get("/oauth2/v2/userinfo").json()
+    email = info["email"]
+    name = info.get("name", email.split("@")[0])
+
+    user = users_collection.find_one({"email": email})
+    if not user:
+        users_collection.insert_one({
+            "username": name,
+            "email": email,
+            "role": "user",
+            "plan": "free",
+            "oauth_provider": "google"
+        })
+
+    session["logged_in"] = True
+    session["username"] = name
+    session["role"] = "user"
+    return redirect(url_for("user_dashboard"))
+
+@app.route("/facebook_login")
+def facebook_login():
+    if not facebook.authorized:
+        return redirect(url_for("facebook.login"))
+
+    info = facebook.get("/me?fields=name,email").json()
+    email = info["email"]
+    name = info["name"]
+
+    user = users_collection.find_one({"email": email})
+    if not user:
+        users_collection.insert_one({
+            "username": name,
+            "email": email,
+            "role": "user",
+            "plan": "free",
+            "oauth_provider": "facebook"
+        })
+
+    session["logged_in"] = True
+    session["username"] = name
+    session["role"] = "user"
+    return redirect(url_for("user_dashboard"))
+
+@app.route("/facebook/delete", methods=["GET", "POST"])
+def facebook_delete():
+    return render_template("delete-my-data.html")
+
+
+@app.route("/cms/users")
+def manage_users():
+    if session.get("role") != "admin":
+        return redirect(url_for("login"))
+
+    users = list(users_collection.find({}, {"_id": 0, "password_hash": 0}))
+    return render_template("manage_users.html", users=users)
+
+@app.route("/cms/create_user", methods=["POST"])
+def create_user():
+    if session.get("role") != "admin":
+        return redirect(url_for("login"))
+
+    username = request.form["username"]
+    password = request.form["password"]
+    role = request.form["role"]
+    plan = request.form["plan"]
+
+    if users_collection.find_one({"username": username}):
+        return "Username already exists", 400
+
+    users_collection.insert_one({
+        "username": username,
+        "password_hash": generate_password_hash(password),
+        "role": role,
+        "plan": plan
+    })
+
+    return redirect(url_for("manage_users"))
+
+@app.route("/admin/listings")
+@admin_required
+def admin_listings():
+    listings = listings_collection.find()
+    return render_template("listings.html", listings=listings)
+
+@app.route("/admin/listings/new", methods=["GET", "POST"])
+@admin_required
+def new_listing():
+    # handle form POST logic here
+    return render_template("listings_form.html", listing=None)
+
+@app.route("/admin/manage-users")
+@admin_required
+def manage_users():
+    users = users_collection.find()
+    return render_template("manage_users.html", users=users)
+
+@app.route("/admin/search-analytics")
+@admin_required
+def search_analytics():
+    top_queries = search_logs.aggregate([
+        {"$group": {"_id": "$query", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 50}
+    ])
+    return render_template("search_analytics.html", queries=top_queries)
+
+@app.route("/admin/page-traffic")
+@admin_required
+def page_traffic():
+    sort_field = request.args.get("sort", "hits")
+    pages = page_views.find().sort(sort_field, -1)
+    return render_template("traffic_report.html", pages=pages)
+
+@app.route("/admin/listings/new", methods=["GET", "POST"])
+@admin_required
+def new_listing():
+    if request.method == "POST":
+        title = request.form["title"]
+        category = request.form["category"]
+        price = float(request.form["price"])
+        description = request.form["description"]
+
+        listings_collection.insert_one({
+            "title": title,
+            "category": category,
+            "price": price,
+            "description": description,
+            "created_at": datetime.utcnow()
+        })
+
+        return redirect(url_for("admin_listings"))
+
+    return render_template("listings_form.html", listing=None)
+
+@app.route("/admin/listings/<id>/edit", methods=["GET", "POST"])
+@admin_required
+def edit_listing(id):
+    listing = listings_collection.find_one({"_id": ObjectId(id)})
+
+    if request.method == "POST":
+        listings_collection.update_one({"_id": ObjectId(id)}, {
+            "$set": {
+                "title": request.form["title"],
+                "category": request.form["category"],
+                "price": float(request.form["price"]),
+                "description": request.form["description"]
+            }
+        })
+        return redirect(url_for("admin_listings"))
+
+    return render_template("listings_form.html", listing=listing)
+
+@app.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = request.form["email"]
+        user = users_collection.find_one({"email": email})
+        if not user:
+            return "Email not found", 404
+
+        token = serializer.dumps(email, salt="password-reset")
+        reset_url = url_for("reset_password", token=token, _external=True)
+
+        # Load HTML email template (inline or from file)
+        html_body = render_template("emails/password_reset.html", reset_url=reset_url, year=datetime.now().year)
+
+        msg = Message("Reset Your First String Password", recipients=[email], html=html_body)
+        mail.send(msg)
+
+        return "A reset link has been sent to your email."
+
+    return render_template("forgot_password.html")
+
+
+@app.route("/reset-password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    try:
+        email = serializer.loads(token, salt="password-reset", max_age=3600)
+    except Exception:
+        return "Reset link is invalid or has expired", 403
+
+    if request.method == "POST":
+        new_pw = request.form["password"]
+        hashed = generate_password_hash(new_pw)
+        users_collection.update_one({"email": email}, {"$set": {"password_hash": hashed}})
+        return redirect(url_for("login"))
+
+    return render_template("reset_password.html", token=token)
+
+@app.route("/cms/update_user", methods=["POST"])
+def update_user():
+    if session.get("role") != "admin":
+        return redirect(url_for("login"))
+
+    username = request.form["username"]
+    plan = request.form["plan"]
+
+    users_collection.update_one({"username": username}, {"$set": {"plan": plan}})
+    return redirect(url_for("manage_users"))
+
+@app.route("/cms/delete_user", methods=["POST"])
+def delete_user():
+    if session.get("role") != "admin":
+        return redirect(url_for("login"))
+
+    username = request.form["username"]
+    users_collection.delete_one({"username": username})
+    return redirect(url_for("manage_users"))
+
+@app.route("/cms/update_role", methods=["POST"])
+def update_role():
+    if session.get("role") != "admin":
+        return redirect(url_for("login"))
+
+    username = request.form["username"]
+    role = request.form["role"]
+
+    users_collection.update_one({"username": username}, {"$set": {"role": role}})
+    return redirect(url_for("manage_users"))
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+
+        user = users_collection.find_one({"username": username})       
+        session["role"] = user["role"]
+        if user and check_password_hash(user["password_hash"], password):
+            session["logged_in"] = True
+            session["username"] = username
+            session["role"] = user.get("role", "user")
+            return redirect(url_for("cms_dashboard") if user["role"] == "admin" else url_for("user_dashboard"))
+
+        return "Invalid credentials", 401
+
+    return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        name = request.form["name"]
+        username = request.form["username"]
+        email = request.form["email"]
+        password = request.form["password"]
+        plan = request.form.get("plan", "free")
+
+        if users_collection.find_one({"$or": [{"username": username}, {"email": email}]}):
+            return "Username or email already exists", 400
+
+        users_collection.insert_one({
+            "name": name,
+            "username": username,
+            "email": email,
+            "password_hash": generate_password_hash(password),
+            "role": "user",
+            "plan": plan
+        })
+
+        session["logged_in"] = True
+        session["username"] = username
+        session["role"] = "user"
+
+        return redirect(url_for("user_dashboard"))
+
+    return render_template("register.html")
+
+@app.route("/cms")
+def cms_dashboard():
+    if session.get("role") != "admin":
+        return redirect(url_for("login"))
+    return render_template("cms.html")
+
+@app.route("/dashboard")
+def user_dashboard():
+    if not session.get("logged_in"):
+        return redirect(url_for("login"))
+
+    user = users_collection.find_one({"username": session["username"]}, {"_id": 0, "password_hash": 0})
+    if not user:
+        return "User not found", 404
+
+    return render_template("user_dashboard.html", user=user)
 
 async def scrape_all_data(date):
     # Run both scrapers concurrently
@@ -31,7 +414,7 @@ async def scrape_all_data(date):
     return streak_data, stats_data
 
 async def scrape_data(date):
-    url = "https://swishanalytics.com/optimus/mlb/batter-vs-pitcher-stats?date={date}"
+    url = f"https://swishanalytics.com/optimus/mlb/batter-vs-pitcher-stats?date={date}"
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
@@ -204,15 +587,20 @@ rows => {
         print(f"[DEBUG] Streak data extracted: {rows_data}")
         print(f"[DEBUG] Players on hot streak: {[player['player'] for player in rows_data if 'player' in player]}")
         return new_data
-    
+
 def store_data(date, data):
-    """Store scraped data in MongoDB; add a 'date' field to each record."""
+    """Deletes old data for the date if outdated, then stores fresh scraped data."""
+    current_time = datetime.datetime.utcnow()
+
+    # Add timestamp field to all entries
     cleaned_data = [{k: v for k, v in entry.items() if k != "_id"} for entry in data]
     for entry in cleaned_data:
         entry["date"] = date
-    collection.delete_many({"date": date})
+        entry["last_updated"] = current_time
+
+    collection.delete_many({"date": date})  # Clear outdated data
     collection.insert_many(cleaned_data)
-    print(f"[DEBUG] Stored cleaned data for {date}: {cleaned_data}")
+    print(f"[DEBUG] Stored updated data for {date} at {current_time}")
 
 def get_data(date):
     return list(collection.find({"date": date}, {"_id": 0}))
@@ -248,25 +636,29 @@ def stats():
     query_date = request.args.get("date") or get_current_est_date()
     print(f"[DEBUG] Fetching stats for {query_date}")
 
-    cached_data = get_data(query_date)
-    streak_data = asyncio.run(scrape_streak_data())
+    # Check if data exists and when it was last updated
+    existing_entry = collection.find_one({"date": query_date}, {"_id": 0})
+    
+    if existing_entry:
+        last_updated = existing_entry.get("last_updated")
+        if last_updated:
+            time_elapsed = datetime.datetime.utcnow() - last_updated
 
-    if cached_data:
-        # Cross-check players and add fire icon
-        streak_players = {player["player"].strip().lower() for player in streak_data["players"]}
-        
-        for entry in cached_data:
-            if entry["batter"].strip().lower() in streak_players:
-                entry["hot_streak"] = "🔥"
-        
-        return jsonify(cached_data)
+            # If data is less than 2 hours old, return cached data
+            if time_elapsed.total_seconds() < 7200:
+                print(f"[DEBUG] Using cached data for {query_date}, last updated {last_updated}")
+                return jsonify(list(collection.find({"date": query_date}, {"_id": 0})))
 
+    # Otherwise, scrape fresh data
+    print(f"[DEBUG] Data for {query_date} is outdated, refreshing now.")
     scraped_data = asyncio.run(scrape_data(query_date))
+
     if scraped_data:
         store_data(query_date, scraped_data)
         return jsonify(scraped_data)
 
     return jsonify({"error": "No data found for this date"}), 404
+
 
 from bson import ObjectId
 
@@ -315,6 +707,16 @@ def change_date():
         if scraped_data:
             store_data(date, scraped_data)
     return redirect(url_for("home", date=date))
+
+@app.before_request
+def redirect_www():
+    if request.host.startswith("www."):
+        return redirect(request.url.replace("www.", ""), code=301)
+
+@app.route("/shop")
+def shop():
+    return render_template("shop.html")
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=port)
