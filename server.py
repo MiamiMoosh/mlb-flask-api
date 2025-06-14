@@ -187,6 +187,17 @@ def create_user():
 
     return redirect(url_for("admin_manage_users"))
 
+@app.route("/webhook/etsy", methods=["POST"])
+def etsy_webhook():
+    data = request.json  # Get webhook data
+    listing_id = data.get("listing_id")
+
+    if listing_id:
+        save_listing_to_db(listing_id, custom_keywords=[])  # Auto-import listing
+        return jsonify({"status": "success"})
+
+    return jsonify({"status": "error", "message": "Invalid data"}), 400
+
 @app.route("/admin/listings")
 @admin_required
 def admin_listings():
@@ -580,22 +591,6 @@ rows => {
         print(f"[DEBUG] Players on hot streak: {[player['player'] for player in rows_data if 'player' in player]}")
         return new_data
 
-@app.route("/dev/create-admin")
-def create_admin():
-    from werkzeug.security import generate_password_hash
-    admin_user = {
-        "username": "admin",
-        "email": "firststring.biz@gmail.com",
-        "password_hash": generate_password_hash("MiamiCanes$1"),
-        "role": "admin",
-        "plan": "free"
-    }
-
-    if not users_collection.find_one({"username": "admin"}):
-        users_collection.insert_one(admin_user)
-        return "✅ Admin user created"
-
-    return "⚠️ Admin user already exists"
 
 def store_data(date, data):
     """Deletes old data for the date if outdated, then stores fresh scraped data."""
