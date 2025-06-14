@@ -98,13 +98,14 @@ def track_view(slug):
 def admin_dashboard():
     return render_template("admin_dashboard.html")
 
-def get_google_oauth_token():
-    return session.get("google_token")
 
 @app.route("/google_login")
 def google_login():
     # Redirect user to Google OAuth login flow
     return google.authorize(callback=url_for("google_callback", _external=True))
+
+def get_google_oauth_token():
+    return session.get("google_token")
 
 @app.route("/login/google/authorized")
 def google_callback():
@@ -113,9 +114,8 @@ def google_callback():
         return "OAuth failed", 401
 
     session["google_token"] = response["access_token"]
-    
-    # Fetch user info safely inside request context
-    with app.app_context():
+
+    with app.app_context():  # ✅ Ensures we're inside a Flask request context
         user_info = google.get("userinfo").json()
 
     email = user_info["email"]
@@ -137,10 +137,6 @@ def google_callback():
     session["role"] = user.get("role", "user") if user else "user"
 
     return redirect(url_for("user_dashboard"))
-
-@google.tokengetter
-def get_google_oauth_token():
-    return session.get("google_token")
 
 @app.route("/facebook_login")
 def facebook_login():
