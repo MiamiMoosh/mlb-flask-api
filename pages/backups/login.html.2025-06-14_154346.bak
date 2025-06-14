@@ -9,6 +9,7 @@
   <div class="login-container">
     <h2>Welcome Back</h2>
 	<a href="/login/google" class="oauth-btn google">Sign in with Google</a>
+<a href="/login/facebook" class="oauth-btn facebook">Sign in with Facebook</a>
 
     <form method="POST">
       <input type="text" name="username" placeholder="Username or Email" required>
