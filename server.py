@@ -580,6 +580,23 @@ rows => {
         print(f"[DEBUG] Players on hot streak: {[player['player'] for player in rows_data if 'player' in player]}")
         return new_data
 
+@app.route("/dev/create-admin")
+def create_admin():
+    from werkzeug.security import generate_password_hash
+    admin_user = {
+        "username": "admin",
+        "email": "firststring.biz@gmail.com",
+        "password_hash": generate_password_hash("MiamiCanes$1"),
+        "role": "admin",
+        "plan": "free"
+    }
+
+    if not users_collection.find_one({"username": "admin"}):
+        users_collection.insert_one(admin_user)
+        return "✅ Admin user created"
+
+    return "⚠️ Admin user already exists"
+
 def store_data(date, data):
     """Deletes old data for the date if outdated, then stores fresh scraped data."""
     current_time = datetime.utcnow()
@@ -708,14 +725,6 @@ def redirect_www():
 @app.route("/shop")
 def shop():
     return render_template("shop.html")
-
-@app.route("/dev/fix-admin-role")
-def fix_admin_role():
-    result = users_collection.update_one(
-        {"username": "admin"},
-        {"$set": {"role": "admin"}}
-    )
-    return "✅ Admin role updated" if result.modified_count else "⚠️ Already admin or not found"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=port)
