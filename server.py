@@ -98,6 +98,9 @@ def track_view(slug):
 def admin_dashboard():
     return render_template("admin_dashboard.html")
 
+def get_google_oauth_token():
+    return session.get("google_token")
+
 @app.route("/google_login")
 def google_login():
     # Redirect user to Google OAuth login flow
@@ -105,21 +108,19 @@ def google_login():
 
 @app.route("/login/google/authorized")
 def google_callback():
-    # Retrieve OAuth response from Google
     response = google.authorized_response()
     if response is None or "access_token" not in response:
         return "OAuth failed", 401
 
-    # Store token in session
     session["google_token"] = response["access_token"]
-
-    # Fetch user information from Google API
-    user_info = google.get("userinfo").json()
+    
+    # Fetch user info safely inside request context
+    with app.app_context():
+        user_info = google.get("userinfo").json()
 
     email = user_info["email"]
     name = user_info.get("name", email.split("@")[0])
 
-    # Check if user exists in MongoDB
     user = users_collection.find_one({"email": email})
     if not user:
         users_collection.insert_one({
@@ -128,10 +129,9 @@ def google_callback():
             "role": "user",
             "plan": "free",
             "oauth_provider": "google",
-            "password_hash": generate_password_hash("OAuthUser")  # Placeholder hash for security
+            "password_hash": generate_password_hash("OAuthUser")  # Placeholder hash
         })
 
-    # Store login session
     session["logged_in"] = True
     session["username"] = name
     session["role"] = user.get("role", "user") if user else "user"
