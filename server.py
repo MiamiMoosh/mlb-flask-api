@@ -100,13 +100,26 @@ def admin_dashboard():
 
 @app.route("/google_login")
 def google_login():
-    if not google.authorized:
-        return redirect(url_for("google.login"))
+    # Redirect user to Google OAuth login flow
+    return google.authorize(callback=url_for("google_callback", _external=True))
 
-    info = google.get("/oauth2/v2/userinfo").json()
-    email = info["email"]
-    name = info.get("name", email.split("@")[0])
+@app.route("/login/google/authorized")
+def google_callback():
+    # Retrieve OAuth response from Google
+    response = google.authorized_response()
+    if response is None or "access_token" not in response:
+        return "OAuth failed", 401
 
+    # Store token in session
+    session["google_token"] = response["access_token"]
+
+    # Fetch user information from Google API
+    user_info = google.get("userinfo").json()
+
+    email = user_info["email"]
+    name = user_info.get("name", email.split("@")[0])
+
+    # Check if user exists in MongoDB
     user = users_collection.find_one({"email": email})
     if not user:
         users_collection.insert_one({
@@ -114,13 +127,20 @@ def google_login():
             "email": email,
             "role": "user",
             "plan": "free",
-            "oauth_provider": "google"
+            "oauth_provider": "google",
+            "password_hash": generate_password_hash("OAuthUser")  # Placeholder hash for security
         })
 
+    # Store login session
     session["logged_in"] = True
     session["username"] = name
-    session["role"] = "user"
+    session["role"] = user.get("role", "user") if user else "user"
+
     return redirect(url_for("user_dashboard"))
+
+@google.tokengetter
+def get_google_oauth_token():
+    return session.get("google_token")
 
 @app.route("/facebook_login")
 def facebook_login():
