@@ -52,21 +52,6 @@ search_logs = db["search_logs"]
 
 
 
-users = [
-    {
-        "username": "admin",
-        "email": "firststring.biz@gmail.com",
-        "password_hash": generate_password_hash("MiamiCanes$1"),
-        "role": "admin",
-    },
-    {
-        "username": "testuser",
-        "password_hash": generate_password_hash("userpass"),
-        "role": "user",
-        "plan": "free"
-    }
-]
-
 {
   "slug": "/shop/product/nike-x-lebron",
   "hits": 104,
