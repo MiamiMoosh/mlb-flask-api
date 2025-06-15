@@ -31,7 +31,7 @@ Talisman(app, content_security_policy={
 
 app.secret_key = "The5Weapon!33534"  # Replace this with a strong, unique string in production
 serializer = URLSafeTimedSerializer(app.secret_key)
-app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+#app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 port = int(os.environ.get("PORT", 8080))
 
 # Google
