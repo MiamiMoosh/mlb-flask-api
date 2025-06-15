@@ -14,9 +14,11 @@ from flask_mail import Mail, Message
 from flask_dance.contrib.google import make_google_blueprint, google
 from flask_dance.contrib.facebook import make_facebook_blueprint, facebook
 from functools import wraps
+from flask_talisman import Talisman  # Enforces HTTPS security headers
 
 # Initialize Flask app
 app = Flask(__name__, template_folder="pages")
+Talisman(app)  # ✅ Forces HTTPS on all routes
 app.secret_key = "The5Weapon!33534"  # Replace this with a strong, unique string in production
 serializer = URLSafeTimedSerializer(app.secret_key)
 port = int(os.environ.get("PORT", 8080))
@@ -717,6 +719,10 @@ def change_date():
 def redirect_www():
     if request.host.startswith("www."):
         return redirect(request.url.replace("www.", ""), code=301)
+def enforce_https():
+    if request.headers.get("X-Forwarded-Proto") != "https":
+        return redirect(url_for(request.endpoint, _external=True, _scheme="https"))
+
 
 @app.route("/shop")
 def shop():
