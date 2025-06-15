@@ -25,21 +25,10 @@ collection = db["batter_vs_pitcher"]
 streak_collection = db["hot_streak_players"]
 db = client["first_string_users"]
 users_collection = db["users"]
+listings_collection = db["listings"]
+page_views = db["page_views"]
+search_logs = db["search_logs"]
 
-users = [
-    {
-        "username": "admin",
-        "password_hash": generate_password_hash("adminpass"),
-        "role": "admin",
-        "plan": "admin"
-    },
-    {
-        "username": "testuser",
-        "password_hash": generate_password_hash("userpass"),
-        "role": "user",
-        "plan": "free"
-    }
-]
 
 app.config.update(
     MAIL_SERVER="smtp.gmail.com",
@@ -51,6 +40,26 @@ app.config.update(
 )
 
 mail = Mail(app)
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get("role") != "admin":
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def track_view(slug):
+    page_views.update_one(
+        {"slug": slug},
+        {"$inc": {"hits": 1}, "$set": {"last_viewed": datetime.utcnow()}},
+        upsert=True
+    )
+
+@app.route("/admin/dashboard")
+@admin_required
+def admin_dashboard():
+    return render_template("admin_dashboard.html")
 
 
 @app.route("/cms/users")
@@ -81,7 +90,86 @@ def create_user():
         "plan": plan
     })
 
-    return redirect(url_for("manage_users"))
+    return redirect(url_for("admin_manage_users"))
+
+@app.route("/webhook/etsy", methods=["POST"])
+def etsy_webhook():
+    data = request.json  # Get webhook data
+    listing_id = data.get("listing_id")
+
+    if listing_id:
+        save_listing_to_db(listing_id, custom_keywords=[])  # Auto-import listing
+        return jsonify({"status": "success"})
+
+    return jsonify({"status": "error", "message": "Invalid data"}), 400
+
+@app.route("/admin/listings")
+@admin_required
+def admin_listings():
+    listings = listings_collection.find()
+    return render_template("listings.html", listings=listings)
+
+@app.route("/admin/manage-users")
+@admin_required
+def admin_manage_users():
+    users = users_collection.find()
+    return render_template("manage_users.html", users=users)
+
+@app.route("/admin/search-analytics")
+@admin_required
+def search_analytics():
+    top_queries = search_logs.aggregate([
+        {"$group": {"_id": "$query", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 50}
+    ])
+    return render_template("search_analytics.html", queries=top_queries)
+
+@app.route("/admin/page-traffic")
+@admin_required
+def page_traffic():
+    sort_field = request.args.get("sort", "hits")
+    pages = page_views.find().sort(sort_field, -1)
+    return render_template("traffic_report.html", pages=pages)
+
+@app.route("/admin/listings/new", methods=["GET", "POST"])
+@admin_required
+def new_listing():
+    if request.method == "POST":
+        title = request.form["title"]
+        category = request.form["category"]
+        price = float(request.form["price"])
+        description = request.form["description"]
+
+        listings_collection.insert_one({
+            "title": title,
+            "category": category,
+            "price": price,
+            "description": description,
+            "created_at": datetime.utcnow()
+        })
+
+        return redirect(url_for("admin_listings"))
+
+    return render_template("listings_form.html", listing=None)
+
+@app.route("/admin/listings/<id>/edit", methods=["GET", "POST"])
+@admin_required
+def edit_listing(id):
+    listing = listings_collection.find_one({"_id": ObjectId(id)})
+
+    if request.method == "POST":
+        listings_collection.update_one({"_id": ObjectId(id)}, {
+            "$set": {
+                "title": request.form["title"],
+                "category": request.form["category"],
+                "price": float(request.form["price"]),
+                "description": request.form["description"]
+            }
+        })
+        return redirect(url_for("admin_listings"))
+
+    return render_template("listings_form.html", listing=listing)
 
 @app.route("/forgot-password", methods=["GET", "POST"])
 def forgot_password():
@@ -129,7 +217,7 @@ def update_user():
     plan = request.form["plan"]
 
     users_collection.update_one({"username": username}, {"$set": {"plan": plan}})
-    return redirect(url_for("manage_users"))
+    return redirect(url_for("admin_manage_users"))
 
 @app.route("/cms/delete_user", methods=["POST"])
 def delete_user():
@@ -138,7 +226,7 @@ def delete_user():
 
     username = request.form["username"]
     users_collection.delete_one({"username": username})
-    return redirect(url_for("manage_users"))
+    return redirect(url_for("admin_manage_users"))
 
 @app.route("/cms/update_role", methods=["POST"])
 def update_role():
@@ -149,21 +237,23 @@ def update_role():
     role = request.form["role"]
 
     users_collection.update_one({"username": username}, {"$set": {"role": role}})
-    return redirect(url_for("manage_users"))
-
+    return redirect(url_for("admin_manage_users"))
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form["username"]
+        identity = request.form["username"]
         password = request.form["password"]
 
-        user = users_collection.find_one({"username": username})
+        user = users_collection.find_one({
+            "$or": [{"username": identity}, {"email": identity}]
+        })
+
         if user and check_password_hash(user["password_hash"], password):
             session["logged_in"] = True
-            session["username"] = username
+            session["username"] = user["username"]
             session["role"] = user.get("role", "user")
-            return redirect(url_for("cms_dashboard") if user["role"] == "admin" else url_for("user_dashboard"))
+            return redirect(url_for("cms_dashboard") if user.get("role") == "admin" else url_for("user_dashboard"))
 
         return "Invalid credentials", 401
 
@@ -506,7 +596,6 @@ def streak_data():
         # If no cache is available for today, force a scrape.
 #        data = asyncio.run(scrape_streak_data())
 #    return jsonify(data)
-
 
 @app.route("/change-date")
 def change_date():
