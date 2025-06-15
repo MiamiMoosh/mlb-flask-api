@@ -15,12 +15,14 @@ from flask_dance.contrib.google import make_google_blueprint, google
 from flask_dance.contrib.facebook import make_facebook_blueprint, facebook
 from functools import wraps
 from flask_talisman import Talisman  # Enforces HTTPS security headers
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Initialize Flask app
 app = Flask(__name__, template_folder="pages")
 Talisman(app)  # ✅ Forces HTTPS on all routes
 app.secret_key = "The5Weapon!33534"  # Replace this with a strong, unique string in production
 serializer = URLSafeTimedSerializer(app.secret_key)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 port = int(os.environ.get("PORT", 8080))
 
 # Google
@@ -101,6 +103,9 @@ def track_view(slug):
 def admin_dashboard():
     return render_template("admin_dashboard.html")
 
+@app.route("/login/google")
+def google_login():
+    return redirect(url_for("google.login", _external=True, _scheme="https"))
 
 @app.route("/google_login")
 def google_login():
@@ -118,7 +123,7 @@ def google_callback():
 
     session["google_token"] = response["access_token"]
 
-    with app.app_context():  # ✅ Ensures we're inside a Flask request context
+    with app.app_context():
         user_info = google.get("userinfo").json()
 
     email = user_info["email"]
@@ -139,7 +144,8 @@ def google_callback():
     session["username"] = name
     session["role"] = user.get("role", "user") if user else "user"
 
-    return redirect(url_for("user_dashboard"))
+    return redirect(url_for("user_dashboard", _external=True, _scheme="https"))
+
 
 @app.route("/facebook_login")
 def facebook_login():
@@ -726,10 +732,9 @@ def debug_request_info():
         print(f"Redirect URI: {url_for(request.endpoint, _external=True)}")
 
 def enforce_https():
-    if request.url.startswith("http://"):
-        return redirect(request.url.replace("http://", "https://"), code=301)
     if request.headers.get("X-Forwarded-Proto") != "https":
-        return redirect(url_for(request.endpoint, _external=True, _scheme="https"))
+        return redirect(request.url.replace("http://", "https://"), code=301)
+
 def redirect_www():
     if request.host.startswith("www."):
         return redirect(request.url.replace("www.", ""), code=301)
