@@ -3,7 +3,7 @@ import time
 import asyncio
 import datetime
 import pytz
-from flask import Flask, jsonify, render_template, render_template_string, request, redirect, url_for, session
+from flask import Flask, Response, jsonify, render_template, render_template_string, request, redirect, url_for, session
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import date
 from datetime import datetime
@@ -747,6 +747,15 @@ def enforce_https():
 def redirect_www():
     if request.host.startswith("www."):
         return redirect(request.url.replace("www.", ""), code=301)
+
+@app.after_request
+def add_security_headers(response):
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' https://code.jquery.com https://cdn.datatables.net; "
+        "style-src 'self' https://cdn.datatables.net 'unsafe-inline';"
+    )
+    return response
 
 @app.route("/admin/terminal", methods=["GET", "POST"])
 def admin_terminal():

@@ -1,6 +1,6 @@
-{% extends "base.html" %}
-{% block title %}Dashboard{% endblock %}
-{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
     <title>Admin Terminal</title>
 </head>
 <body>
@@ -10,5 +10,5 @@
         <button type="submit">Run</button>
     </form>
     <pre>{{ output }}</pre>
-	
-{% endblock %}
+</body>
+</html>

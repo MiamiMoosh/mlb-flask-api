@@ -11,8 +11,7 @@
     <a href="/admin/listings">Listings</a> |
     <a href="/admin/search-analytics">Searches</a> |
     <a href="/admin/page-traffic">Page Traffic</a> |
-    <a href="/admin/manage-users">Users</a> |
-    <li><a href="/admin/terminal">Terminal</a></li>
+    <a href="/admin/manage-users">Users</a>
   </nav>
 
   <main style="padding: 2rem;">
