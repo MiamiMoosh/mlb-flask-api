@@ -20,7 +20,15 @@ import subprocess
 
 # Initialize Flask app
 app = Flask(__name__, template_folder="pages", static_url_path="/static")
-Talisman(app)  # ✅ Forces HTTPS on all routes
+Talisman(app)  # ✅ Forces HTTPS on all routes
+Talisman(app, content_security_policy={
+    'default-src': ["'self'"],
+    'script-src': ["'self'", "https://code.jquery.com", "https://cdn.datatables.net", "'unsafe-inline'"],
+    'style-src': ["'self'", "https://cdn.datatables.net", "'unsafe-inline'"],
+    'img-src': ["'self'", "data:", "https:"],
+    'font-src': ["'self'", "https://cdn.datatables.net"]
+})
+
 app.secret_key = "The5Weapon!33534"  # Replace this with a strong, unique string in production
 serializer = URLSafeTimedSerializer(app.secret_key)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
