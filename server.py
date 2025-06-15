@@ -718,13 +718,16 @@ def change_date():
 
 @app.before_request
 def debug_request_info():
+    print(f"Request URL: {request.url}")
     print(f"Request Scheme: {request.scheme}")
-    print(f"Request Headers: {dict(request.headers)}")
-    print(f"Redirect URI: {url_for(request.endpoint, _external=True)}")
-    if request.endpoint:  # ✅ Prevents NoneType errors
+    print(f"Headers: {dict(request.headers)}")
+
+    if request.endpoint:  # ✅ Prevents the NoneType error
         print(f"Redirect URI: {url_for(request.endpoint, _external=True)}")
 
 def enforce_https():
+    if request.url.startswith("http://"):
+        return redirect(request.url.replace("http://", "https://"), code=301)
     if request.headers.get("X-Forwarded-Proto") != "https":
         return redirect(url_for(request.endpoint, _external=True, _scheme="https"))
 def redirect_www():
