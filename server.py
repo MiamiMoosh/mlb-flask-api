@@ -674,6 +674,14 @@ def home():
 def serve_bvp_page():
     return send_from_directory("templates", "MyBatterVsPitcher.html")
 
+@app.route("/static/<path:filename>")
+def static_files(filename):
+    return send_from_directory("static", filename)
+
+@app.route("/stats/daily-bvp")
+def daily_bvp():
+    return render_template("MyBatterVsPitcher.html")  # Ensure this file exists in templates
+
 @app.route("/stats")
 def stats():
     query_date = request.args.get("date") or get_current_est_date()
