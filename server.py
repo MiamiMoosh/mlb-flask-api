@@ -18,7 +18,7 @@ from flask_talisman import Talisman  # Enforces HTTPS security headers
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Initialize Flask app
-app = Flask(__name__, template_folder="pages")
+app = Flask(__name__, template_folder="pages", static_url_path="/static")
 Talisman(app)  # ✅ Forces HTTPS on all routes
 app.secret_key = "The5Weapon!33534"  # Replace this with a strong, unique string in production
 serializer = URLSafeTimedSerializer(app.secret_key)
@@ -641,9 +641,9 @@ def home():
 def serve_bvp_page():
     return send_from_directory("templates", "MyBatterVsPitcher.html")
 
-@app.route("/static/<path:filename>")
-def static_files(filename):
-    return send_from_directory("static", filename)
+#@app.route("/static/<path:filename>")
+#def static_files(filename):
+#    return send_from_directory("static", filename)
 
 @app.route("/stats/daily-bvp")
 def daily_bvp():
