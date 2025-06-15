@@ -107,11 +107,6 @@ def admin_dashboard():
 def google_login():
     return redirect(url_for("google.login", _external=True, _scheme="https"))
 
-@app.route("/google_login")
-def google_login():
-    # Redirect user to Google OAuth login flow
-    return google.authorize(callback=url_for("google_callback", _external=True))
-
 def get_google_oauth_token():
     return session.get("google_token")
 
