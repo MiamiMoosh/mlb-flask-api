@@ -621,7 +621,10 @@ def shop():
 
 @app.route("/stats/daily-bvp")
 def daily_bvp():
-    return render_template("MyBatterVsPitcher.html")  # Ensure this file exists in templates
+    query_date = request.args.get("date")
+    date = query_date if query_date else get_current_est_date()
+    return render_template("MyBatterVsPitcher.html", date=date)
+
 
 @app.route("/index.html")
 def index_redirect():
