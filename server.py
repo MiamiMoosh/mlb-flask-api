@@ -114,62 +114,30 @@ def get_google_oauth_token():
 
 @app.route("/login/google/authorized")
 def google_callback():
-    # Retrieve stored state from session
-    state_sent = session.get("oauth_state")
-    state_received = request.args.get("state")
+    # Debugging: Verify redirect flow
+    print(f"[DEBUG] Google Redirected Here: {request.url}")
 
-    # Check for mismatched OAuth state values
-    if state_sent != state_received:
-        print(f"[ERROR] OAuth state mismatch! Sent: {state_sent}, Received: {state_received}")
-        return "OAuth failed: Invalid state parameter", 401
+    auth_code = request.args.get("code")
+    if not auth_code:
+        print("[ERROR] No authorization code received.")
+        return "OAuth failed: No authorization code", 401
 
     response = google.authorized_response()
-
-    # Debugging log
-    print(f"[DEBUG] OAuth Response from Google: {response}")
-
-    if response is None:
-        print("[ERROR] No response received from Google.")
-        return "OAuth failed: No response received", 401
-
-    if "access_token" not in response:
-        print("[ERROR] Access token missing in response.")
+    
+    if response is None or "access_token" not in response:
+        print("[ERROR] Access token missing.")
         return "OAuth failed: No access token", 401
 
     session["google_token"] = response["access_token"]
 
-    with app.app_context():
-        try:
-            user_info = google.get("userinfo").json()
-            print(f"[DEBUG] Google User Info: {user_info}")
-        except Exception as e:
-            print(f"[ERROR] Failed to fetch user info: {e}")
-            return "Failed to fetch user data", 500
+    try:
+        user_info = google.get("userinfo").json()
+        print(f"[DEBUG] Google User Info: {user_info}")
+    except Exception as e:
+        print(f"[ERROR] Failed to fetch user info: {e}")
+        return "Failed to fetch user data", 500
 
-    # Extract user details
-    email = user_info.get("email")
-    name = user_info.get("name", email.split("@")[0]) if email else "Unknown"
-
-    if not email:
-        print("[ERROR] Missing email field in Google response.")
-        return "OAuth failed: Missing user email", 401
-
-    user = users_collection.find_one({"email": email})
-    if not user:
-        users_collection.insert_one({
-            "username": name,
-            "email": email,
-            "role": "user",
-            "plan": "free",
-            "oauth_provider": "google",
-            "password_hash": generate_password_hash("OAuthUser")  # Placeholder hash
-        })
-
-    session["logged_in"] = True
-    session["username"] = name
-    session["role"] = user.get("role", "user") if user else "user"
-
-    return redirect(url_for("user_dashboard", _external=True, _scheme="https"))
+    return redirect(url_for("user_dashboard", _external=True, _scheme="https"))    return redirect(url_for("user_dashboard", _external=True, _scheme="https"))
 
 
 @app.route("/facebook_login")
