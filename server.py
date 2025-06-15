@@ -28,7 +28,8 @@ google_bp = make_google_blueprint(
     client_id=os.environ.get("GOOGLE_CLIENT_ID"),
     client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
     scope=["profile", "email"],
-    redirect_to="google_login"
+    redirect_to="google_login",
+    redirect_url="https://firststring.biz/login/google/authorized"  # ✅ Forces HTTPS redirect URI
 )
 app.register_blueprint(google_bp, url_prefix="/login")
 
@@ -722,6 +723,10 @@ def redirect_www():
 def enforce_https():
     if request.headers.get("X-Forwarded-Proto") != "https":
         return redirect(url_for(request.endpoint, _external=True, _scheme="https"))
+def debug_request_info():
+    print(f"Request Scheme: {request.scheme}")
+    print(f"Request Headers: {dict(request.headers)}")
+    print(f"Redirect URI: {url_for(request.endpoint, _external=True)}")
 
 
 @app.route("/shop")
