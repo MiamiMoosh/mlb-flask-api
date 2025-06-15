@@ -12,7 +12,7 @@
     <a href="/admin/search-analytics">Searches</a> |
     <a href="/admin/page-traffic">Page Traffic</a> |
     <a href="/admin/manage-users">Users</a> |
-    <a href="/admin/terminal">Terminal</a>
+    <li><a href="/admin/terminal">Terminal</a></li>
   </nav>
 
   <main style="padding: 2rem;">
