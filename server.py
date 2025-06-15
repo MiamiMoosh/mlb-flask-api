@@ -105,13 +105,24 @@ def admin_dashboard():
 
 @app.route("/login/google")
 def google_login():
+    session["oauth_state"] = google_bp.session.state  # ✅ Save state in session
     return redirect(url_for("google.login", _external=True, _scheme="https"))
+
 
 def get_google_oauth_token():
     return session.get("google_token")
 
 @app.route("/login/google/authorized")
 def google_callback():
+    # Retrieve stored state from session
+    state_sent = session.get("oauth_state")
+    state_received = request.args.get("state")
+
+    # Check for mismatched OAuth state values
+    if state_sent != state_received:
+        print(f"[ERROR] OAuth state mismatch! Sent: {state_sent}, Received: {state_received}")
+        return "OAuth failed: Invalid state parameter", 401
+
     response = google.authorized_response()
 
     # Debugging log
@@ -658,6 +669,10 @@ def home():
     print(f"[DEBUG] FINAL Date Used for Display: {date}")
     # Pass the date to the template so the client-side nav links can be built from it.
     return render_template("MyBatterVsPitcher.html", date=date)
+
+@app.route("/MyBatterVsPitcher.html")
+def serve_bvp_page():
+    return send_from_directory("templates", "MyBatterVsPitcher.html")
 
 @app.route("/stats")
 def stats():
