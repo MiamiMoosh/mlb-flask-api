@@ -756,16 +756,16 @@ def redirect_www():
     if request.host.startswith("www."):
         return redirect(request.url.replace("www.", ""), code=301)
 
-@app.after_request
-def add_security_headers(response):
-    response.headers["Content-Security-Policy"] = (
-        "default-src 'self'; "
-        "script-src 'self' https://code.jquery.com https://cdn.datatables.net 'unsafe-inline'; "
-        "style-src 'self' https://cdn.datatables.net 'unsafe-inline'; "
-        "img-src 'self' data: https:; "
-        "font-src 'self' https://cdn.datatables.net;"
-    )
-    return response
+#@app.after_request
+#def add_security_headers(response):
+#    response.headers["Content-Security-Policy"] = (
+#        "default-src 'self'; "
+#        "script-src 'self' https://code.jquery.com https://cdn.datatables.net 'unsafe-inline'; "
+#        "style-src 'self' https://cdn.datatables.net 'unsafe-inline'; "
+#        "img-src 'self' data: https:; "
+#        "font-src 'self' https://cdn.datatables.net;"
+#    )
+#    return response
 
 @app.route("/admin/terminal", methods=["GET", "POST"])
 def admin_terminal():
