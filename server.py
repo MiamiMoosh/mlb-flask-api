@@ -123,6 +123,8 @@ def google_callback():
     with app.app_context():
         user_info = google.get("userinfo").json()
 
+    print(f"[DEBUG] Google User Info: {user_info}")
+
     email = user_info["email"]
     name = user_info.get("name", email.split("@")[0])
 
@@ -718,6 +720,10 @@ def change_date():
         if scraped_data:
             store_data(date, scraped_data)
     return redirect(url_for("home", date=date))
+
+@app.route("/index.html")
+def index_redirect():
+    return redirect(url_for("home"))
 
 @app.before_request
 def debug_request_info():
