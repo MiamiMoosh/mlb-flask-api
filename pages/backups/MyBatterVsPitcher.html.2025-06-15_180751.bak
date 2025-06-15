@@ -10,14 +10,6 @@
   <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.ico') }}" />
   <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}" />
   <meta name="apple-mobile-web-app-title" content="BvP" />
-  <meta http-equiv="Content-Security-Policy" content="
-    default-src 'self';
-    script-src 'self' https://code.jquery.com https://cdn.datatables.net 'unsafe-inline';
-    style-src 'self' https://cdn.datatables.net 'unsafe-inline';
-    img-src 'self' data: https:;
-    font-src 'self' https://cdn.datatables.net;
-">
-
   <link rel="manifest" href="{{ url_for('static', filename='images/site.webmanifest') }}" />
   <style>
     /* 🔷 General Page Styling */
