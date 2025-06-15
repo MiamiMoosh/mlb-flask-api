@@ -721,12 +721,15 @@ def debug_request_info():
     print(f"Request Scheme: {request.scheme}")
     print(f"Request Headers: {dict(request.headers)}")
     print(f"Redirect URI: {url_for(request.endpoint, _external=True)}")
-def redirect_www():
-    if request.host.startswith("www."):
-        return redirect(request.url.replace("www.", ""), code=301)
+    if request.endpoint:  # ✅ Prevents NoneType errors
+        print(f"Redirect URI: {url_for(request.endpoint, _external=True)}")
+
 def enforce_https():
     if request.headers.get("X-Forwarded-Proto") != "https":
         return redirect(url_for(request.endpoint, _external=True, _scheme="https"))
+def redirect_www():
+    if request.host.startswith("www."):
+        return redirect(request.url.replace("www.", ""), code=301)
 
 
 @app.route("/shop")
