@@ -7,6 +7,5 @@
     <li><a href="/admin/search-analytics">Search Analytics</a></li>
     <li><a href="/admin/page-traffic">Page Views</a></li>
     <li><a href="/admin/manage-users">User Management</a></li>
-    <li><a href="/admin/terminal">Terminal</a></li>
   </ul>
 {% endblock %}

