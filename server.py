@@ -29,7 +29,7 @@ port = int(os.environ.get("PORT", 8080))
 google_bp = make_google_blueprint(
     client_id=os.environ.get("GOOGLE_CLIENT_ID"),
     client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
-    scope=["profile", "email"],
+    scope=["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email", "openid"],
     redirect_to="google_login",
     redirect_url="https://firststring.biz/login/google/authorized"  # ✅ Forces HTTPS redirect URI
 )
@@ -113,6 +113,8 @@ def get_google_oauth_token():
 @app.route("/login/google/authorized")
 def google_callback():
     response = google.authorized_response()
+    print(f"OAuth Response: {response}")
+
     if response is None or "access_token" not in response:
         return "OAuth failed", 401
 
