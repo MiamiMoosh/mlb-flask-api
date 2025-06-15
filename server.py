@@ -717,16 +717,16 @@ def change_date():
     return redirect(url_for("home", date=date))
 
 @app.before_request
+def debug_request_info():
+    print(f"Request Scheme: {request.scheme}")
+    print(f"Request Headers: {dict(request.headers)}")
+    print(f"Redirect URI: {url_for(request.endpoint, _external=True)}")
 def redirect_www():
     if request.host.startswith("www."):
         return redirect(request.url.replace("www.", ""), code=301)
 def enforce_https():
     if request.headers.get("X-Forwarded-Proto") != "https":
         return redirect(url_for(request.endpoint, _external=True, _scheme="https"))
-def debug_request_info():
-    print(f"Request Scheme: {request.scheme}")
-    print(f"Request Headers: {dict(request.headers)}")
-    print(f"Redirect URI: {url_for(request.endpoint, _external=True)}")
 
 
 @app.route("/shop")
