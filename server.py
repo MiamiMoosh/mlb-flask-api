@@ -113,17 +113,23 @@ def get_google_oauth_token():
 @app.route("/login/google/authorized")
 def google_callback():
     response = google.authorized_response()
-    print(f"OAuth Response: {response}")
+
+    # Debugging log
+    print(f"[DEBUG] OAuth Response from Google: {response}")
 
     if response is None or "access_token" not in response:
+        print("[ERROR] Failed to retrieve access token")
         return "OAuth failed", 401
 
     session["google_token"] = response["access_token"]
 
     with app.app_context():
-        user_info = google.get("userinfo").json()
-
-    print(f"[DEBUG] Google User Info: {user_info}")
+        try:
+            user_info = google.get("userinfo").json()
+            print(f"[DEBUG] Google User Info: {user_info}")
+        except Exception as e:
+            print(f"[ERROR] Failed to fetch user info: {e}")
+            return "Failed to fetch user data", 500
 
     email = user_info["email"]
     name = user_info.get("name", email.split("@")[0])
