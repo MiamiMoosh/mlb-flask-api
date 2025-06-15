@@ -137,8 +137,7 @@ def google_callback():
         print(f"[ERROR] Failed to fetch user info: {e}")
         return "Failed to fetch user data", 500
 
-    return redirect(url_for("user_dashboard", _external=True, _scheme="https"))    return redirect(url_for("user_dashboard", _external=True, _scheme="https"))
-
+    return redirect(url_for("user_dashboard", _external=True, _scheme="https"))
 
 @app.route("/facebook_login")
 def facebook_login():
