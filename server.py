@@ -3,54 +3,19 @@ import time
 import asyncio
 import datetime
 import pytz
-from flask import Flask, Response, jsonify, render_template, render_template_string, request, redirect, url_for, session
+from flask import Flask, jsonify, render_template, render_template_string, request, redirect, url_for, session
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import date
-from datetime import datetime
 from playwright.async_api import async_playwright
 from pymongo import MongoClient
 from itsdangerous import URLSafeTimedSerializer
 from flask_mail import Mail, Message
-from flask_dance.contrib.google import make_google_blueprint, google
-from flask_dance.contrib.facebook import make_facebook_blueprint, facebook
-from functools import wraps
-from flask_talisman import Talisman  # Enforces HTTPS security headers
-from werkzeug.middleware.proxy_fix import ProxyFix
-import subprocess
 
 # Initialize Flask app
-app = Flask(__name__, template_folder="pages", static_url_path="/static")
-Talisman(app)  # ✅ Forces HTTPS on all routes
-Talisman(app, content_security_policy={
-    'default-src': ["'self'"],
-    'script-src': ["'self'", "https://code.jquery.com", "https://cdn.datatables.net", "'unsafe-inline'"],
-    'style-src': ["'self'", "https://cdn.datatables.net", "'unsafe-inline'"],
-    'img-src': ["'self'", "data:", "https:"],
-    'font-src': ["'self'", "https://cdn.datatables.net"]
-})
-
+app = Flask(__name__, template_folder="pages")
 app.secret_key = "The5Weapon!33534"  # Replace this with a strong, unique string in production
 serializer = URLSafeTimedSerializer(app.secret_key)
-#app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 port = int(os.environ.get("PORT", 8080))
-
-# Google
-google_bp = make_google_blueprint(
-    client_id=os.environ.get("GOOGLE_CLIENT_ID"),
-    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
-    scope=["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email", "openid"],
-    redirect_to="google_login",
-    redirect_url="https://firststring.biz/login/google/authorized"  # ✅ Forces HTTPS redirect URI
-)
-app.register_blueprint(google_bp, url_prefix="/login")
-
-# Facebook
-facebook_bp = make_facebook_blueprint(
-    client_id=os.environ.get("FACEBOOK_CLIENT_ID"),
-    client_secret=os.environ.get("FACEBOOK_CLIENT_SECRET"),
-    redirect_to="facebook_login"
-)
-app.register_blueprint(facebook_bp, url_prefix="/login")
 
 # Connect to MongoDB using Railway-provided URI
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://mongo:MXQDxgcJWYBgTFtLPiwGdsnRXTIONzNc@trolley.proxy.rlwy.net:25766")
@@ -60,25 +25,21 @@ collection = db["batter_vs_pitcher"]
 streak_collection = db["hot_streak_players"]
 db = client["first_string_users"]
 users_collection = db["users"]
-listings_collection = db["listings"]
-page_views = db["page_views"]
-search_logs = db["search_logs"]
 
-
-
-{
-  "slug": "/shop/product/nike-x-lebron",
-  "hits": 104,
-  "last_viewed": "2025-06-12T20:44:00Z"
-}
-
-{
-  "query": "jordan jersey 1996",
-  "timestamp": "...",
-  "ip": "...",
-  "device": "Mozilla/5.0..."
-}
-
+users = [
+    {
+        "username": "admin",
+        "password_hash": generate_password_hash("adminpass"),
+        "role": "admin",
+        "plan": "admin"
+    },
+    {
+        "username": "testuser",
+        "password_hash": generate_password_hash("userpass"),
+        "role": "user",
+        "plan": "free"
+    }
+]
 
 app.config.update(
     MAIL_SERVER="smtp.gmail.com",
@@ -91,90 +52,14 @@ app.config.update(
 
 mail = Mail(app)
 
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if session.get("role") != "admin":
-            return redirect(url_for("login"))
-        return f(*args, **kwargs)
-    return decorated_function
 
+@app.route("/cms/users")
+def manage_users():
+    if session.get("role") != "admin":
+        return redirect(url_for("login"))
 
-def track_view(slug):
-    page_views.update_one(
-        {"slug": slug},
-        {"$inc": {"hits": 1}, "$set": {"last_viewed": datetime.utcnow()}},
-        upsert=True
-    )
-
-@app.route("/admin/dashboard")
-@admin_required
-def admin_dashboard():
-    return render_template("admin_dashboard.html")
-
-@app.route("/login/google")
-def google_login():
-    session["oauth_state"] = google_bp.session.state  # ✅ Save state in session
-    return redirect(url_for("google.login", _external=True, _scheme="https"))
-
-
-def get_google_oauth_token():
-    return session.get("google_token")
-
-@app.route("/login/google/authorized")
-def google_callback():
-    # Debugging: Verify redirect flow
-    print(f"[DEBUG] Google Redirected Here: {request.url}")
-
-    auth_code = request.args.get("code")
-    if not auth_code:
-        print("[ERROR] No authorization code received.")
-        return "OAuth failed: No authorization code", 401
-
-    response = google.authorized_response()
-    
-    if response is None or "access_token" not in response:
-        print("[ERROR] Access token missing.")
-        return "OAuth failed: No access token", 401
-
-    session["google_token"] = response["access_token"]
-
-    try:
-        user_info = google.get("userinfo").json()
-        print(f"[DEBUG] Google User Info: {user_info}")
-    except Exception as e:
-        print(f"[ERROR] Failed to fetch user info: {e}")
-        return "Failed to fetch user data", 500
-
-    return redirect(url_for("user_dashboard", _external=True, _scheme="https"))
-
-@app.route("/facebook_login")
-def facebook_login():
-    if not facebook.authorized:
-        return redirect(url_for("facebook.login"))
-
-    info = facebook.get("/me?fields=name,email").json()
-    email = info["email"]
-    name = info["name"]
-
-    user = users_collection.find_one({"email": email})
-    if not user:
-        users_collection.insert_one({
-            "username": name,
-            "email": email,
-            "role": "user",
-            "plan": "free",
-            "oauth_provider": "facebook"
-        })
-
-    session["logged_in"] = True
-    session["username"] = name
-    session["role"] = "user"
-    return redirect(url_for("user_dashboard"))
-
-@app.route("/facebook/delete", methods=["GET", "POST"])
-def facebook_delete():
-    return render_template("delete-my-data.html")
+    users = list(users_collection.find({}, {"_id": 0, "password_hash": 0}))
+    return render_template("manage_users.html", users=users)
 
 @app.route("/cms/create_user", methods=["POST"])
 def create_user():
@@ -196,86 +81,7 @@ def create_user():
         "plan": plan
     })
 
-    return redirect(url_for("admin_manage_users"))
-
-@app.route("/webhook/etsy", methods=["POST"])
-def etsy_webhook():
-    data = request.json  # Get webhook data
-    listing_id = data.get("listing_id")
-
-    if listing_id:
-        save_listing_to_db(listing_id, custom_keywords=[])  # Auto-import listing
-        return jsonify({"status": "success"})
-
-    return jsonify({"status": "error", "message": "Invalid data"}), 400
-
-@app.route("/admin/listings")
-@admin_required
-def admin_listings():
-    listings = listings_collection.find()
-    return render_template("listings.html", listings=listings)
-
-@app.route("/admin/manage-users")
-@admin_required
-def admin_manage_users():
-    users = users_collection.find()
-    return render_template("manage_users.html", users=users)
-
-@app.route("/admin/search-analytics")
-@admin_required
-def search_analytics():
-    top_queries = search_logs.aggregate([
-        {"$group": {"_id": "$query", "count": {"$sum": 1}}},
-        {"$sort": {"count": -1}},
-        {"$limit": 50}
-    ])
-    return render_template("search_analytics.html", queries=top_queries)
-
-@app.route("/admin/page-traffic")
-@admin_required
-def page_traffic():
-    sort_field = request.args.get("sort", "hits")
-    pages = page_views.find().sort(sort_field, -1)
-    return render_template("traffic_report.html", pages=pages)
-
-@app.route("/admin/listings/new", methods=["GET", "POST"])
-@admin_required
-def new_listing():
-    if request.method == "POST":
-        title = request.form["title"]
-        category = request.form["category"]
-        price = float(request.form["price"])
-        description = request.form["description"]
-
-        listings_collection.insert_one({
-            "title": title,
-            "category": category,
-            "price": price,
-            "description": description,
-            "created_at": datetime.utcnow()
-        })
-
-        return redirect(url_for("admin_listings"))
-
-    return render_template("listings_form.html", listing=None)
-
-@app.route("/admin/listings/<id>/edit", methods=["GET", "POST"])
-@admin_required
-def edit_listing(id):
-    listing = listings_collection.find_one({"_id": ObjectId(id)})
-
-    if request.method == "POST":
-        listings_collection.update_one({"_id": ObjectId(id)}, {
-            "$set": {
-                "title": request.form["title"],
-                "category": request.form["category"],
-                "price": float(request.form["price"]),
-                "description": request.form["description"]
-            }
-        })
-        return redirect(url_for("admin_listings"))
-
-    return render_template("listings_form.html", listing=listing)
+    return redirect(url_for("manage_users"))
 
 @app.route("/forgot-password", methods=["GET", "POST"])
 def forgot_password():
@@ -323,7 +129,7 @@ def update_user():
     plan = request.form["plan"]
 
     users_collection.update_one({"username": username}, {"$set": {"plan": plan}})
-    return redirect(url_for("admin_manage_users"))
+    return redirect(url_for("manage_users"))
 
 @app.route("/cms/delete_user", methods=["POST"])
 def delete_user():
@@ -332,7 +138,7 @@ def delete_user():
 
     username = request.form["username"]
     users_collection.delete_one({"username": username})
-    return redirect(url_for("admin_manage_users"))
+    return redirect(url_for("manage_users"))
 
 @app.route("/cms/update_role", methods=["POST"])
 def update_role():
@@ -343,24 +149,21 @@ def update_role():
     role = request.form["role"]
 
     users_collection.update_one({"username": username}, {"$set": {"role": role}})
-    return redirect(url_for("admin_manage_users"))
+    return redirect(url_for("manage_users"))
 
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        identity = request.form["username"]
+        username = request.form["username"]
         password = request.form["password"]
 
-        user = users_collection.find_one({
-            "$or": [{"username": identity}, {"email": identity}]
-        })
-
+        user = users_collection.find_one({"username": username})
         if user and check_password_hash(user["password_hash"], password):
             session["logged_in"] = True
-            session["username"] = user["username"]
+            session["username"] = username
             session["role"] = user.get("role", "user")
-            return redirect(url_for("cms_dashboard") if user.get("role") == "admin" else url_for("user_dashboard"))
+            return redirect(url_for("cms_dashboard") if user["role"] == "admin" else url_for("user_dashboard"))
 
         return "Invalid credentials", 401
 
@@ -602,10 +405,9 @@ rows => {
         print(f"[DEBUG] Players on hot streak: {[player['player'] for player in rows_data if 'player' in player]}")
         return new_data
 
-
 def store_data(date, data):
     """Deletes old data for the date if outdated, then stores fresh scraped data."""
-    current_time = datetime.utcnow()
+    current_time = datetime.datetime.utcnow()
 
     # Add timestamp field to all entries
     cleaned_data = [{k: v for k, v in entry.items() if k != "_id"} for entry in data]
@@ -626,7 +428,7 @@ def get_current_est_date():
     (No after-8PM adjustment is applied here.)
     """
     user_timezone = pytz.timezone("America/New_York")
-    now_local = datetime.now(user_timezone)
+    now_local = datetime.datetime.now(user_timezone)
     return now_local.date().strftime("%Y-%m-%d")
 
 # ------------------------------
@@ -646,18 +448,6 @@ def home():
     # Pass the date to the template so the client-side nav links can be built from it.
     return render_template("MyBatterVsPitcher.html", date=date)
 
-@app.route("/MyBatterVsPitcher.html")
-def serve_bvp_page():
-    return send_from_directory("templates", "MyBatterVsPitcher.html")
-
-#@app.route("/static/<path:filename>")
-#def static_files(filename):
-#    return send_from_directory("static", filename)
-
-@app.route("/stats/daily-bvp")
-def daily_bvp():
-    return render_template("MyBatterVsPitcher.html")  # Ensure this file exists in templates
-
 @app.route("/stats")
 def stats():
     query_date = request.args.get("date") or get_current_est_date()
@@ -669,7 +459,7 @@ def stats():
     if existing_entry:
         last_updated = existing_entry.get("last_updated")
         if last_updated:
-            time_elapsed = datetime.utcnow() - last_updated
+            time_elapsed = datetime.datetime.utcnow() - last_updated
 
             # If data is less than 2 hours old, return cached data
             if time_elapsed.total_seconds() < 7200:
@@ -735,53 +525,10 @@ def change_date():
             store_data(date, scraped_data)
     return redirect(url_for("home", date=date))
 
-@app.route("/index.html")
-def index_redirect():
-    return redirect(url_for("home"))
-
-@app.before_request
-def debug_request_info():
-    print(f"Request URL: {request.url}")
-    print(f"Request Scheme: {request.scheme}")
-    print(f"Headers: {dict(request.headers)}")
-
-    if request.endpoint and request.endpoint != "static":  # ✅ Prevents error for static files
-        print(f"Redirect URI: {url_for(request.endpoint, _external=True)}")
-
-def enforce_https():
-    if request.headers.get("X-Forwarded-Proto") != "https":
-        return redirect(request.url.replace("http://", "https://"), code=301)
-
-def redirect_www():
-    if request.host.startswith("www."):
-        return redirect(request.url.replace("www.", ""), code=301)
-
-#@app.after_request
-#def add_security_headers(response):
-#    response.headers["Content-Security-Policy"] = (
-#        "default-src 'self'; "
-#        "script-src 'self' https://code.jquery.com https://cdn.datatables.net 'unsafe-inline'; "
-#        "style-src 'self' https://cdn.datatables.net 'unsafe-inline'; "
-#        "img-src 'self' data: https:; "
-#        "font-src 'self' https://cdn.datatables.net;"
-#    )
-#    return response
-
-@app.route("/admin/terminal", methods=["GET", "POST"])
-def admin_terminal():
-    output = ""
-    if request.method == "POST":
-        command = request.form.get("command")
-        if command:
-            try:
-                output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT).decode()
-            except subprocess.CalledProcessError as e:
-                output = e.output.decode()
-    return render_template("terminal.html", output=output)
-
 @app.route("/shop")
 def shop():
     return render_template("shop.html")
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=port)
