@@ -769,7 +769,7 @@ def debug_request_info():
     print(f"Request Scheme: {request.scheme}")
     print(f"Headers: {dict(request.headers)}")
 
-    if request.endpoint:  # ✅ Prevents the NoneType error
+    if request.endpoint and request.endpoint != "static":  # ✅ Prevents error for static files
         print(f"Redirect URI: {url_for(request.endpoint, _external=True)}")
 
 def enforce_https():
