@@ -619,6 +619,31 @@ def change_date():
 def shop():
     return render_template("shop.html")
 
+@app.route("/stats/daily-bvp")
+def daily_bvp():
+    return render_template("MyBatterVsPitcher.html")  # Ensure this file exists in templates
+
+@app.route("/index.html")
+def index_redirect():
+    return redirect(url_for("home"))
+
+@app.before_request
+def debug_request_info():
+    print(f"Request URL: {request.url}")
+    print(f"Request Scheme: {request.scheme}")
+    print(f"Headers: {dict(request.headers)}")
+
+    if request.endpoint and request.endpoint != "static":  # ✅ Prevents error for static files
+        print(f"Redirect URI: {url_for(request.endpoint, _external=True)}")
+
+def enforce_https():
+    if request.headers.get("X-Forwarded-Proto") != "https":
+        return redirect(request.url.replace("http://", "https://"), code=301)
+
+def redirect_www():
+    if request.host.startswith("www."):
+        return redirect(request.url.replace("www.", ""), code=301)
+
 @app.route("/admin/terminal", methods=["GET", "POST"])
 def admin_terminal():
     output = ""
