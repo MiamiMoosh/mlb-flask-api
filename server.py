@@ -117,9 +117,13 @@ def google_callback():
     # Debugging log
     print(f"[DEBUG] OAuth Response from Google: {response}")
 
-    if response is None or "access_token" not in response:
-        print("[ERROR] Failed to retrieve access token")
-        return "OAuth failed", 401
+    if response is None:
+        print("[ERROR] No response received from Google.")
+        return "OAuth failed: No response received", 401
+
+    if "access_token" not in response:
+        print("[ERROR] Access token missing in response.")
+        return "OAuth failed: No access token", 401
 
     session["google_token"] = response["access_token"]
 
@@ -131,8 +135,13 @@ def google_callback():
             print(f"[ERROR] Failed to fetch user info: {e}")
             return "Failed to fetch user data", 500
 
-    email = user_info["email"]
-    name = user_info.get("name", email.split("@")[0])
+    # Extract user details
+    email = user_info.get("email")
+    name = user_info.get("name", email.split("@")[0]) if email else "Unknown"
+
+    if not email:
+        print("[ERROR] Missing email field in Google response.")
+        return "OAuth failed: Missing user email", 401
 
     user = users_collection.find_one({"email": email})
     if not user:
