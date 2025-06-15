@@ -9,4 +9,3 @@ dnspython
 Flask-Dance
 Authlib
 Werkzeug
-flask-talisman
