@@ -11,3 +11,6 @@ Authlib
 Werkzeug
 flask-talisman
 pycryptodome
+flask-cors
+MLB-StatsAPI
+pybaseball

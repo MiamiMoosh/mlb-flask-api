@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Threadline | {{ game_id }}</title>
+  <style>
+    body { font-family: Arial; margin: 40px; background: #f9f9f9; }
+    .echo { padding: 10px; border-bottom: 1px solid #ddd; }
+    .insight-box { margin-top: 30px; padding: 15px; background: #fff8e1; border: 1px solid #e0c97d; }
+    .user { font-weight: bold; }
+    .badge { font-size: 0.9em; padding-left: 5px; color: #888; }
+    .timestamp { float: right; font-size: 0.8em; color: #aaa; }
+  </style>
+</head>
+<body>
+
+  <h2>🧵 Threadline: {{ game_id }}</h2>
+  <p>You are posting as: <strong>{{ user_display }}</strong>{% if is_anon %} <em>(anonymous)</em>{% endif %}</p>
+
+  <form id="echo-form">
+    <input type="hidden" name="game_id" value="{{ game_id }}">
+    <textarea name="text" placeholder="Echo something…" maxlength="200" style="width: 100%; height: 60px;"></textarea>
+    <button type="submit">Post Echo</button>
+  </form>
+
+  <div id="echoes">
+    {% for echo in echoes %}
+      <div class="echo">
+        <span class="user">{{ echo.user_display }}</span>
+        {% if echo.badge %}
+          <span class="badge">{{ echo.badge }}</span>
+        {% endif %}
+        <span class="timestamp">{{ echo.timestamp }}</span>
+        <p>{{ echo.text }}</p>
+        {% if echo.tags %}<small>Tags: {{ echo.tags | join(', ') }}</small>{% endif %}
+      </div>
+    {% endfor %}
+  </div>
+
+  {% if insights %}
+    <div class="insight-box">
+      <h4>📊 Matchup Insights</h4>
+      {% for pair in insights %}
+        <p><strong>{{ pair.batter }}</strong>: {{ pair.insights.batter }}</p>
+        <p><strong>{{ pair.pitcher }}</strong>: {{ pair.insights.pitcher }}</p>
+        <hr>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <script>
+    document.getElementById("echo-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const game_id = "{{ game_id }}";
+      const text = e.target.text.value;
+
+      const res = await fetch("/threadline/echo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ game_id, text })
+      });
+
+      if (res.ok) {
+        window.location.reload();  // Simple reload for now
+      } else {
+        alert("Error submitting echo.");
+      }
+    });
+  </script>
+
+</body>
+</html>

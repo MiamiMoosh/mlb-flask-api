@@ -3,7 +3,6 @@ import time
 import asyncio
 import datetime
 import pytz
-import statsapi
 from flask import Flask, jsonify, render_template, render_template_string, request, redirect, url_for, session, flash, get_flashed_messages
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import date
@@ -12,18 +11,12 @@ from pymongo import MongoClient
 from itsdangerous import URLSafeTimedSerializer
 from flask_mail import Mail, Message
 from functools import wraps
-from flask_cors import CORS
-from difflib import get_close_matches
-from pybaseball import statcast_batter, statcast_pitcher
-from insight_utils import get_recent_batter_insight, get_pitcher_mix
-
 
 # Initialize Flask app
 app = Flask(__name__, template_folder="pages")
 app.secret_key = "The5Weapon!33534"  # Replace this with a strong, unique string in production
 serializer = URLSafeTimedSerializer(app.secret_key)
 port = int(os.environ.get("PORT", 8080))
-CORS(app)
 
 # Connect to MongoDB using Railway-provided URI
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://mongo:MXQDxgcJWYBgTFtLPiwGdsnRXTIONzNc@trolley.proxy.rlwy.net:25766")
@@ -37,9 +30,6 @@ listings_collection = db["listings"]
 page_views = db["page_views"]
 search_logs = db["search_logs"]
 banned_emails = db["banned_emails"]
-threadline_echoes = db["threadline_echoes"]
-threadline_users = db["threadline_users"]
-threadline_insights = db["threadline_insights"]
 
 
 app.config.update(
@@ -53,25 +43,6 @@ app.config.update(
 
 mail = Mail(app)
 
-def extract_tags(text):
-    tags = []
-    lowered = text.lower()
-    if any(word in lowered for word in ["momentum", "swing", "shift", "flip"]):
-        tags.append("momentum")
-    if any(word in lowered for word in ["collapse", "choke", "fall apart"]):
-        tags.append("collapse")
-    if any(word in lowered for word in ["clutch", "ice cold", "step up"]):
-        tags.append("clutch")
-    if any(word in lowered for word in ["blow", "lead gone", "meltdown"]):
-        tags.append("meltdown")
-    return tags
-def detect_players(text, player_names):
-    found = []
-    for name in player_names:
-        if name.lower() in text.lower():
-            found.append(name)
-    return list(set(found))  # remove duplicates
-
 def track(slug):
     def decorator(f):
         @wraps(f)
@@ -84,7 +55,7 @@ def track(slug):
 def track_view(slug):
     page_views.update_one(
         {"slug": slug},
-        {"$inc": {"hits": 1}, "$set": {"last_viewed": datetime.datetime.utcnow()}},
+        {"$inc": {"hits": 1}, "$set": {"last_viewed": datetime.utcnow()}},
         upsert=True
     )
 
@@ -235,7 +206,7 @@ def new_listing():
             "category": category,
             "price": price,
             "description": description,
-            "created_at": datetime.datetime.utcnow()
+            "created_at": datetime.utcnow()
         })
 
         return redirect(url_for("admin_listings"))
@@ -749,175 +720,6 @@ def admin_terminal():
             except subprocess.CalledProcessError as e:
                 output = e.output.decode()
     return render_template("terminal.html", output=output)
-
-@app.route("/threadline/upvote", methods=["POST"])
-def upvote_echo():
-    data = request.get_json()
-    user_id = data.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Missing user_id"}), 400
-
-    threadline_users.update_one(
-        {"user_id": user_id},
-        {"$inc": {"cred_score": 2}}
-    )
-    return jsonify({"status": "ok"})
-
-@app.route("/threadline/mute", methods=["POST"])
-def mute_echo():
-    data = request.get_json()
-    user_id = data.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Missing user_id"}), 400
-
-    threadline_users.update_one(
-        {"user_id": user_id},
-        {"$inc": {"cred_score": -1}}
-    )
-    return jsonify({"status": "ok"})
-
-@app.route("/threadline/echo", methods=["POST"])
-def post_echo():
-    data = request.get_json()
-    game_id = data.get("game_id")
-    text = data.get("text")
-
-    now = datetime.datetime.utcnow()
-
-    if session.get("logged_in") and session.get("username"):
-        user_display = session["username"]
-        is_anon = False
-    else:
-        anon_name = session.get("anon_name")
-        if not anon_name:
-            anon_name = f"Anon-{os.urandom(2).hex()[:4]}"
-            session["anon_name"] = anon_name
-        user_display = anon_name
-        is_anon = True
-
-        # Only track cred if anonymous
-        threadline_users.update_one(
-            {"user_id": anon_name},
-            {
-                "$setOnInsert": {"cred_score": 100, "badge": "Rookie"},
-                "$set": {"last_active": now}
-            },
-            upsert=True
-        )
-
-    echo = {
-        "game_id": game_id,
-        "text": text.strip(),
-        "user_display": user_display,
-        "is_anon": is_anon,
-        "cred_at_post": 100 if is_anon else None,
-        "timestamp": now,
-        "tags": extract_tags(text),
-        "player_mentions": detect_players(text, cached_player_list)  # Or empty list for now
-    }
-
-    threadline_echoes.insert_one(echo)
-
-    return jsonify({"status": "success", "user_display": user_display})
-def update_badges():
-    for user in threadline_users.find():
-        cred = user.get("cred_score", 0)
-        badge = "Rookie Threader"
-        if cred < 50:
-            badge = "Echo Dust"
-        elif cred < 100:
-            badge = "Rookie Threader"
-        elif cred < 150:
-            badge = "Thread Sharp"
-        elif cred < 200:
-            badge = "Signal Riser"
-        else:
-            badge = "Thread Prophet"
-
-        threadline_users.update_one(
-            {"user_id": user["user_id"]},
-            {"$set": {"badge": badge}}
-        )
-@app.route("/threadline/feed", methods=["GET"])
-def get_echo_feed():
-    game_id = request.args.get("game_id")
-    if not game_id:
-        return jsonify({"error": "Missing game_id"}), 400
-
-    echoes = list(threadline_echoes.find(
-        {"game_id": game_id},
-        {"_id": 0}
-    ).sort("timestamp", -1).limit(50))
-
-    return jsonify(echoes)
-
-@app.route("/threadline/insight")
-def insight():
-    batter = request.args.get("batter")
-    pitcher = request.args.get("pitcher")
-    game_id = request.args.get("game_id")
-
-    existing = threadline_insights.find_one({
-        "batter": batter,
-        "pitcher": pitcher,
-        "game_id": game_id
-    })
-
-    if existing:
-        return jsonify(existing["insights"])
-
-    # Generate fresh if not cached
-    batter_blurb = get_recent_batter_insight(batter)
-    pitcher_blurb = get_pitcher_mix(pitcher)
-
-    threadline_insights.insert_one({
-        "batter": batter,
-        "pitcher": pitcher,
-        "game_id": game_id,
-        "insights": {
-            "batter": batter_blurb,
-            "pitcher": pitcher_blurb
-        },
-        "cached_at": datetime.datetime.utcnow()
-    })
-
-    return jsonify({
-        "batter": batter_blurb,
-        "pitcher": pitcher_blurb
-    })
-
-@app.route("/threadline/<game_id>")
-def view_threadline(game_id):
-    # Retrieve all echoes tied to this game
-    echoes = list(threadline_echoes.find(
-        {"game_id": game_id},
-        {"_id": 0}
-    ).sort("timestamp", -1))
-
-    # Get any cached insights for this game
-    insights = list(threadline_insights.find(
-        {"game_id": game_id},
-        {"_id": 0}
-    ))
-
-    # Determine current user (if logged in or anonymous)
-    if session.get("logged_in") and session.get("username"):
-        user_display = session["username"]
-        is_anon = False
-    else:
-        anon_name = session.get("anon_name")
-        if not anon_name:
-            anon_name = f"Anon-{os.urandom(2).hex()[:4]}"
-            session["anon_name"] = anon_name
-        user_display = anon_name
-        is_anon = True
-
-    return render_template("threadline.html",
-                           game_id=game_id,
-                           user_display=user_display,
-                           is_anon=is_anon,
-                           echoes=echoes,
-                           insights=insights)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=port)
