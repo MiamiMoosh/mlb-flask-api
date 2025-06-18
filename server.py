@@ -254,7 +254,7 @@ def login():
             session["logged_in"] = True
             session["username"] = user["username"]
             session["role"] = user.get("role", "user")
-            return redirect(url_for("cms_dashboard") if user.get("role") == "admin" else url_for("user_dashboard"))
+            return redirect(url_for("admin_dashboard") if user.get("role") == "admin" else url_for("user_dashboard"))
 
         return "Invalid credentials", 401
 
@@ -298,7 +298,7 @@ def register():
 def cms_dashboard():
     if session.get("role") != "admin":
         return redirect(url_for("login"))
-    return render_template("cms.html")
+    return render_template("admin_dashboard.html")
 
 @app.route("/dashboard")
 def user_dashboard():

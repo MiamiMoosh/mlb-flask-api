@@ -1,0 +1,65 @@
+import os
+import time
+import asyncio
+import datetime
+import pytz
+from flask import Flask, Response, jsonify, render_template, render_template_string, request, redirect, url_for, session
+from werkzeug.security import check_password_hash, generate_password_hash
+from datetime import date
+from datetime import datetime
+from playwright.async_api import async_playwright
+from pymongo import MongoClient
+from itsdangerous import URLSafeTimedSerializer
+from flask_mail import Mail, Message
+from flask_dance.contrib.google import make_google_blueprint, google
+from flask_dance.contrib.facebook import make_facebook_blueprint, facebook
+from functools import wraps
+from flask_talisman import Talisman  # Enforces HTTPS security headers
+from werkzeug.middleware.proxy_fix import ProxyFix
+import subprocess
+
+
+
+
+
+{
+  "slug": "/shop/product/nike-x-lebron",
+  "hits": 104,
+  "last_viewed": "2025-06-12T20:44:00Z"
+}
+
+{
+  "query": "jordan jersey 1996",
+  "timestamp": "...",
+  "ip": "...",
+  "device": "Mozilla/5.0..."
+}
+
+
+# ------------------------------
+# ROUTE DEFINITIONS
+# ------------------------------
+
+
+
+@app.route("/MyBatterVsPitcher.html")
+def serve_bvp_page():
+    return send_from_directory("templates", "MyBatterVsPitcher.html")
+
+#@app.route("/static/<path:filename>")
+#def static_files(filename):
+#    return send_from_directory("static", filename)
+
+
+
+
+@app.after_request
+def add_security_headers(response):
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' https://code.jquery.com https://cdn.datatables.net 'unsafe-inline'; "
+        "style-src 'self' https://cdn.datatables.net 'unsafe-inline'; "
+        "img-src 'self' data: https:; "
+        "font-src 'self' https://cdn.datatables.net;"
+    )
+    return response
