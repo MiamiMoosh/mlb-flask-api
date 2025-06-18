@@ -699,7 +699,7 @@ def debug_request_info():
     print(f"Headers: {dict(request.headers)}")
 
     if request.endpoint and request.endpoint != "static":  # ✅ Prevents error for static files
-        print(f"Redirect URI: {url_for(request.endpoint, _external=True)}")
+        print(f"Request endpoint: {request.endpoint}")
 
 def enforce_https():
     if request.headers.get("X-Forwarded-Proto") != "https":
