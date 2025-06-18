@@ -42,13 +42,14 @@ app.config.update(
 
 mail = Mail(app)
 
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if session.get("role") != "admin":
-            return redirect(url_for("login"))
-        return f(*args, **kwargs)
-    return decorated_function
+def track(slug):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            track_view(slug)
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
 
 def track_view(slug):
     page_views.update_one(
@@ -56,6 +57,14 @@ def track_view(slug):
         {"$inc": {"hits": 1}, "$set": {"last_viewed": datetime.utcnow()}},
         upsert=True
     )
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get("role") != "admin":
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated_function
 
 @app.route("/admin/dashboard")
 @admin_required
@@ -289,7 +298,7 @@ def register():
         session["logged_in"] = True
         session["username"] = username
         session["role"] = "user"
-
+        track_view("/register")
         return redirect(url_for("user_dashboard"))
 
     return render_template("register.html")
@@ -308,7 +317,7 @@ def user_dashboard():
     user = users_collection.find_one({"username": session["username"]}, {"_id": 0, "password_hash": 0})
     if not user:
         return "User not found", 404
-
+    track_view("/dashboard")
     return render_template("user_dashboard.html", user=user)
 
 async def scrape_all_data(date):
@@ -537,6 +546,7 @@ def home():
     date = query_date if query_date else get_current_est_date()
     print(f"[DEBUG] FINAL Date Used for Display: {date}")
     # Pass the date to the template so the client-side nav links can be built from it.
+    track_view("/")
     return render_template("MyBatterVsPitcher.html", date=date)
 
 @app.route("/stats")
@@ -617,12 +627,14 @@ def change_date():
 
 @app.route("/shop")
 def shop():
+    track_view("/shop")
     return render_template("shop.html")
 
 @app.route("/stats/daily-bvp")
 def daily_bvp():
     query_date = request.args.get("date")
     date = query_date if query_date else get_current_est_date()
+    track_view("/stats/daily-bvp")
     return render_template("MyBatterVsPitcher.html", date=date)
 
 
