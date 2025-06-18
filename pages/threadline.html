@@ -48,6 +48,24 @@
     </div>
   {% endif %}
 
+  {% if matchup_insight %}
+  <div class="insight-box">
+    <h4>⚾ Matchup Insight</h4>
+    <p><strong>{{ pitcher }} pitch mix:</strong></p>
+    <ul>
+      {% for pitch, pct in matchup_insight.pitcher_pitch_mix.items() %}
+        <li>{{ pitch }}: {{ (pct * 100) | round }}%</li>
+      {% endfor %}
+    </ul>
+    <p><strong>{{ batter }} vs pitch types:</strong></p>
+    <ul>
+      {% for line in matchup_insight.batter_vs_pitch_types %}
+        <li>{{ line }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
   <script>
     document.getElementById("echo-form").addEventListener("submit", async (e) => {
       e.preventDefault();

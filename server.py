@@ -15,7 +15,7 @@ from functools import wraps
 from flask_cors import CORS
 from difflib import get_close_matches
 from pybaseball import statcast_batter, statcast_pitcher
-from insight_utils import get_recent_batter_insight, get_pitcher_mix
+from insight_utils import generate_matchup_insight, get_recent_batter_insight, get_pitcher_mix
 
 
 # Initialize Flask app
@@ -886,6 +886,17 @@ def insight():
         "pitcher": pitcher_blurb
     })
 
+
+@app.route("/threadline/matchup-insight")
+def matchup_insight():
+    batter = request.args.get("batter")
+    pitcher = request.args.get("pitcher")
+
+    if not batter or not pitcher:
+        return jsonify({"error": "Missing batter or pitcher name"}), 400
+
+    result = generate_matchup_insight(batter, pitcher)
+    return jsonify(result)
 @app.route("/threadline/<game_id>")
 def view_threadline(game_id):
     # Retrieve all echoes tied to this game
