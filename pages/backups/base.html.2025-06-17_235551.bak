@@ -6,15 +6,15 @@
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
-  <nav>    
+  <nav>
+    <a href="/dashboard">User Dashboard</a> |
 	<a href="/admin/dashboard">Admin Dashboard</a> |
     <a href="/admin/listings">Listings</a> |
     <a href="/admin/search-analytics">Searches</a> |
     <a href="/admin/page-traffic">Page Traffic</a> |
     <a href="/admin/manage-users">Users</a> |
     <a href="/admin/terminal">Terminal</a> |
-    <a href="/dashboard">User Dashboard</a> |
-	<a href="/logout">Logout</a> |
+    <a href="/logout">Logout</a> |
   </nav>
 
   <main style="padding: 2rem;">
