@@ -2,17 +2,6 @@
 {% block title %}User Management{% endblock %}
 
 {% block content %}
-
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    <ul class="flashes">
-      {% for category, message in messages %}
-        <li class="flash {{ category }}">{{ message }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
-{% endwith %}
-
 <h2>User Management</h2>
 
 <form method="GET" action="{{ url_for('admin_manage_users') }}">
@@ -24,7 +13,7 @@
   <tr><th>Username</th><th>Role</th><th>Plan</th><th>Actions</th></tr>
   {% for user in users %}
     <tr>
-      <td><a class="btn btn-sm btn-primary" href="{{ url_for('admin_view_user', username=user.username) }}">{{ user.username }}</a></td>
+      <td><a class="btn btn-sm btn-primary" href="{{ url_for('admin_view_user', username=user.username) }}">Details{{ user.username }}</a></td>
       <td>
         <form method="POST" action="{{ url_for('update_role') }}">
           <input type="hidden" name="username" value="{{ user.username }}">

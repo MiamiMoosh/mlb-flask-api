@@ -146,12 +146,26 @@ def admin_view_user(username):
 @app.route("/admin/reset-password", methods=["POST"])
 @admin_required
 def admin_reset_password():
-    username = request.form["username"]
-    new_pw = request.form["new_password"]
+    username = request.form.get("username")
+    new_pw = request.form.get("new_password")
+
+    if not username or not new_pw:
+        flash("Username or new password missing. Please try again.", "danger")
+        return redirect(url_for("admin_manage_users"))
+
     hashed_pw = generate_password_hash(new_pw)
-    users_collection.update_one({"username": username}, {"$set": {"password_hash": hashed_pw}})
-    flash(f"Password successfully reset for {username}.", "success")
+    result = users_collection.update_one(
+        {"username": username},
+        {"$set": {"password_hash": hashed_pw}}
+    )
+
+    if result.modified_count == 1:
+        flash(f"Password successfully reset for {username}.", "success")
+    else:
+        flash(f"Could not reset password for {username}.", "warning")
+
     return redirect(url_for("admin_view_user", username=username))
+
 
 @app.route("/admin/ban-email", methods=["POST"])
 @admin_required
