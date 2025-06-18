@@ -36,5 +36,3 @@
   <input type="hidden" name="email" value="{{ user.email }}">
   <button type="submit" class="btn btn-danger">Ban Email</button>
 </form>
-
-{% endblock %}
