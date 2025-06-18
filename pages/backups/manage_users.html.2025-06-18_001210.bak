@@ -13,7 +13,7 @@
   <tr><th>Username</th><th>Role</th><th>Plan</th><th>Actions</th></tr>
   {% for user in users %}
     <tr>
-      <td><a class="btn btn-sm btn-primary" href="{{ url_for('admin_view_user', username=user.username) }}">Details{{ user.username }}</a></td>
+      <td>{{ user.username }}</td>
       <td>
         <form method="POST" action="{{ url_for('update_role') }}">
           <input type="hidden" name="username" value="{{ user.username }}">

@@ -3,7 +3,7 @@ import time
 import asyncio
 import datetime
 import pytz
-from flask import Flask, jsonify, render_template, render_template_string, request, redirect, url_for, session
+from flask import Flask, jsonify, render_template, render_template_string, request, redirect, url_for, session, flash, get_flashed_messages
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import date
 from playwright.async_api import async_playwright
@@ -29,6 +29,7 @@ users_collection = db["users"]
 listings_collection = db["listings"]
 page_views = db["page_views"]
 search_logs = db["search_logs"]
+banned_emails = db["banned_emails"]
 
 
 app.config.update(
@@ -122,8 +123,43 @@ def admin_listings():
 @app.route("/admin/manage-users")
 @admin_required
 def admin_manage_users():
-    users = users_collection.find()
+    query = request.args.get("q")
+    if query:
+        users = users_collection.find({
+            "$or": [
+                {"username": {"$regex": query, "$options": "i"}},
+                {"email": {"$regex": query, "$options": "i"}}
+            ]
+        })
+    else:
+        users = users_collection.find()
     return render_template("manage_users.html", users=users)
+
+@app.route("/admin/user/<username>")
+@admin_required
+def admin_view_user(username):
+    user = users_collection.find_one({"username": username}, {"_id": 0, "password_hash": 0})
+    if not user:
+        return "User not found", 404
+    return render_template("user_detail.html", user=user)
+
+@app.route("/admin/reset-password", methods=["POST"])
+@admin_required
+def admin_reset_password():
+    username = request.form["username"]
+    new_pw = request.form["new_password"]
+    hashed_pw = generate_password_hash(new_pw)
+    users_collection.update_one({"username": username}, {"$set": {"password_hash": hashed_pw}})
+    flash(f"Password successfully reset for {username}.", "success")
+    return redirect(url_for("admin_view_user", username=username))
+
+@app.route("/admin/ban-email", methods=["POST"])
+@admin_required
+def ban_email():
+    email = request.form["email"]
+    banned_emails.insert_one({"email": email})
+    flash(f"Email address {email} has been banned.", "warning")
+    return redirect(url_for("admin_manage_users"))
 
 @app.route("/admin/search-analytics")
 @admin_required

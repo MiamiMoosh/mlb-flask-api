@@ -1,0 +1,23 @@
+<h2>User Details: {{ user.username }}</h2>
+<ul>
+  <li>Name: {{ user.email }}</li>
+  <li>Email: {{ user.email }}</li>
+  <li>Plan: {{ user.plan }}</li>
+  <li>Role: {{ user.role }}</li>
+</ul>
+
+<hr>
+
+<!-- Reset Password Form -->
+<form method="POST" action="{{ url_for('admin_reset_password') }}">
+  <input type="hidden" name="username" value="{{ user.username }}">
+  <label>New Password:</label>
+  <input type="password" name="new_password" required>
+  <button type="submit">Reset Password</button>
+</form>
+
+<!-- Ban Email Form -->
+<form method="POST" action="{{ url_for('ban_email') }}" style="margin-top: 20px;">
+  <input type="hidden" name="email" value="{{ user.email }}">
+  <button type="submit" class="btn btn-danger">Ban Email</button>
+</form>
