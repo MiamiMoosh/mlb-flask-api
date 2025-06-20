@@ -4,6 +4,20 @@
   <meta charset="UTF-8" />
   <title>{% block title %}Admin | First String{% endblock %}</title>
   <link rel="stylesheet" href="/static/styles.css" />
+  {% block styles %}
+<style>
+  table { width: 90%; margin: 30px auto; border-collapse: collapse; background-color: #1D1F21; color: #F5F5F5; font-family: 'Orbitron', sans-serif; font-size: 12px; border: 1px solid #AA0000; }
+  th { background-color: #AA0000; color: #FFFFFF; text-transform: uppercase; padding: 12px; border-bottom: 2px solid #222; }
+  td { padding: 10px; border-top: 1px solid #444; vertical-align: top; text-align: left; }
+  tr:nth-child(even) { background-color: #2A2C2F; }
+  tr:hover { background-color: #333639; }
+  h2 { font-family: 'Orbitron', sans-serif; color: #FFFFFF; margin-bottom: 20px; font-size: 20px; }
+  form label { color: #CCCCCC; font-size: 13px; margin-right: 20px; }
+  select, input[type="checkbox"] { margin-left: 8px; background-color: #2A2A2A; color: #FFFFFF; border: 1px solid #AA0000; padding: 4px 6px; border-radius: 4px; }
+  .suspicious-flag { color: #FF4444; font-size: 11px; font-weight: bold; margin-bottom: 4px; }
+</style>
+{% endblock %}
+
 </head>
 <body>
   <nav>    
