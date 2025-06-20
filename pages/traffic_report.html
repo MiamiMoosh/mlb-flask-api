@@ -2,23 +2,54 @@
 {% block title %}Page Traffic{% endblock %}
 {% block content %}
   <h2>Page Views</h2>
-  <form method="get">
-    <label>Sort by:
-      <select name="sort" onchange="this.form.submit()">
-        <option value="hits">Hits</option>
-        <option value="last_viewed">Last Viewed</option>
-      </select>
-    </label>
-  </form>
+ <form method="get">
+  <label>Sort by:
+    <select name="sort" onchange="this.form.submit()">
+      <option value="hits">Hits</option>
+      <option value="last_viewed">Last Viewed</option>
+    </select>
+  </label>
+  <label style="margin-left:20px">
+    <input type="checkbox" name="bots" value="on"
+           onchange="this.form.submit()"
+           {% if include_bots %}checked{% endif %}> Include bots
+  </label>
+</form>
 
   <table>
-    <tr><th>Slug</th><th>Hits</th><th>Last Viewed</th></tr>
-    {% for page in pages %}
-      <tr>
-        <td>{{ page.slug }}</td>
-        <td>{{ page.hits }}</td>
-        <td>{{ page.last_viewed }}</td>
-      </tr>
-    {% endfor %}
+    <tr><th>Slug</th><th>Hits</th><th>Last Viewed</th><th>Top Sources</th></tr>
+{% for page in pages %}
+    page["bot_hits"] = sum(1 for s in sources if is_bot(s.get("user_agent", "")))
+page["human_hits"] = len(sources) - page["bot_hits"]
+    ip_counts = {}
+for s in sources:
+    ip = s.get("ip")
+    if ip:
+        ip_counts[ip] = ip_counts.get(ip, 0) + 1
+page["suspicious_ips"] = [ip for ip, c in ip_counts.items() if c >= 10]
+
+
+  <tr>
+    <td>{{ page.slug }}</td>
+    <td>{{ page.hits }}</td>
+    <td>{{ page.last_viewed }}</td>
+    <td>
+  👤 {{ page.human_hits }}<br>
+  🤖 {{ page.bot_hits }}
+</td>
+
+    <td>
+      <td>
+  {% for ip in page.suspicious_ips %}
+    <div style="color:red; font-size:12px;">🚩 {{ ip }}</div>
+  {% endfor %}
+</td>
+
+      {% for ref, count in page.ref_summary %}
+        <div>{{ ref }} ({{ count }})</div>
+      {% endfor %}
+    </td>
+  </tr>
+{% endfor %}
   </table>
 {% endblock %}

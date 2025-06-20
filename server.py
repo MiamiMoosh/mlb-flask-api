@@ -5,6 +5,7 @@ import datetime
 import pytz
 import statsapi
 from flask import Flask, jsonify, render_template, render_template_string, request, redirect, url_for, session, flash, get_flashed_messages
+from bson import ObjectId
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import date
 from playwright.async_api import async_playwright
@@ -37,7 +38,7 @@ listings_collection = db["listings"]
 page_views = db["page_views"]
 search_logs = db["search_logs"]
 banned_emails = db["banned_emails"]
-threadline_echoes = db["threadline_echoes"]
+threadline_comments = db["threadline_comments"]
 threadline_users = db["threadline_users"]
 threadline_insights = db["threadline_insights"]
 
@@ -65,12 +66,15 @@ def extract_tags(text):
     if any(word in lowered for word in ["blow", "lead gone", "meltdown"]):
         tags.append("meltdown")
     return tags
+
+
 def detect_players(text, player_names):
     found = []
     for name in player_names:
         if name.lower() in text.lower():
             found.append(name)
     return list(set(found))  # remove duplicates
+
 
 def track(slug):
     def decorator(f):
@@ -81,12 +85,52 @@ def track(slug):
         return decorated_function
     return decorator
 
+
+def is_bot(user_agent):
+    bot_signatures = [
+        "bot", "spider", "crawl", "slurp", "fetch", "monitor", "pingdom",
+        "headless", "python-requests", "httpclient", "wget", "curl"
+    ]
+    ua = user_agent.lower()
+    return any(sig in ua for sig in bot_signatures)
+
+
 def track_view(slug):
+    ua = request.headers.get("User-Agent", "")
+    if is_bot(ua):
+        return  # Skip bot traffic
+
+    ref = request.referrer or "direct"
+    ip = request.remote_addr
+
     page_views.update_one(
         {"slug": slug},
-        {"$inc": {"hits": 1}, "$set": {"last_viewed": datetime.datetime.utcnow()}},
+        {
+            "$inc": {"hits": 1},
+            "$set": {"last_viewed": datetime.datetime.utcnow()},
+            "$push": {
+                "sources": {
+                    "referrer": ref,
+                    "user_agent": ua,
+                    "ip": ip,
+                    "timestamp": datetime.datetime.utcnow()
+                }
+            }
+        },
         upsert=True
     )
+
+
+if is_bot(ua):
+    bot_views.insert_one({
+        "slug": slug,
+        "user_agent": ua,
+        "referrer": request.referrer,
+        "ip": request.remote_addr,
+        "timestamp": datetime.datetime.utcnow()
+    })
+    return
+
 
 def admin_required(f):
     @wraps(f)
@@ -95,6 +139,7 @@ def admin_required(f):
             return redirect(url_for("login"))
         return f(*args, **kwargs)
     return decorated_function
+
 
 @app.route("/admin/dashboard")
 @admin_required
@@ -109,6 +154,7 @@ def manage_users():
 
     users = list(users_collection.find({}, {"_id": 0, "password_hash": 0}))
     return render_template("manage_users.html", users=users)
+
 
 @app.route("/cms/create_user", methods=["POST"])
 def create_user():
@@ -132,6 +178,7 @@ def create_user():
 
     return redirect(url_for("admin_manage_users"))
 
+
 @app.route("/webhook/etsy", methods=["POST"])
 def etsy_webhook():
     data = request.json  # Get webhook data
@@ -143,11 +190,13 @@ def etsy_webhook():
 
     return jsonify({"status": "error", "message": "Invalid data"}), 400
 
+
 @app.route("/admin/listings")
 @admin_required
 def admin_listings():
     listings = listings_collection.find()
     return render_template("listings.html", listings=listings)
+
 
 @app.route("/admin/manage-users")
 @admin_required
@@ -164,6 +213,7 @@ def admin_manage_users():
         users = users_collection.find()
     return render_template("manage_users.html", users=users)
 
+
 @app.route("/admin/user/<username>")
 @admin_required
 def admin_view_user(username):
@@ -171,6 +221,7 @@ def admin_view_user(username):
     if not user:
         return "User not found", 404
     return render_template("user_detail.html", user=user)
+
 
 @app.route("/admin/reset-password", methods=["POST"])
 @admin_required
@@ -204,6 +255,7 @@ def ban_email():
     flash(f"Email address {email} has been banned.", "warning")
     return redirect(url_for("admin_manage_users"))
 
+
 @app.route("/admin/search-analytics")
 @admin_required
 def search_analytics():
@@ -214,12 +266,28 @@ def search_analytics():
     ])
     return render_template("search_analytics.html", queries=top_queries)
 
+
 @app.route("/admin/page-traffic")
 @admin_required
 def page_traffic():
     sort_field = request.args.get("sort", "hits")
-    pages = page_views.find().sort(sort_field, -1)
-    return render_template("traffic_report.html", pages=pages)
+    include_bots = request.args.get("bots", "off") == "on"
+
+    pages = list(page_views.find().sort(sort_field, -1))
+
+    for page in pages:
+        sources = page.get("sources", [])
+        if not include_bots:
+            sources = [s for s in sources if not is_bot(s.get("user_agent", ""))]
+
+        ref_counts = {}
+        for s in sources:
+            ref = s.get("referrer", "direct")
+            ref_counts[ref] = ref_counts.get(ref, 0) + 1
+        page["ref_summary"] = sorted(ref_counts.items(), key=lambda x: -x[1])[:3]
+
+    return render_template("traffic_report.html", pages=pages, include_bots=include_bots)
+
 
 @app.route("/admin/listings/new", methods=["GET", "POST"])
 @admin_required
@@ -242,6 +310,7 @@ def new_listing():
 
     return render_template("listings_form.html", listing=None)
 
+
 @app.route("/admin/listings/<id>/edit", methods=["GET", "POST"])
 @admin_required
 def edit_listing(id):
@@ -259,6 +328,7 @@ def edit_listing(id):
         return redirect(url_for("admin_listings"))
 
     return render_template("listings_form.html", listing=listing)
+
 
 @app.route("/forgot-password", methods=["GET", "POST"])
 def forgot_password():
@@ -297,6 +367,7 @@ def reset_password(token):
 
     return render_template("reset_password.html", token=token)
 
+
 @app.route("/cms/update_user", methods=["POST"])
 def update_user():
     if session.get("role") != "admin":
@@ -308,6 +379,7 @@ def update_user():
     users_collection.update_one({"username": username}, {"$set": {"plan": plan}})
     return redirect(url_for("admin_manage_users"))
 
+
 @app.route("/cms/delete_user", methods=["POST"])
 def delete_user():
     if session.get("role") != "admin":
@@ -316,6 +388,7 @@ def delete_user():
     username = request.form["username"]
     users_collection.delete_one({"username": username})
     return redirect(url_for("admin_manage_users"))
+
 
 @app.route("/cms/update_role", methods=["POST"])
 def update_role():
@@ -327,6 +400,7 @@ def update_role():
 
     users_collection.update_one({"username": username}, {"$set": {"role": role}})
     return redirect(url_for("admin_manage_users"))
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -348,10 +422,12 @@ def login():
 
     return render_template("login.html")
 
+
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("login"))
+
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -382,11 +458,13 @@ def register():
 
     return render_template("register.html")
 
+
 @app.route("/cms")
 def cms_dashboard():
     if session.get("role") != "admin":
         return redirect(url_for("login"))
     return render_template("admin_dashboard.html")
+
 
 @app.route("/dashboard")
 def user_dashboard():
@@ -399,6 +477,7 @@ def user_dashboard():
     track_view("/dashboard")
     return render_template("user_dashboard.html", user=user)
 
+
 async def scrape_all_data(date):
     # Run both scrapers concurrently
     async with asyncio.TaskGroup() as tg:
@@ -408,6 +487,7 @@ async def scrape_all_data(date):
         streak_data, stats_data = await asyncio.gather(streak_task, stats_task)
 
     return streak_data, stats_data
+
 
 async def scrape_data(date):
     url = f"https://swishanalytics.com/optimus/mlb/batter-vs-pitcher-stats?date={date}"
@@ -484,6 +564,7 @@ async def scrape_data(date):
         await browser.close()
         return rows_data
 
+
 def get_streak_data():
     """Retrieve cached streak data from MongoDB for today's scrape date."""
     today_str = date.today().strftime("%Y-%m-%d")
@@ -491,9 +572,9 @@ def get_streak_data():
     return entry if entry else None
 
 
-
 # Set to 1 for forced re-scraping (debug), 0 for normal behavior.
 ALWAYS_SCRAPE = 1
+
 
 async def scrape_streak_data():
     """Scrape streak data only if no cached entry exists for today's scrape date."""
@@ -584,6 +665,7 @@ rows => {
         print(f"[DEBUG] Players on hot streak: {[player['player'] for player in rows_data if 'player' in player]}")
         return new_data
 
+
 def store_data(date, data):
     """Deletes old data for the date if outdated, then stores fresh scraped data."""
     current_time = datetime.datetime.utcnow()
@@ -598,8 +680,10 @@ def store_data(date, data):
     collection.insert_many(cleaned_data)
     print(f"[DEBUG] Stored updated data for {date} at {current_time}")
 
+
 def get_data(date):
     return list(collection.find({"date": date}, {"_id": 0}))
+
 
 def get_current_est_date():
     """
@@ -614,6 +698,7 @@ def get_current_est_date():
 # ROUTE DEFINITIONS
 # ------------------------------
 
+
 @app.route("/")
 def home():
     """
@@ -627,6 +712,7 @@ def home():
     # Pass the date to the template so the client-side nav links can be built from it.
     track_view("/")
     return render_template("MyBatterVsPitcher.html", date=date)
+
 
 @app.route("/stats")
 def stats():
@@ -657,8 +743,6 @@ def stats():
     return jsonify({"error": "No data found for this date"}), 404
 
 
-from bson import ObjectId
-
 def convert_object_ids(obj):
     if isinstance(obj, dict):
         return {k: convert_object_ids(v) for k, v in obj.items()}
@@ -668,6 +752,7 @@ def convert_object_ids(obj):
         return str(obj)  # Convert ObjectId to string
     else:
         return obj
+
 
 @app.route("/streak-data")
 def streak_data():
@@ -679,13 +764,6 @@ def streak_data():
     cleaned_data = convert_object_ids(data)  # Convert ObjectIds before returning
     return jsonify(cleaned_data)
 
-#@app.route("/streak-data")
-#def streak_data():
-#    data = get_streak_data()
-#    if data is None:
-        # If no cache is available for today, force a scrape.
-#        data = asyncio.run(scrape_streak_data())
-#    return jsonify(data)
 
 @app.route("/change-date")
 def change_date():
@@ -704,10 +782,12 @@ def change_date():
             store_data(date, scraped_data)
     return redirect(url_for("home", date=date))
 
+
 @app.route("/shop")
 def shop():
     track_view("/shop")
     return render_template("shop.html")
+
 
 @app.route("/stats/daily-bvp")
 def daily_bvp():
@@ -721,6 +801,7 @@ def daily_bvp():
 def index_redirect():
     return redirect(url_for("home"))
 
+
 @app.before_request
 def debug_request_info():
     print(f"Request URL: {request.url}")
@@ -730,13 +811,16 @@ def debug_request_info():
     if request.endpoint and request.endpoint != "static":  # ✅ Prevents error for static files
         print(f"Request endpoint: {request.endpoint}")
 
+
 def enforce_https():
     if request.headers.get("X-Forwarded-Proto") != "https":
         return redirect(request.url.replace("http://", "https://"), code=301)
 
+
 def redirect_www():
     if request.host.startswith("www."):
         return redirect(request.url.replace("www.", ""), code=301)
+
 
 @app.route("/admin/terminal", methods=["GET", "POST"])
 def admin_terminal():
@@ -750,8 +834,9 @@ def admin_terminal():
                 output = e.output.decode()
     return render_template("terminal.html", output=output)
 
+
 @app.route("/threadline/upvote", methods=["POST"])
-def upvote_echo():
+def upvote_comment():
     data = request.get_json()
     user_id = data.get("user_id")
     if not user_id:
@@ -763,8 +848,9 @@ def upvote_echo():
     )
     return jsonify({"status": "ok"})
 
+
 @app.route("/threadline/mute", methods=["POST"])
-def mute_echo():
+def mute_comment():
     data = request.get_json()
     user_id = data.get("user_id")
     if not user_id:
@@ -776,8 +862,9 @@ def mute_echo():
     )
     return jsonify({"status": "ok"})
 
-@app.route("/threadline/echo", methods=["POST"])
-def post_echo():
+
+@app.route("/threadline/comment", methods=["POST"])
+def post_comment():
     data = request.get_json()
     game_id = data.get("game_id")
     text = data.get("text")
@@ -804,8 +891,8 @@ def post_echo():
             },
             upsert=True
         )
-
-    echo = {
+    cached_player_list = []
+    comment = {
         "game_id": game_id,
         "text": text.strip(),
         "user_display": user_display,
@@ -816,15 +903,17 @@ def post_echo():
         "player_mentions": detect_players(text, cached_player_list)  # Or empty list for now
     }
 
-    threadline_echoes.insert_one(echo)
+    threadline_comments.insert_one(comment)
 
-    return jsonify({"status": "success", "user_display": user_display})
+    return jsonify({"user_display": user_display, "text": text.strip()})
+
+
 def update_badges():
     for user in threadline_users.find():
         cred = user.get("cred_score", 0)
         badge = "Rookie Threader"
         if cred < 50:
-            badge = "Echo Dust"
+            badge = "Comment Dust"
         elif cred < 100:
             badge = "Rookie Threader"
         elif cred < 150:
@@ -838,18 +927,21 @@ def update_badges():
             {"user_id": user["user_id"]},
             {"$set": {"badge": badge}}
         )
+
+
 @app.route("/threadline/feed", methods=["GET"])
-def get_echo_feed():
+def get_comment_feed():
     game_id = request.args.get("game_id")
     if not game_id:
         return jsonify({"error": "Missing game_id"}), 400
 
-    echoes = list(threadline_echoes.find(
+    comments = list(threadline_comments.find(
         {"game_id": game_id},
         {"_id": 0}
     ).sort("timestamp", -1).limit(50))
 
-    return jsonify(echoes)
+    return jsonify(comments)
+
 
 @app.route("/threadline/insight")
 def insight():
@@ -897,21 +989,23 @@ def matchup_insight():
 
     result = generate_matchup_insight(batter, pitcher)
     return jsonify(result)
+
+
 @app.route("/threadline/<game_id>")
 def view_threadline(game_id):
-    # Retrieve all echoes tied to this game
-    echoes = list(threadline_echoes.find(
+    # Retrieve all comments tied to this game
+    comments = list(threadline_comments.find(
         {"game_id": game_id},
         {"_id": 0}
-    ).sort("timestamp", -1))
+    ).sort("timestamp", -1).limit(50))
 
-    # Get any cached insights for this game
+    # Get cached insight documents
     insights = list(threadline_insights.find(
         {"game_id": game_id},
         {"_id": 0}
     ))
 
-    # Determine current user (if logged in or anonymous)
+    # Determine current user (logged in or anonymous)
     if session.get("logged_in") and session.get("username"):
         user_display = session["username"]
         is_anon = False
@@ -923,12 +1017,22 @@ def view_threadline(game_id):
         user_display = anon_name
         is_anon = True
 
+    # For now: hardcoded example (replace this with real game-based logic)
+    batter = "Aaron Judge"
+    pitcher = "Tarik Skubal"
+    matchup_insight = generate_matchup_insight(batter, pitcher)
+
     return render_template("threadline.html",
                            game_id=game_id,
                            user_display=user_display,
                            is_anon=is_anon,
-                           echoes=echoes,
-                           insights=insights)
+                           comments=comments,
+                           insights=insights,
+                           matchup_insight=matchup_insight,
+                           batter=batter,
+                           pitcher=pitcher)
+
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=port)
