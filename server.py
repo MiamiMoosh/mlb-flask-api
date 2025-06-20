@@ -98,7 +98,14 @@ def is_bot(user_agent):
 def track_view(slug):
     ua = request.headers.get("User-Agent", "")
     if is_bot(ua):
-        return  # Skip bot traffic
+        bot_views.insert_one({
+            "slug": slug,
+            "user_agent": ua,
+            "referrer": request.referrer,
+            "ip": request.remote_addr,
+            "timestamp": datetime.datetime.utcnow()
+        })
+        return
 
     ref = request.referrer or "direct"
     ip = request.remote_addr
@@ -121,15 +128,6 @@ def track_view(slug):
     )
 
 
-if is_bot(ua):
-    bot_views.insert_one({
-        "slug": slug,
-        "user_agent": ua,
-        "referrer": request.referrer,
-        "ip": request.remote_addr,
-        "timestamp": datetime.datetime.utcnow()
-    })
-    return
 
 
 def admin_required(f):
