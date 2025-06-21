@@ -16,7 +16,7 @@ from functools import wraps
 from flask_cors import CORS
 from difflib import get_close_matches
 from pybaseball import statcast_batter, statcast_pitcher
-from insight_utils import generate_matchup_insight, get_recent_batter_insight, get_pitcher_mix
+from insight_utils import generate_matchup_insight, get_recent_batter_insight, get_pitcher_mix, extract_matchup_pair
 
 
 # Initialize Flask app
@@ -41,6 +41,8 @@ banned_emails = db["banned_emails"]
 threadline_comments = db["threadline_comments"]
 threadline_users = db["threadline_users"]
 threadline_insights = db["threadline_insights"]
+threadline_games = db["threadline_games"]
+
 
 
 app.config.update(
@@ -991,7 +993,7 @@ def matchup_insight():
 
 @app.route("/threadline/<game_id>")
 def view_threadline(game_id):
-    # Retrieve all comments tied to this game
+    # Retrieve recent comments tied to this game
     comments = list(threadline_comments.find(
         {"game_id": game_id},
         {"_id": 0}
@@ -1015,10 +1017,12 @@ def view_threadline(game_id):
         user_display = anon_name
         is_anon = True
 
-    # For now: hardcoded example (replace this with real game-based logic)
-    batter = "Aaron Judge"
-    pitcher = "Tarik Skubal"
-    matchup_insight = generate_matchup_insight(batter, pitcher)
+    # Retrieve matchup insight using live game data
+    game = threadline_games.find_one({"game_id": game_id})
+    batter, pitcher = extract_matchup_pair(game_id, game)
+    matchup_insight = None
+    if batter and pitcher:
+        matchup_insight = generate_matchup_insight(batter, pitcher)
 
     return render_template("threadline.html",
                            game_id=game_id,
@@ -1029,7 +1033,6 @@ def view_threadline(game_id):
                            matchup_insight=matchup_insight,
                            batter=batter,
                            pitcher=pitcher)
-
 
 
 if __name__ == "__main__":

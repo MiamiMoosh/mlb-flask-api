@@ -76,3 +76,38 @@ def get_pitcher_mix(name):
 
     mix = data["pitch_type"].value_counts(normalize=True).head(3)
     return f"{name}'s pitch mix: " + ", ".join([f"{k} ({round(v*100)}%)" for k, v in mix.items()])
+
+def extract_matchup_pair(game_id, game_doc):
+    """Returns (batter, pitcher) tuple using best available info, or (None, None)."""
+    if not game_doc:
+        return None, None
+
+    home = game_doc.get("home_team")
+    away = game_doc.get("away_team")
+    probable = game_doc.get("probable_pitchers", {})
+    lineups = game_doc.get("batting_orders", {})
+
+    teams = game_id.split("-")[-2:]
+    home_abbr = home if home in teams else None
+    away_abbr = away if away in teams else None
+
+    if not home_abbr or not away_abbr:
+        return None, None
+
+    pitcher = probable.get("away")
+    batter_list = lineups.get("home")
+
+    if pitcher and batter_list and len(batter_list) > 0:
+        return batter_list[0], pitcher
+
+    pitcher_alt = probable.get("home")
+    batter_list_alt = lineups.get("away")
+    if pitcher_alt and batter_list_alt and len(batter_list_alt) > 0:
+        return batter_list_alt[0], pitcher_alt
+
+    any_pitcher = (probable.get("home") or probable.get("away"))
+    any_batter = (lineups.get("home") or lineups.get("away") or [])
+    if any_pitcher and any_batter:
+        return any_batter[0], any_pitcher
+
+    return None, None
