@@ -1,4 +1,4 @@
-from sports_api import get_games_for_league
+from sportsdb_api import get_games_for_league
 from pymongo import MongoClient
 from datetime import datetime
 
@@ -6,6 +6,7 @@ LEAGUE_IDS = ["4387", "4391", "4394", "4424", "4457"]  # NBA, NFL, etc.
 client = MongoClient()
 db = client["your-db"]
 threadline_games = db.threadline_games
+
 
 def seed_games():
     today = datetime.utcnow().date().isoformat()
@@ -24,6 +25,7 @@ def seed_games():
                     "league": g["league"],
                     "sport": g["sport"]
                 })
+
 
 if __name__ == "__main__":
     seed_games()

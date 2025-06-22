@@ -22,7 +22,7 @@ from pybaseball import statcast_batter, statcast_pitcher
 from insight_utils import generate_or_fetch_matchup_insight, generate_matchup_insight, get_recent_batter_insight, \
     get_pitcher_mix, extract_matchup_pair
 from game_logic import extract_game_state, is_high_leverage
-from sports_api import get_games_for_league, get_leagues
+from sportsdb_api import get_games_for_league, get_leagues
 
 # Initialize Flask app
 app = Flask(__name__, template_folder="pages")
