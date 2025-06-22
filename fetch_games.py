@@ -1,6 +1,6 @@
 from sportsdb_api import get_games_for_league
 from pymongo import MongoClient
-from datetime import datetime
+from datetime import datetime, UTC
 
 LEAGUE_IDS = ["4387", "4391", "4394", "4424", "4457"]  # NBA, NFL, etc.
 client = MongoClient()

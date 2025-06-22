@@ -1,5 +1,5 @@
 import requests
-import datetime
+import datetime, UTC
 import logging
 
 API_KEY = "1"  # Free tier key for TheSportsDB

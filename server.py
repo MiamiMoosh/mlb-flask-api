@@ -10,7 +10,7 @@ from flask import Flask, jsonify, render_template, render_template_string, reque
     get_flashed_messages
 from bson import ObjectId
 from werkzeug.security import check_password_hash, generate_password_hash
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from playwright.async_api import async_playwright
 from pymongo import MongoClient
 from itsdangerous import URLSafeTimedSerializer
