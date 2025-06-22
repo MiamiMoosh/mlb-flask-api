@@ -675,7 +675,7 @@ rows => {
 
 def store_data(target_date, data):
     """Deletes old data for the date if outdated, then stores fresh scraped data."""
-    current_time = datetime.now(timezone.utc))
+    current_time = datetime.now(timezone.utc)
 
     # Add timestamp field to all entries
     cleaned_data = [{k: v for k, v in entry.items() if k != "_id"} for entry in data]
