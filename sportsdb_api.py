@@ -1,5 +1,5 @@
 import requests
-import datetime, UTC
+import datetime, timezone
 import logging
 
 API_KEY = "1"  # Free tier key for TheSportsDB
@@ -21,7 +21,7 @@ def fetch_json(endpoint, params=None, ttl=30):
 
     if ENABLE_CACHE and cache_key in _cache:
         cached = _cache[cache_key]
-        if (datetime.now(UTC) - cached["ts"]).total_seconds() < ttl:
+        if (datetime.now(timezone.utc) - cached["ts"]).total_seconds() < ttl:
             return cached["data"]
 
     try:
@@ -29,7 +29,7 @@ def fetch_json(endpoint, params=None, ttl=30):
         res.raise_for_status()
         data = res.json()
         if ENABLE_CACHE:
-            _cache[cache_key] = {"data": data, "ts": datetime.now(UTC)}
+            _cache[cache_key] = {"data": data, "ts": datetime.now(timezone.utc)}
         return data
     except Exception as e:
         logging.warning(f"❌ Fetch error: {url} • {e}")
@@ -63,7 +63,7 @@ def infer_status(e):
         return e.get("strStatus") or "Unknown"
 
     try:
-        now = datetime.now(UTC).date()
+        now = datetime.now(timezone.utc).date()
         event_date = datetime.datetime.strptime(e["dateEvent"], "%Y-%m-%d").date()
         if e.get("intHomeScore") is not None:
             return "Final"

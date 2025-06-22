@@ -7,7 +7,7 @@ import subprocess
 from flask import Flask, jsonify, render_template,  request, redirect, url_for, session, flash
 from bson import ObjectId
 from werkzeug.security import check_password_hash, generate_password_hash
-from datetime import date, datetime, timedelta, UTC
+from datetime import date, datetime, timedelta, timezone
 from playwright.async_api import async_playwright
 from pymongo import MongoClient
 from itsdangerous import URLSafeTimedSerializer
@@ -117,7 +117,7 @@ def track_view(slug):
             "user_agent": ua,
             "referrer": request.referrer,
             "ip": request.remote_addr,
-            "timestamp": datetime.now(UTC)
+            "timestamp": datetime.now(timezone.utc)
         })
         return
 
@@ -134,7 +134,7 @@ def track_view(slug):
                     "referrer": ref,
                     "user_agent": ua,
                     "ip": ip,
-                    "timestamp": datetime.now(UTC)
+                    "timestamp": datetime.now(timezone.utc)
                 }
             }
         },
@@ -314,7 +314,7 @@ def new_listing():
             "category": category,
             "price": price,
             "description": description,
-            "created_at": datetime.now(UTC)
+            "created_at": datetime.now(timezone.utc)
         })
 
         return redirect(url_for("admin_listings"))
@@ -675,7 +675,7 @@ rows => {
 
 def store_data(target_date, data):
     """Deletes old data for the date if outdated, then stores fresh scraped data."""
-    current_time = datetime.now(UTC)
+    current_time = datetime.now(timezone.utc))
 
     # Add timestamp field to all entries
     cleaned_data = [{k: v for k, v in entry.items() if k != "_id"} for entry in data]
@@ -895,7 +895,7 @@ def post_comment():
     game_id = data.get("game_id")
     text = data.get("text", "").strip()
     sport = data.get("sport", "mlb")  # 🔥 default for now if not provided
-    now = datetime.now(UTC)
+    now = datetime.now(timezone.utc)
 
     if not game_id or not text:
         return jsonify({"error": "Missing game_id or text"}), 400
@@ -1014,7 +1014,7 @@ def insight():
             "batter": batter_blurb,
             "pitcher": pitcher_blurb
         },
-        "cached_at": datetime.now(UTC)
+        "cached_at": datetime.now(timezone.utc)
     })
 
     return jsonify({
@@ -1049,7 +1049,7 @@ def view_threadline(game_id):
                 "game_id": game_id,
                 "username": username,
                 "text": comment_text,
-                "timestamp": datetime.now(UTC)
+                "timestamp": datetime.now(timezone.utc)
             })
         return redirect(url_for("view_threadline", game_id=game_id))
 
@@ -1143,7 +1143,7 @@ def view_threadline(game_id):
 def timeago(ts):
     if not ts:
         return ""
-    now = datetime.now(UTC)
+    now = datetime.now(timezone.utc)
     diff = now - ts
     if diff.days >= 1:
         return f"{diff.days}d ago"
@@ -1184,7 +1184,7 @@ def record_survey_vote():
         "username": username,
         "selected_option": selected,
         "correct_option": survey.get("correct_option"),
-        "timestamp": datetime.now(UTC)
+        "timestamp": datetime.now(timezone.utc)
     })
 
     # Update reputation
