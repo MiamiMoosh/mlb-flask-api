@@ -1,13 +1,10 @@
 import os
-import time
 import asyncio
 import datetime
 import pytz
-import statsapi
 import subprocess
 
-from flask import Flask, jsonify, render_template, render_template_string, request, redirect, url_for, session, flash, \
-    get_flashed_messages
+from flask import Flask, jsonify, render_template,  request, redirect, url_for, session, flash
 from bson import ObjectId
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import date, datetime, timedelta, UTC
@@ -17,8 +14,6 @@ from itsdangerous import URLSafeTimedSerializer
 from flask_mail import Mail, Message
 from functools import wraps
 from flask_cors import CORS
-from difflib import get_close_matches
-from pybaseball import statcast_batter, statcast_pitcher
 from insight_utils import generate_or_fetch_matchup_insight, generate_matchup_insight, get_recent_batter_insight, \
     get_pitcher_mix, extract_matchup_pair
 from game_logic import extract_game_state, is_high_leverage
@@ -329,11 +324,11 @@ def new_listing():
 
 @app.route("/admin/listings/<id>/edit", methods=["GET", "POST"])
 @admin_required
-def edit_listing(id):
-    listing = listings_collection.find_one({"_id": ObjectId(id)})
+def edit_listing(listing_id):
+    listing = listings_collection.find_one({"_id": ObjectId(listing_id)})
 
     if request.method == "POST":
-        listings_collection.update_one({"_id": ObjectId(id)}, {
+        listings_collection.update_one({"_id": ObjectId(listing_id)}, {
             "$set": {
                 "title": request.form["title"],
                 "category": request.form["category"],
@@ -494,24 +489,23 @@ def user_dashboard():
     return render_template("user_dashboard.html", user=user)
 
 
-async def scrape_all_data(date):
+async def scrape_all_data(target_date):
     # Run both scrapers concurrently
     async with asyncio.TaskGroup() as tg:
         streak_task = tg.create_task(scrape_streak_data())
-        stats_task = tg.create_task(scrape_data(date))
+        stats_task = tg.create_task(scrape_data(target_date))
 
-        streak_data, stats_data = await asyncio.gather(streak_task, stats_task)
+        streak_data1, stats_data = await asyncio.gather(streak_task, stats_task)
 
-    return streak_data, stats_data
+    return streak_data1, stats_data
 
 
-async def scrape_data(date):
-    url = f"https://swishanalytics.com/optimus/mlb/batter-vs-pitcher-stats?date={date}"
+async def scrape_data(target_date):
+    url = f"https://swishanalytics.com/optimus/mlb/batter-vs-pitcher-stats?date={target_date}"
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
         await page.goto(url, timeout=15000, wait_until="domcontentloaded")
-        #print(f"[DEBUG] Scraping data for {date} from {url}")
 
         try:
             await page.wait_for_selector("table tbody tr", timeout=10000)
@@ -602,7 +596,7 @@ async def scrape_streak_data():
     if not ALWAYS_SCRAPE:
         cached_data = streak_collection.find_one({"scrape_date": today_str}, {"_id": 0})
         if cached_data:
-            #print(f"[DEBUG] Using cached streak data for {today_str}")
+            # print(f"[DEBUG] Using cached streak data for {today_str}")
             return cached_data
 
     url = "https://www.baseballmusings.com/cgi-bin/CurStreak.py"
@@ -676,9 +670,6 @@ rows => {
         }
         streak_collection.delete_many({"scrape_date": today_str})
         streak_collection.insert_one(new_data)
-        #print(f"[DEBUG] Cached new streak data for {today_str}")
-        #print(f"[DEBUG] Streak data extracted: {rows_data}")
-        #print(f"[DEBUG] Players on hot streak: {[player['player'] for player in rows_data if 'player' in player]}")
         return new_data
 
 
@@ -694,7 +685,7 @@ def store_data(target_date, data):
 
     collection.delete_many({"date": target_date})  # Clear outdated data
     collection.insert_many(cleaned_data)
-    #print(f"[DEBUG] Stored updated data for {target_date} at {current_time}")
+    # print(f"[DEBUG] Stored updated data for {target_date} at {current_time}")
 
 
 def get_data(target_date):
@@ -725,16 +716,15 @@ def home():
     """
     query_date = request.args.get("date")
     target_date = query_date if query_date else get_current_est_date()
-    #print(f"[DEBUG] FINAL Date Used for Display: {target_date}")
     # Pass the date to the template so the client-side nav links can be built from it.
     track_view("/")
-    return render_template("MyBatterVsPitcher.html", date=date)
+    return render_template("MyBatterVsPitcher.html", date=target_date)
 
 
 @app.route("/stats")
 def stats():
     query_date = request.args.get("date") or get_current_est_date()
-    #print(f"[DEBUG] Fetching stats for {query_date}")
+    # print(f"[DEBUG] Fetching stats for {query_date}")
 
     # Check if data exists and when it was last updated
     existing_entry = collection.find_one({"date": query_date}, {"_id": 0})
@@ -746,11 +736,11 @@ def stats():
 
             # If data is less than 2 hours old, return cached data
             if time_elapsed.total_seconds() < 7200:
-                #print(f"[DEBUG] Using cached data for {query_date}, last updated {last_updated}")
+                # print(f"[DEBUG] Using cached data for {query_date}, last updated {last_updated}")
                 return jsonify(list(collection.find({"date": query_date}, {"_id": 0})))
 
     # Otherwise, scrape fresh data
-    #print(f"[DEBUG] Data for {query_date} is outdated, refreshing now.")
+    # print(f"[DEBUG] Data for {query_date} is outdated, refreshing now.")
     scraped_data = asyncio.run(scrape_data(query_date))
 
     if scraped_data:
@@ -791,7 +781,7 @@ def change_date():
     """
     query_date = request.args.get("date")
     target_date = query_date if query_date else get_current_est_date()
-    #print(f"[DEBUG] FINAL Date Before Redirect: {target_date}")
+    # print(f"[DEBUG] FINAL Date Before Redirect: {target_date}")
     cached_data = get_data(target_date)
     if not cached_data:
         scraped_data = asyncio.run(scrape_data(date))
@@ -819,14 +809,14 @@ def index_redirect():
     return redirect(url_for("home"))
 
 
-#@app.before_request
-#def debug_request_info():
-    #print(f"Request URL: {request.url}")
-    #print(f"Request Scheme: {request.scheme}")
-    #print(f"Headers: {dict(request.headers)}")
+# @app.before_request
+# def debug_request_info():
+    # print(f"Request URL: {request.url}")
+    # print(f"Request Scheme: {request.scheme}")
+    # print(f"Headers: {dict(request.headers)}")
 
-    #if request.endpoint and request.endpoint != "static":  # ✅ Prevents error for static files
-        #print(f"Request endpoint: {request.endpoint}")
+    # if request.endpoint and request.endpoint != "static":  # ✅ Prevents error for static files
+    # print(f"Request endpoint: {request.endpoint}")
 
 
 def enforce_https():
@@ -892,9 +882,9 @@ def get_threadline_comments(game_id):
         if "username" not in c and "user_display" in c:
             c["username"] = c["user_display"]
 
-    #print(f"→ Returning {len(comments)} comments for {game_id}")
-    #for c in comments:
-        #print(c)
+    # print(f"→ Returning {len(comments)} comments for {game_id}")
+    # for c in comments:
+        # print(c)
 
     return jsonify(comments)
 
@@ -1094,9 +1084,9 @@ def view_threadline(game_id):
 
     batter, pitcher = extract_matchup_pair(game_id, game)
 
-    matchup_insight = None
+    matchup_insight1 = None
     if batter and pitcher:
-        matchup_insight = generate_or_fetch_matchup_insight(game_id, batter, pitcher, threadline_insights)
+        matchup_insight1 = generate_or_fetch_matchup_insight(game_id, batter, pitcher, threadline_insights)
 
     game_state = extract_game_state(game)
 
@@ -1140,7 +1130,7 @@ def view_threadline(game_id):
                            is_anon=is_anon,
                            comments=comments,
                            insights=insights,
-                           matchup_insight=matchup_insight,
+                           matchup_insight=matchup_insight1,
                            batter=batter,
                            pitcher=pitcher,
                            survey=survey,
@@ -1269,4 +1259,3 @@ if __name__ == "__main__":
     log.setLevel(logging.ERROR)  # or WARNING to still show 404s, etc.
 
     app.run(host="0.0.0.0", port=port)
-
