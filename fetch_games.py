@@ -9,7 +9,7 @@ threadline_games = db.threadline_games
 
 
 def seed_games():
-    today = datetime.utcnow().date().isoformat()
+    today = datetime.now(UTC).date().isoformat()
     threadline_games.delete_many({"date": today})
 
     for lid in LEAGUE_IDS:

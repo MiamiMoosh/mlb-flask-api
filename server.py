@@ -122,7 +122,7 @@ def track_view(slug):
             "user_agent": ua,
             "referrer": request.referrer,
             "ip": request.remote_addr,
-            "timestamp": datetime.utcnow()
+            "timestamp": datetime.now(UTC)
         })
         return
 
@@ -139,7 +139,7 @@ def track_view(slug):
                     "referrer": ref,
                     "user_agent": ua,
                     "ip": ip,
-                    "timestamp": datetime.utcnow()
+                    "timestamp": datetime.now(UTC)
                 }
             }
         },
@@ -319,7 +319,7 @@ def new_listing():
             "category": category,
             "price": price,
             "description": description,
-            "created_at": datetime.utcnow()
+            "created_at": datetime.now(UTC)
         })
 
         return redirect(url_for("admin_listings"))
@@ -684,7 +684,7 @@ rows => {
 
 def store_data(target_date, data):
     """Deletes old data for the date if outdated, then stores fresh scraped data."""
-    current_time = datetime.utcnow()
+    current_time = datetime.now(UTC)
 
     # Add timestamp field to all entries
     cleaned_data = [{k: v for k, v in entry.items() if k != "_id"} for entry in data]
@@ -905,7 +905,7 @@ def post_comment():
     game_id = data.get("game_id")
     text = data.get("text", "").strip()
     sport = data.get("sport", "mlb")  # 🔥 default for now if not provided
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
 
     if not game_id or not text:
         return jsonify({"error": "Missing game_id or text"}), 400
@@ -1024,7 +1024,7 @@ def insight():
             "batter": batter_blurb,
             "pitcher": pitcher_blurb
         },
-        "cached_at": datetime.utcnow()
+        "cached_at": datetime.now(UTC)
     })
 
     return jsonify({
@@ -1059,7 +1059,7 @@ def view_threadline(game_id):
                 "game_id": game_id,
                 "username": username,
                 "text": comment_text,
-                "timestamp": datetime.utcnow()
+                "timestamp": datetime.now(UTC)
             })
         return redirect(url_for("view_threadline", game_id=game_id))
 
@@ -1153,7 +1153,7 @@ def view_threadline(game_id):
 def timeago(ts):
     if not ts:
         return ""
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     diff = now - ts
     if diff.days >= 1:
         return f"{diff.days}d ago"
@@ -1194,7 +1194,7 @@ def record_survey_vote():
         "username": username,
         "selected_option": selected,
         "correct_option": survey.get("correct_option"),
-        "timestamp": datetime.utcnow()
+        "timestamp": datetime.now(UTC)
     })
 
     # Update reputation
