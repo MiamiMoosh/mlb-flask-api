@@ -1,6 +1,7 @@
 import requests
-import datetime, timezone
 import logging
+
+from datetime import datetime, timezone  # ✅ Correct
 
 API_KEY = "1"  # Free tier key for TheSportsDB
 BASE = f"https://www.thesportsdb.com/api/v1/json/{API_KEY}"
