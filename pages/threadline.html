@@ -5,102 +5,262 @@
   <title>Threadline | {{ game_id }}</title>
   <style>
     body { font-family: Arial; margin: 40px; background: #f9f9f9; }
-    .comment { padding: 10px; border-bottom: 1px solid #ddd; }
-    .insight-box { margin-top: 30px; padding: 15px; background: #fff8e1; border: 1px solid #e0c97d; }
-    .user { font-weight: bold; }
-    .badge { font-size: 0.9em; padding-left: 5px; color: #888; }
-    .timestamp { float: right; font-size: 0.8em; color: #aaa; }
-    .comment {  font-size: 14px;  margin-bottom: 6px;}
-    .user {  font-weight: bold;  margin-right: 4px;}
-    .insight-box {  background: #f9f9f9;  padding: 8px 12px;  border-radius: 4px;  margin-bottom: 12px;  font-size: 13px;}
-    .badge {  background: gold;  color: #222;  font-size: 10px;  padding: 1px 4px;  margin-right: 6px;  border-radius: 3px;}
-    .timestamp {  color: #aaa;  font-size: 11px;  margin-left: 10px;}
-    textarea {  height: 32px;  font-size: 14px;  resize: none; width: 100%; padding: 6px 8px; box-sizing: border-box; }
-    .matchup-banner { background-color: #121212; color: #f5f5f5; border-left: 4px solid #AA0000; padding: 10px 16px; font-family: 'Orbitron', sans-serif; margin-bottom: 12px; text-align: left; }
-    .matchup-banner strong { color: #ffffff; }
+    h2, p { color: #111; }
+    .matchup-banner { background-color: #121212; color: #f5f5f5; border-left: 4px solid #AA0000; padding: 10px 16px; margin-bottom: 12px; font-family: 'Orbitron', sans-serif; }
     .matchup-label { color: #AAAAAA; font-size: 11px; text-transform: uppercase; margin-right: 8px; letter-spacing: 0.05em; }
+    .insight-box { background: #1b1b1b; padding: 6px 10px; margin-bottom: 8px; font-size: 12px; border-radius: 4px; border: 1px solid #444; color: #ddd; }
+    .survey-box { background: #1b1b1b; padding: 10px; margin-bottom: 10px; font-size: 13px; border-left: 3px solid #AA0000; border-radius: 4px; color: #ddd; }
+    .survey-btn { padding: 4px 10px; font-size: 12px; margin: 2px; background: #222; color: #fff; border: 1px solid #555; border-radius: 6px; cursor: pointer; }
+    .bar-container { background: #333; height: 10px; border-radius: 8px; margin: 3px 0; position: relative; }
+    .bar-fill { height: 100%; background: #AA0000; border-radius: 8px; }
+    .comment-thread { background: #000; color: #fff; height: 400px; overflow-y: scroll; display: flex; flex-direction: column; padding: 10px; border: 1px solid #444; border-radius: 6px; }
+    .comment { padding: 8px 12px; margin: 4px 0; max-width: 75%; background: #1a1a1a; border-radius: 12px; font-size: 14px; color: #f2f2f2; align-self: flex-start; }
+    .own-comment { background: #003366; align-self: flex-end; }
+    .comment-header { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px; color: #aaa; }
+    .comment-user strong { color: #f5f5f5; }
+    .comment-user em { color: #777; }
+    .comment-text { line-height: 1.4em; }
+    .badge { background: gold; color: #222; font-size: 10px; padding: 1px 4px; margin-right: 6px; border-radius: 3px; }
+    .timestamp { font-size: 11px; color: #aaa; margin-left: 10px; }
+    #comment-form { position: relative; margin-top: 10px; background: transparent; border-top: none; padding: 0; }
+    #comment-form input { background: #1a1a1a; border: 1px solid #444; color: #eee; padding: 10px 12px; border-radius: 12px; width: 100%; font-size: 14px; }
+    .threadline-grid { display: grid; grid-template-rows: 25% 75%; height: 100vh; overflow: hidden; }
+    .top-content { padding: 20px; overflow-y: auto; background: #1b1b1b; }
+    .chat-section { padding: 20px; overflow-y: scroll; border-top: 2px solid #333; background: #111; }
+  .new-comment-banner {
+  background: #ffe066;
+  color: #333;
+  padding: 6px 12px;
+  font-size: 14px;
+  text-align: center;
+  cursor: pointer;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 1px solid #ccc;
+}
+
+
 </style>
 </head>
 <body>
+<div class="threadline-grid">
+  <div class="top-content">
+    <h2>🧵 Threadline: {{ game_id }}</h2>
+    <p>You are posting as: <strong>{{ user_display }}</strong>{% if is_anon %} <em>(anonymous)</em>{% endif %}</p>
 
-  <h2>🧵 Threadline: {{ game_id }}</h2>
-  <p>You are posting as: <strong>{{ user_display }}</strong>{% if is_anon %} <em>(anonymous)</em>{% endif %}</p>
+    <div id="game-status" style="margin: 12px 0; font-weight: bold;"></div>
+    <div class="matchup-banner">
+      <span class="matchup-label">🔥 Featured Matchup:</span>
+      <strong>{{ batter }}</strong> vs <strong>{{ pitcher }}</strong>
+    </div>
+    <div id="live-game-state" style="margin-bottom: 12px; font-size: 14px; font-weight: bold;"></div>
 
-  <div class="matchup-banner">
-  <span class="matchup-label">🔥 Featured Matchup:</span>
-  <strong>{{ batter }}</strong> vs <strong>{{ pitcher }}</strong>
+    {% if matchup_insight %}
+      <div id="matchup-insight" class="insight-box">
+        <small><strong>{{ batter }} vs {{ pitcher }}</strong></small>
+        <ul>
+          {% for line in matchup_insight.batter_vs_pitch_types %}
+            <li>{{ line }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    {% if insights %}
+      <div class="insight-box">
+        <h4>📊 Matchup Insights</h4>
+        {% for pair in insights %}
+          <p><strong>{{ pair.batter }}</strong>: {{ pair.insight.batter }}</p>
+          <p><strong>{{ pair.pitcher }}</strong>: {{ pair.insight.pitcher }}</p>
+          <hr>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% if survey %}
+      {% if not user_vote %}
+        <div class="survey-box">
+          <p><strong>{{ survey.question }}</strong></p>
+          <div class="survey-options">
+            {% for option in survey.options %}
+              <button class="survey-btn" onclick="voteSurvey('{{ option }}')">{{ option }}</button>
+            {% endfor %}
+          </div>
+        </div>
+      {% else %}
+        <div class="survey-box">
+          <p><strong>{{ survey.question }}</strong></p>
+          {% for option, count in result_counts.items() %}
+            <div class="result-line">
+              <strong>{{ option }}</strong>
+              <div class="bar-container">
+                <div class="bar-fill" style="width: {{ percentages[option] }}%"></div>
+                <span>{{ percentages[option] }}%</span>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  <div class="chat-section">
+    <div id="new-comment-banner" style="display: none;" class="new-comment-banner">
+  New comment ↓
+</div>
+    <div class="comment-thread"></div>
+    <form id="comment-form" autocomplete="off">
+      <input type="text" name="text" placeholder="Type your comment..." />
+    </form>
+  </div>
 </div>
 
-  {% if matchup_insight %}
-  <div id="matchup-insight" class="insight-box">
-    <small><strong>{{ batter }} vs {{ pitcher }}</strong></small>
-    <ul>
-      {% for line in matchup_insight.batter_vs_pitch_types %}
-        <li style="font-size: 13px;">{{ line }}</li>
-      {% endfor %}
-    </ul>
-  </div>
-{% else %}
-  <div id="matchup-insight" class="insight-box">
-    <small><em>No matchup insight available for this game.</em></small>
-  </div>
-{% endif %}
+<script>
+const thread = document.querySelector(".comment-thread");
+const banner = document.getElementById("new-comment-banner");
+let scrollTimeout;
+let lastSeenTimestamp = 0;
 
+thread.addEventListener("scroll", () => {
+  if (scrollTimeout) clearTimeout(scrollTimeout);
 
-  <form id="comment-form">
-  <input type="text" name="text" placeholder="Say something..." autocomplete="off" />
-  <button type="submit">Post</button>
-</form>
+  scrollTimeout = setTimeout(() => {
+    const distance = thread.scrollHeight - thread.scrollTop - thread.clientHeight;
+    if (distance < 300) {
+      banner.style.display = "none";
+    }
+  }, 100);
+});
 
+banner.addEventListener("click", () => {
+  thread.scrollTop = thread.scrollHeight;
+  banner.style.display = "none";
+});
 
-  <div id="comments">
-    {% for comment in comments %}
-      <div class="comment">
-        {% if comment.badge %}
-          <span class="badge">{{ comment.badge }}</span>
-        {% endif %}
-        <span class="user">{{ comment.user_display }}:</span> {{ comment.text }}
+document.querySelector("#comment-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const input = e.target.text;
+  const text = input.value.trim();
+  if (!text) return;
+
+  const res = await fetch("/threadline/comment", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ game_id: "{{ game_id }}", text })
+  });
+
+  console.log("POST response:", res.status);
+
+  if (res.ok) {
+    const data = await res.json();
+    const newComment = document.createElement("div");
+    newComment.className = "comment own-comment";
+    const displayName = data.user_display || "{{ user_display }}"; // fallback to session/templated value
+
+    newComment.innerHTML = `
+      <div class="comment-header">
+        <div class="comment-user"><strong>${displayName}</strong></div>
+        <div class="timestamp">just now</div>
       </div>
-    {% endfor %}
-  </div>
+      <div class="comment-text">${data.text}</div>
+    `;
+    thread.appendChild(newComment);
+    input.value = "";
 
-  {% if insights %}
-    <div class="insight-box">
-      <h4>📊 Matchup Insights</h4>
-      {% for pair in insights %}
-        <p><strong>{{ pair.batter }}</strong>: {{ pair.insights.batter }}</p>
-        <p><strong>{{ pair.pitcher }}</strong>: {{ pair.insights.pitcher }}</p>
-        <hr>
-      {% endfor %}
-    </div>
-  {% endif %}
+    setTimeout(() => {
+      const distance = thread.scrollHeight - thread.scrollTop - thread.clientHeight;
+      if (distance < 300) {
+        thread.scrollTop = thread.scrollHeight;
+      }
+    }, 50);
+  }
+});
 
-  <script>
-    document.getElementById("comment-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const text = e.target.text.value.trim();
-      if (!text) return;
+document.querySelector("#comment-form input").addEventListener("keydown", function (e) {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    this.form.dispatchEvent(new Event("submit"));
+  }
+});
 
-      const res = await fetch("/threadline/comment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ game_id: "{{ game_id }}", text })
+function loadComments(scrollToBottomOnLoad = false) {
+  fetch(`/threadline/comments/{{ game_id }}`)
+    .then(res => res.json())
+    .then(comments => {
+      if (!Array.isArray(comments)) {
+        console.warn("Invalid comments payload:", comments);
+        return;
+      }
+
+      const latest = comments.at(-1);
+      const latestTimestamp = latest ? new Date(latest.timestamp).getTime() : 0;
+      const hasNewContent = latestTimestamp > lastSeenTimestamp;
+
+      thread.innerHTML = "";
+
+      comments.forEach(c => {
+        if (!c || !c.username || !c.text) return;
+        const div = document.createElement("div");
+        div.className = "comment" + (c.username === "{{ user_display }}" ? " own-comment" : "");
+        div.innerHTML = `
+          <div class="comment-header">
+            <div class="comment-user">
+              ${c.username.startsWith("Anon-") ? `<em>${c.username}</em>` : `<strong>${c.username}</strong>`}
+            </div>
+            <div class="timestamp">${new Date(c.timestamp).toLocaleTimeString()}</div>
+          </div>
+          <div class="comment-text">${c.text}</div>
+        `;
+        thread.appendChild(div);
       });
 
-      if (res.ok) {
-        const { user_display, text } = await res.json();
-        const now = new Date();
-        const timestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const badge = user_display.startsWith("Anon-") ? "" : `<span class="badge">⭐</span>`;
+      requestAnimationFrame(() => {
+        const distance = thread.scrollHeight - thread.scrollTop - thread.clientHeight;
+        console.log("🌀 Final scroll distance:", distance, "• hasNewContent:", hasNewContent);
 
-        const div = document.createElement("div");
-        div.className = "comment";
-        div.innerHTML = `${badge}<span class="user">${user_display}:</span> ${text} <span class="timestamp">${timestamp}</span>`;
-        document.getElementById("comments").prepend(div);
-        e.target.text.value = "";
+        if (scrollToBottomOnLoad || distance < 20) {
+          thread.scrollTop = thread.scrollHeight;
+          banner.style.display = "none";
+        } else if (hasNewContent) {
+          banner.style.display = "block";
+        }
+
+        if (latestTimestamp) {
+          lastSeenTimestamp = latestTimestamp;
+        }
+      });
+    })
+    .catch(err => {
+      console.error("❌ Failed to load comments:", err);
+    });
+}
+
+function voteSurvey(option) {
+  const surveyId = "{{ survey._id }}";
+  fetch("/threadline/survey_vote", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ survey_id: surveyId, selected_option: option })
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      } else {
+        alert(data.error || "Something went wrong.");
       }
     });
-  </script>
+}
+
+window.addEventListener("load", () => {
+  loadComments(true); // auto-scroll on initial page load
+  const input = document.querySelector("#comment-form input");
+  if (input) input.focus();
+});
+
+setInterval(loadComments, 2000);
+</script>
 
 </body>
 </html>

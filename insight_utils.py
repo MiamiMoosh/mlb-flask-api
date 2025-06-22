@@ -2,6 +2,7 @@ from pybaseball import statcast_batter, statcast_pitcher
 import statsapi
 import datetime
 
+
 def generate_matchup_insight(batter_name, pitcher_name, days_back=14):
     try:
         # Look up MLBAM IDs
@@ -40,11 +41,13 @@ def generate_matchup_insight(batter_name, pitcher_name, days_back=14):
         "batter_vs_pitch_types": insights
     }
 
+
 def get_player_id(name):
     try:
         return statsapi.lookup_player(name)[0]["id"]
     except:
         return None
+
 
 def get_recent_batter_insight(name):
     pid = get_player_id(name)
@@ -62,6 +65,7 @@ def get_recent_batter_insight(name):
     avg_ev = round(data["launch_speed"].mean(), 1)
     return f"{name} has hit {hr} HR with an average exit velo of {avg_ev} mph in the last 2 weeks."
 
+
 def get_pitcher_mix(name):
     pid = get_player_id(name)
     if not pid:
@@ -77,8 +81,8 @@ def get_pitcher_mix(name):
     mix = data["pitch_type"].value_counts(normalize=True).head(3)
     return f"{name}'s pitch mix: " + ", ".join([f"{k} ({round(v*100)}%)" for k, v in mix.items()])
 
+
 def extract_matchup_pair(game_id, game_doc):
-    """Returns (batter, pitcher) tuple using best available info, or (None, None)."""
     if not game_doc:
         return None, None
 
@@ -90,7 +94,6 @@ def extract_matchup_pair(game_id, game_doc):
     teams = game_id.split("-")[-2:]
     home_abbr = home if home in teams else None
     away_abbr = away if away in teams else None
-
     if not home_abbr or not away_abbr:
         return None, None
 
@@ -105,9 +108,38 @@ def extract_matchup_pair(game_id, game_doc):
     if pitcher_alt and batter_list_alt and len(batter_list_alt) > 0:
         return batter_list_alt[0], pitcher_alt
 
-    any_pitcher = (probable.get("home") or probable.get("away"))
-    any_batter = (lineups.get("home") or lineups.get("away") or [])
-    if any_pitcher and any_batter:
-        return any_batter[0], any_pitcher
+    any_pitcher = probable.get("home") or probable.get("away")
+    any_batter_list = lineups.get("home") or lineups.get("away") or []
+    if any_pitcher and any_batter_list:
+        return any_batter_list[0], any_pitcher
 
     return None, None
+
+
+def generate_or_fetch_matchup_insight(game_id, batter, pitcher, threadline_insights):
+    if not batter or not pitcher:
+        return None
+
+    # See if this specific matchup is already cached
+    cached = threadline_insights.find_one({
+        "game_id": game_id,
+        "batter": batter,
+        "pitcher": pitcher
+    }, {"_id": 0, "insight": 1})
+
+    if cached and cached.get("insight"):
+        return cached["insight"]
+
+    # Generate fresh insight
+    new_insight = generate_matchup_insight(batter, pitcher)
+
+    # Persist it
+    threadline_insights.insert_one({
+        "game_id": game_id,
+        "batter": batter,
+        "pitcher": pitcher,
+        "insight": new_insight,
+        "cached_at": datetime.datetime.utcnow()
+    })
+
+    return new_insight

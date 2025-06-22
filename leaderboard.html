@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<h3>📊 Top Threadline Reputations</h3>
+<ol>
+  {% for user in top_users %}
+    <li>{{ user.username }} — Score: {{ user.score }}</li>
+  {% endfor %}
+</ol>
+</body>
+</html>

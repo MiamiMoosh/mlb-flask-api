@@ -4,10 +4,13 @@ import asyncio
 import datetime
 import pytz
 import statsapi
-from flask import Flask, jsonify, render_template, render_template_string, request, redirect, url_for, session, flash, get_flashed_messages
+import subprocess
+
+from flask import Flask, jsonify, render_template, render_template_string, request, redirect, url_for, session, flash, \
+    get_flashed_messages
 from bson import ObjectId
 from werkzeug.security import check_password_hash, generate_password_hash
-from datetime import date
+from datetime import date, datetime, timedelta
 from playwright.async_api import async_playwright
 from pymongo import MongoClient
 from itsdangerous import URLSafeTimedSerializer
@@ -16,8 +19,10 @@ from functools import wraps
 from flask_cors import CORS
 from difflib import get_close_matches
 from pybaseball import statcast_batter, statcast_pitcher
-from insight_utils import generate_matchup_insight, get_recent_batter_insight, get_pitcher_mix, extract_matchup_pair
-
+from insight_utils import generate_or_fetch_matchup_insight, generate_matchup_insight, get_recent_batter_insight, \
+    get_pitcher_mix, extract_matchup_pair
+from game_logic import extract_game_state, is_high_leverage
+from sports_api import get_games_for_league, get_leagues
 
 # Initialize Flask app
 app = Flask(__name__, template_folder="pages")
@@ -29,21 +34,30 @@ CORS(app)
 # Connect to MongoDB using Railway-provided URI
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://mongo:MXQDxgcJWYBgTFtLPiwGdsnRXTIONzNc@trolley.proxy.rlwy.net:25766")
 client = MongoClient(MONGO_URI)
-db = client["mlb_stats"]
-collection = db["batter_vs_pitcher"]
-streak_collection = db["hot_streak_players"]
-db = client["first_string_users"]
-users_collection = db["users"]
-listings_collection = db["listings"]
-page_views = db["page_views"]
-search_logs = db["search_logs"]
-banned_emails = db["banned_emails"]
-threadline_comments = db["threadline_comments"]
-threadline_users = db["threadline_users"]
-threadline_insights = db["threadline_insights"]
-threadline_games = db["threadline_games"]
 
+# MLB stats DB
+mlb_db = client["mlb_stats"]
+collection = mlb_db["batter_vs_pitcher"]
+streak_collection = mlb_db["hot_streak_players"]
 
+# First String users DB
+users_db = client["first_string_users"]
+users_collection = users_db["users"]
+listings_collection = users_db["listings"]
+page_views = users_db["page_views"]
+search_logs = users_db["search_logs"]
+bot_views = users_db["bot_views"]
+banned_emails = users_db["banned_emails"]
+
+# Threadline DB
+threadline_db = client["threadline"]
+threadline_comments = threadline_db["threadline_comments"]
+threadline_users = threadline_db["threadline_users"]
+threadline_insights = threadline_db["threadline_insights"]
+threadline_games = threadline_db["threadline_games"]
+threadline_surveys = threadline_db["threadline_surveys"]
+threadline_votes = threadline_db["threadline_votes"]
+user_reputation = threadline_db["user_reputation"]
 
 app.config.update(
     MAIL_SERVER="smtp.gmail.com",
@@ -55,6 +69,7 @@ app.config.update(
 )
 
 mail = Mail(app)
+
 
 def extract_tags(text):
     tags = []
@@ -84,7 +99,9 @@ def track(slug):
         def decorated_function(*args, **kwargs):
             track_view(slug)
             return f(*args, **kwargs)
+
         return decorated_function
+
     return decorator
 
 
@@ -105,7 +122,7 @@ def track_view(slug):
             "user_agent": ua,
             "referrer": request.referrer,
             "ip": request.remote_addr,
-            "timestamp": datetime.datetime.utcnow()
+            "timestamp": datetime.utcnow()
         })
         return
 
@@ -116,20 +133,18 @@ def track_view(slug):
         {"slug": slug},
         {
             "$inc": {"hits": 1},
-            "$set": {"last_viewed": datetime.datetime.utcnow()},
+            "$set": {"last_viewed": datetime.utcnow()},
             "$push": {
                 "sources": {
                     "referrer": ref,
                     "user_agent": ua,
                     "ip": ip,
-                    "timestamp": datetime.datetime.utcnow()
+                    "timestamp": datetime.utcnow()
                 }
             }
         },
         upsert=True
     )
-
-
 
 
 def admin_required(f):
@@ -138,6 +153,7 @@ def admin_required(f):
         if session.get("role") != "admin":
             return redirect(url_for("login"))
         return f(*args, **kwargs)
+
     return decorated_function
 
 
@@ -303,7 +319,7 @@ def new_listing():
             "category": category,
             "price": price,
             "description": description,
-            "created_at": datetime.datetime.utcnow()
+            "created_at": datetime.utcnow()
         })
 
         return redirect(url_for("admin_listings"))
@@ -483,7 +499,7 @@ async def scrape_all_data(date):
     async with asyncio.TaskGroup() as tg:
         streak_task = tg.create_task(scrape_streak_data())
         stats_task = tg.create_task(scrape_data(date))
-        
+
         streak_data, stats_data = await asyncio.gather(streak_task, stats_task)
 
     return streak_data, stats_data
@@ -495,7 +511,7 @@ async def scrape_data(date):
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
         await page.goto(url, timeout=15000, wait_until="domcontentloaded")
-        print(f"[DEBUG] Scraping data for {date} from {url}")
+        #print(f"[DEBUG] Scraping data for {date} from {url}")
 
         try:
             await page.wait_for_selector("table tbody tr", timeout=10000)
@@ -579,14 +595,14 @@ ALWAYS_SCRAPE = 1
 async def scrape_streak_data():
     """Scrape streak data only if no cached entry exists for today's scrape date."""
     today_str = date.today().strftime("%Y-%m-%d")
-    
+
     # Remove any cached data not from today.
     streak_collection.delete_many({"scrape_date": {"$ne": today_str}})
-    
+
     if not ALWAYS_SCRAPE:
         cached_data = streak_collection.find_one({"scrape_date": today_str}, {"_id": 0})
         if cached_data:
-            print(f"[DEBUG] Using cached streak data for {today_str}")
+            #print(f"[DEBUG] Using cached streak data for {today_str}")
             return cached_data
 
     url = "https://www.baseballmusings.com/cgi-bin/CurStreak.py"
@@ -594,10 +610,10 @@ async def scrape_streak_data():
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
         await page.goto(url, timeout=15000, wait_until="domcontentloaded")
-        
+
         date_element = await page.query_selector("h2")
         streak_date_scraped = await date_element.inner_text() if date_element else "Unknown"
-        
+
         rows_data = await page.eval_on_selector_all("table tbody tr", r"""
 rows => {
     const data = [];
@@ -660,29 +676,29 @@ rows => {
         }
         streak_collection.delete_many({"scrape_date": today_str})
         streak_collection.insert_one(new_data)
-        print(f"[DEBUG] Cached new streak data for {today_str}")
-        print(f"[DEBUG] Streak data extracted: {rows_data}")
-        print(f"[DEBUG] Players on hot streak: {[player['player'] for player in rows_data if 'player' in player]}")
+        #print(f"[DEBUG] Cached new streak data for {today_str}")
+        #print(f"[DEBUG] Streak data extracted: {rows_data}")
+        #print(f"[DEBUG] Players on hot streak: {[player['player'] for player in rows_data if 'player' in player]}")
         return new_data
 
 
-def store_data(date, data):
+def store_data(target_date, data):
     """Deletes old data for the date if outdated, then stores fresh scraped data."""
-    current_time = datetime.datetime.utcnow()
+    current_time = datetime.utcnow()
 
     # Add timestamp field to all entries
     cleaned_data = [{k: v for k, v in entry.items() if k != "_id"} for entry in data]
     for entry in cleaned_data:
-        entry["date"] = date
+        entry["date"] = target_date
         entry["last_updated"] = current_time
 
-    collection.delete_many({"date": date})  # Clear outdated data
+    collection.delete_many({"date": target_date})  # Clear outdated data
     collection.insert_many(cleaned_data)
-    print(f"[DEBUG] Stored updated data for {date} at {current_time}")
+    #print(f"[DEBUG] Stored updated data for {target_date} at {current_time}")
 
 
-def get_data(date):
-    return list(collection.find({"date": date}, {"_id": 0}))
+def get_data(target_date):
+    return list(collection.find({"date": target_date}, {"_id": 0}))
 
 
 def get_current_est_date():
@@ -691,8 +707,9 @@ def get_current_est_date():
     (No after-8PM adjustment is applied here.)
     """
     user_timezone = pytz.timezone("America/New_York")
-    now_local = datetime.datetime.now(user_timezone)
+    now_local = datetime.now(user_timezone)
     return now_local.date().strftime("%Y-%m-%d")
+
 
 # ------------------------------
 # ROUTE DEFINITIONS
@@ -707,8 +724,8 @@ def home():
     otherwise, use the current EST date.
     """
     query_date = request.args.get("date")
-    date = query_date if query_date else get_current_est_date()
-    print(f"[DEBUG] FINAL Date Used for Display: {date}")
+    target_date = query_date if query_date else get_current_est_date()
+    #print(f"[DEBUG] FINAL Date Used for Display: {target_date}")
     # Pass the date to the template so the client-side nav links can be built from it.
     track_view("/")
     return render_template("MyBatterVsPitcher.html", date=date)
@@ -717,23 +734,23 @@ def home():
 @app.route("/stats")
 def stats():
     query_date = request.args.get("date") or get_current_est_date()
-    print(f"[DEBUG] Fetching stats for {query_date}")
+    #print(f"[DEBUG] Fetching stats for {query_date}")
 
     # Check if data exists and when it was last updated
     existing_entry = collection.find_one({"date": query_date}, {"_id": 0})
-    
+
     if existing_entry:
         last_updated = existing_entry.get("last_updated")
         if last_updated:
-            time_elapsed = datetime.datetime.utcnow() - last_updated
+            time_elapsed = datetime.utcnow() - last_updated
 
             # If data is less than 2 hours old, return cached data
             if time_elapsed.total_seconds() < 7200:
-                print(f"[DEBUG] Using cached data for {query_date}, last updated {last_updated}")
+                #print(f"[DEBUG] Using cached data for {query_date}, last updated {last_updated}")
                 return jsonify(list(collection.find({"date": query_date}, {"_id": 0})))
 
     # Otherwise, scrape fresh data
-    print(f"[DEBUG] Data for {query_date} is outdated, refreshing now.")
+    #print(f"[DEBUG] Data for {query_date} is outdated, refreshing now.")
     scraped_data = asyncio.run(scrape_data(query_date))
 
     if scraped_data:
@@ -760,7 +777,7 @@ def streak_data():
     if data is None:
         # If no cache is available for today, force a scrape.
         data = asyncio.run(scrape_streak_data())
-    
+
     cleaned_data = convert_object_ids(data)  # Convert ObjectIds before returning
     return jsonify(cleaned_data)
 
@@ -773,14 +790,14 @@ def change_date():
     Then redirect to the home page with the chosen date.
     """
     query_date = request.args.get("date")
-    date = query_date if query_date else get_current_est_date()
-    print(f"[DEBUG] FINAL Date Before Redirect: {date}")
-    cached_data = get_data(date)
+    target_date = query_date if query_date else get_current_est_date()
+    #print(f"[DEBUG] FINAL Date Before Redirect: {target_date}")
+    cached_data = get_data(target_date)
     if not cached_data:
         scraped_data = asyncio.run(scrape_data(date))
         if scraped_data:
             store_data(date, scraped_data)
-    return redirect(url_for("home", date=date))
+    return redirect(url_for("home", date=target_date))
 
 
 @app.route("/shop")
@@ -792,9 +809,9 @@ def shop():
 @app.route("/stats/daily-bvp")
 def daily_bvp():
     query_date = request.args.get("date")
-    date = query_date if query_date else get_current_est_date()
+    target_date = query_date if query_date else get_current_est_date()
     track_view("/stats/daily-bvp")
-    return render_template("MyBatterVsPitcher.html", date=date)
+    return render_template("MyBatterVsPitcher.html", date=target_date)
 
 
 @app.route("/index.html")
@@ -802,14 +819,14 @@ def index_redirect():
     return redirect(url_for("home"))
 
 
-@app.before_request
-def debug_request_info():
-    print(f"Request URL: {request.url}")
-    print(f"Request Scheme: {request.scheme}")
-    print(f"Headers: {dict(request.headers)}")
+#@app.before_request
+#def debug_request_info():
+    #print(f"Request URL: {request.url}")
+    #print(f"Request Scheme: {request.scheme}")
+    #print(f"Headers: {dict(request.headers)}")
 
-    if request.endpoint and request.endpoint != "static":  # ✅ Prevents error for static files
-        print(f"Request endpoint: {request.endpoint}")
+    #if request.endpoint and request.endpoint != "static":  # ✅ Prevents error for static files
+        #print(f"Request endpoint: {request.endpoint}")
 
 
 def enforce_https():
@@ -863,13 +880,35 @@ def mute_comment():
     return jsonify({"status": "ok"})
 
 
+@app.route("/threadline/comments/<game_id>")
+def get_threadline_comments(game_id):
+    comments = list(threadline_comments.find(
+        {"game_id": game_id},
+        {"_id": 0}
+    ).sort("timestamp", 1))
+
+    # Patch inconsistent fields
+    for c in comments:
+        if "username" not in c and "user_display" in c:
+            c["username"] = c["user_display"]
+
+    #print(f"→ Returning {len(comments)} comments for {game_id}")
+    #for c in comments:
+        #print(c)
+
+    return jsonify(comments)
+
+
 @app.route("/threadline/comment", methods=["POST"])
 def post_comment():
     data = request.get_json()
     game_id = data.get("game_id")
-    text = data.get("text")
+    text = data.get("text", "").strip()
+    sport = data.get("sport", "mlb")  # 🔥 default for now if not provided
+    now = datetime.utcnow()
 
-    now = datetime.datetime.utcnow()
+    if not game_id or not text:
+        return jsonify({"error": "Missing game_id or text"}), 400
 
     if session.get("logged_in") and session.get("username"):
         user_display = session["username"]
@@ -882,7 +921,6 @@ def post_comment():
         user_display = anon_name
         is_anon = True
 
-        # Only track cred if anonymous
         threadline_users.update_one(
             {"user_id": anon_name},
             {
@@ -891,21 +929,37 @@ def post_comment():
             },
             upsert=True
         )
-    cached_player_list = []
+
+    cached_player_list = []  # should be populated in future phases
+
     comment = {
         "game_id": game_id,
-        "text": text.strip(),
-        "user_display": user_display,
+        "sport": sport,
+        "username": user_display,
+        "text": text,
         "is_anon": is_anon,
         "cred_at_post": 100 if is_anon else None,
         "timestamp": now,
         "tags": extract_tags(text),
-        "player_mentions": detect_players(text, cached_player_list)  # Or empty list for now
+        "player_mentions": detect_players(text, cached_player_list)
     }
 
     threadline_comments.insert_one(comment)
+    return jsonify({"username": user_display, "text": text})
 
-    return jsonify({"user_display": user_display, "text": text.strip()})
+
+@app.route("/threadline/comments/<sport>/<game_id>")
+def get_threadline_comments_by_sport(sport, game_id):
+    comments = list(threadline_comments.find(
+        {"sport": sport, "game_id": game_id},
+        {"_id": 0}
+    ).sort("timestamp", 1))
+
+    for c in comments:
+        if "username" not in c and "user_display" in c:
+            c["username"] = c["user_display"]
+
+    return jsonify(comments)
 
 
 def update_badges():
@@ -938,7 +992,7 @@ def get_comment_feed():
     comments = list(threadline_comments.find(
         {"game_id": game_id},
         {"_id": 0}
-    ).sort("timestamp", -1).limit(50))
+    ).sort("timestamp", 1))  # 1 = ascending
 
     return jsonify(comments)
 
@@ -970,7 +1024,7 @@ def insight():
             "batter": batter_blurb,
             "pitcher": pitcher_blurb
         },
-        "cached_at": datetime.datetime.utcnow()
+        "cached_at": datetime.utcnow()
     })
 
     return jsonify({
@@ -991,21 +1045,37 @@ def matchup_insight():
     return jsonify(result)
 
 
-@app.route("/threadline/<game_id>")
+@app.route("/threadline/<game_id>", methods=["GET", "POST"])
 def view_threadline(game_id):
-    # Retrieve recent comments tied to this game
+    # Handle incoming comment
+    if request.method == "POST":
+        comment_text = request.form.get("text", "").strip()
+        if comment_text:
+            username = session.get("username") or session.get("anon_name")
+            if not username:
+                username = f"Anon-{os.urandom(2).hex()[:4]}"
+                session["anon_name"] = username
+            threadline_comments.insert_one({
+                "game_id": game_id,
+                "username": username,
+                "text": comment_text,
+                "timestamp": datetime.utcnow()
+            })
+        return redirect(url_for("view_threadline", game_id=game_id))
+
+    # Load recent comments (chronological for chat flow)
     comments = list(threadline_comments.find(
         {"game_id": game_id},
         {"_id": 0}
-    ).sort("timestamp", -1).limit(50))
+    ).sort("timestamp", 1))  # ascending
 
-    # Get cached insight documents
+    # Load insights
     insights = list(threadline_insights.find(
         {"game_id": game_id},
         {"_id": 0}
     ))
 
-    # Determine current user (logged in or anonymous)
+    # User identity
     if session.get("logged_in") and session.get("username"):
         user_display = session["username"]
         is_anon = False
@@ -1017,12 +1087,52 @@ def view_threadline(game_id):
         user_display = anon_name
         is_anon = True
 
-    # Retrieve matchup insight using live game data
+    # Load matchup info
     game = threadline_games.find_one({"game_id": game_id})
+    if not game:
+        return f"Game not found: {game_id}", 404  # or render_template("not_found.html")
+
     batter, pitcher = extract_matchup_pair(game_id, game)
+
     matchup_insight = None
     if batter and pitcher:
-        matchup_insight = generate_matchup_insight(batter, pitcher)
+        matchup_insight = generate_or_fetch_matchup_insight(game_id, batter, pitcher, threadline_insights)
+
+    game_state = extract_game_state(game)
+
+    if is_high_leverage(game_state):
+        survey = threadline_surveys.find_one({
+            "game_id": game_id,
+            "trigger_event": "high_leverage"
+        })
+
+    # Load latest survey for the game
+    survey = threadline_surveys.find_one(
+        {"game_id": game_id},
+        sort=[("timestamp", -1)]
+    )
+
+    user_vote = None
+    result_counts = {}
+    percentages = {}
+
+    if survey:
+        vote_doc = threadline_votes.find_one({
+            "survey_id": survey["_id"],
+            "username": user_display
+        })
+        user_vote = vote_doc.get("selected_option") if vote_doc else None
+
+        if user_vote:
+            all_votes = list(threadline_votes.find({"survey_id": survey["_id"]}))
+            total = len(all_votes)
+            for v in all_votes:
+                opt = v["selected_option"]
+                result_counts[opt] = result_counts.get(opt, 0) + 1
+            percentages = {
+                k: int((v / total) * 100)
+                for k, v in result_counts.items()
+            }
 
     return render_template("threadline.html",
                            game_id=game_id,
@@ -1032,8 +1142,131 @@ def view_threadline(game_id):
                            insights=insights,
                            matchup_insight=matchup_insight,
                            batter=batter,
-                           pitcher=pitcher)
+                           pitcher=pitcher,
+                           survey=survey,
+                           user_vote=user_vote,
+                           result_counts=result_counts,
+                           percentages=percentages)
+
+
+@app.template_filter("timeago")
+def timeago(ts):
+    if not ts:
+        return ""
+    now = datetime.utcnow()
+    diff = now - ts
+    if diff.days >= 1:
+        return f"{diff.days}d ago"
+    elif diff.seconds >= 3600:
+        return f"{diff.seconds // 3600}h ago"
+    elif diff.seconds >= 60:
+        return f"{diff.seconds // 60}m ago"
+    else:
+        return "Just now"
+
+
+@app.route("/threadline/survey_vote", methods=["POST"])
+def record_survey_vote():
+    data = request.get_json()
+    survey_id = data.get("survey_id")
+    selected = data.get("selected_option")
+
+    username = session.get("username") or session.get("anon_name")
+    if not username:
+        return jsonify({"error": "User not identified"}), 403
+
+    survey = threadline_surveys.find_one({"_id": ObjectId(survey_id)})
+    if not survey:
+        return jsonify({"error": "Survey not found"}), 404
+
+    # Has user already voted?
+    existing_vote = threadline_votes.find_one({
+        "survey_id": ObjectId(survey_id),
+        "username": username
+    })
+    if existing_vote:
+        return jsonify({"error": "Already voted"}), 400
+
+    # Record vote
+    threadline_votes.insert_one({
+        "survey_id": ObjectId(survey_id),
+        "game_id": survey.get("game_id"),
+        "username": username,
+        "selected_option": selected,
+        "correct_option": survey.get("correct_option"),
+        "timestamp": datetime.utcnow()
+    })
+
+    # Update reputation
+    correct = (selected == survey.get("correct_option"))
+    delta = 1 if correct else -1
+    user_reputation.update_one(
+        {"username": username},
+        {"$inc": {"score": delta}},
+        upsert=True
+    )
+
+    return jsonify({"success": True, "correct": correct})
+
+
+@app.route("/threadline")
+def threadline_home():
+    today = datetime.utcnow().date()
+    games_today = list(threadline_games.find({
+        "date": str(today)
+    }, {"_id": 0}).sort("scheduled_time", 1))
+
+    username = session.get("username") or session.get("anon_name")
+    if not username:
+        anon = f"Anon-{os.urandom(2).hex()[:4]}"
+        session["anon_name"] = anon
+        username = anon
+
+    rep = user_reputation.find_one({"username": username}) or {"score": 0}
+    for game in games_today:
+        game_id = game["game_id"]
+        game["comment_count"] = threadline_comments.count_documents({
+            "game_id": game_id,
+            "timestamp": {"$gte": datetime.utcnow() - timedelta(minutes=30)}
+        })
+        game["has_survey"] = threadline_surveys.find_one({
+            "game_id": game_id
+        }) is not None
+
+    return render_template("threadline_home.html",
+                           games=games_today,
+                           user_display=username,
+                           rep_score=rep["score"])
+
+
+@app.route("/threadline/leaderboard")
+def show_leaderboard():
+    top_users = list(user_reputation.find().sort("score", -1).limit(10))
+    return render_template("leaderboard.html", top_users=top_users)
+
+
+@app.route("/threadline/top_insights")
+def top_insights():
+    top = list(threadline_insights.find().sort("votes", -1).limit(10))
+    return render_template("top_insights.html", insights=top)
+
+
+@app.route("/api/leagues")
+def list_leagues():
+    return jsonify(get_leagues())
+
+
+@app.route("/api/games/<league_id>")
+def league_games(league_id):
+    mode = request.args.get("mode", "next")
+    games = get_games_for_league(league_id, mode=mode)
+    return jsonify(games)
 
 
 if __name__ == "__main__":
+    import logging
+    log = logging.getLogger("werkzeug")
+    log.setLevel(logging.ERROR)  # or WARNING to still show 404s, etc.
+
     app.run(host="0.0.0.0", port=port)
+
