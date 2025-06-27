@@ -3,225 +3,263 @@
 <head>
   <meta charset="UTF-8" />
   <title>Shop – First String</title>
-  <link rel="stylesheet" href="/static/css/main.css" />
-  <link rel="icon" href="/static/images/favicon.ico" />
+
+  <!-- Fonts -->
+  <link rel="preload" as="font" href="/static/fonts/Orbitron-Bold.ttf" type="font/ttf" crossorigin>
+  <link rel="preload" as="font" href="/static/fonts/Canes.otf" type="font/otf" crossorigin>
   <style>
-    /* ⛳ Background + Font Styling */
-body {
-  background: url("/static/images/firststring_bg.png") no-repeat center center fixed;
-  background-color: #000;
-  background-size: cover;
-  font-family: 'Orbitron', sans-serif;
-  color: #FFFFFF;
-  margin: 0;
-  overflow-x: hidden;
-}
+    @font-face {
+      font-family: 'Canes';
+      src: url('/static/fonts/Canes.otf') format('opentype');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Orbitron';
+      src: url('/static/fonts/Orbitron-Regular.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Orbitron';
+      src: url('/static/fonts/Orbitron-Bold.ttf') format('truetype');
+      font-weight: bold;
+      font-style: normal;
+      font-display: swap;
+    }
 
-/* ✅ Header stays pinned */
-.header-wrapper {
-  display: flex;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 80px;
-  background-image: url("/static/images/firststring_bg.png");
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: inherit;
-  background-attachment: fixed;
-  z-index: 9999;
-}
+    body {
+      background: url("/static/images/firststring_bg.png") no-repeat center center fixed;
+      background-size: cover;
+      background-color: #000;
+      font-family: 'Orbitron', sans-serif;
+      color: white;
+      margin: 0;
+      overflow-x: hidden;
+    }
 
-/* 🧱 Layout */
-.wrapper {
-  will-change: transform;
-  margin-top: 80px;
-  display: flex;
-  width: 100vw;
-  position: relative;
-}
+    /* Header */
+    .header-wrapper {
+      display: flex;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 80px;
+      background-image: url("/static/images/firststring_bg.png");
+      background-repeat: no-repeat;
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      z-index: 9999;
+    }
+    .header-left,
+    .header-right {
+      width: 100%;
+      display: flex;
+      align-items: flex-start;
+    }
+    .header-left {
+      justify-content: flex-end;
+      padding-right: 50px;
+    }
+    .header-left img {
+      max-width: 80%;
+      width: 300px;
+      object-fit: contain;
+    }
 
-.empty-container {
-  flex: 1;
-  background-color: transparent;
-  display: flex;
-  justify-content: flex-end;
-  align-items: flex-start;
-  width: 100%;
-  padding-top: 10px;
-}
+    /* Navigation */
+    .main-menu {
+      font-family: 'Canes', sans-serif;
+      background: #1D1F21;
+    }
+    .main-menu ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      font-size: 16px;
+    }
+    .main-menu ul li {
+      position: relative;
+      padding: 5px 10px;
+    }
+    .main-menu ul li a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 16px;
+    }
+    .dropdown-content,
+    .submenu-content {
+      display: none;
+      position: absolute;
+      background: #1D1F21;
+      border: 1px solid #AA0000;
+      min-width: 200px;
+      z-index: 1000;
+    }
+    .dropdown-content li a,
+    .submenu-content li a {
+      display: block;
+      padding: 10px;
+      font-size: 12px;
+      color: white;
+    }
+    .dropdown:hover > .dropdown-content {
+      display: block !important;
+    }
+    .submenu:hover > .submenu-content {
+      display: block !important;
+      left: 100%;
+      top: 0;
+    }
 
-.dashboard-panel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-}
+    /* Layout */
+    .wrapper {
+      margin-top: 80px;
+      display: flex;
+      width: 100vw;
+      position: relative;
+    }
+    .empty-container {
+      flex: 1;
+    }
+    .dashboard-panel {
+      flex: 1;
+      padding: 20px;
+    }
+    #stats-container {
+      display: flex;
+      flex-direction: column;
+      padding-right: 100px;
+    }
 
-/* 🛍 Product Grid */
-#stats-container {
-  display: flex;
-  flex-direction: column;
-  padding-right: 100px;
-}
+    /* Product Grid */
+    #product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 30px;
+      margin-top: 20px;
+    }
 
-#product-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 30px;
-  margin-top: 20px;
-}
+    .product-card {
+      background-color: #1c1c1c;
+      border: 2px solid #AA0000;
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+      transition: 0.3s ease-in-out;
+    }
 
-/* 🧢 Product Cards */
-.product-card {
-  background-color: #1c1c1c;
-  border: 2px solid #AA0000;
-  border-radius: 8px;
-  padding: 16px;
-  text-align: center;
-  transition: 0.3s ease-in-out;
-}
+    .product-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0 10px #AA0000;
+    }
 
-.product-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 0 10px #AA0000;
-}
+    .product-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
 
-.product-image {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  border-radius: 4px;
-}
+    .product-title {
+      font-size: 14px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
 
-.product-title {
-  font-size: 14px;
-  font-weight: bold;
-  margin-top: 10px;
-}
-
-.product-price {
-  color: #C0C8B6;
-  font-size: 12px;
-  margin-top: 4px;
-}
-.main-menu ul li:hover > .dropdown-content {
-  display: block !important;
-}
-.dropdown-content {
-  display: none !important;
-  position: absolute;
-  background: #1D1F21;
-  min-width: 200px;
-  z-index: 1000;
-}
-
-.submenu:hover > .submenu-content {
-  display: block !important;
-}
-
+    .product-price {
+      color: #C0C8B6;
+      font-size: 12px;
+      margin-top: 4px;
+    }
   </style>
 </head>
+
 <body>
   <div class="header-wrapper">
-    <img src="/static/images/firststring_logo_300x96.png" alt="First String Logo" />
-  </div>
-
-  <div class="header-wrapper">
-  <div class="header-left">
-    <img src="{{ url_for('static', filename='images/firststring_logo_300x96.png') }}">
-  </div>
-  <div class="header-right">
-    <nav class="main-menu">
-      <ul>
-        <li class="dropdown">
-          <a href="#">Shop</a>
-          <ul class="dropdown-content">
-            <li><a href="/shop/signature-collection">Mens Signature Collection</a></li>
-          </ul>
-        </li>
-        <li class="dropdown">
-          <a href="#">Stats</a>
-          <ul class="dropdown-content">
-            <li class="submenu">
-              <a href="#">MLB</a>
-              <ul class="submenu-content">
-                <li><a href="/stats/daily-bvp">Daily Batter vs. Pitcher History</a></li>
-              </ul>
-            </li>
-          </ul>
-        </li>
-      </ul>
-    </nav>
-  </div>
-</div>
-
-  <div class="wrapper">
-  <div class="empty-container"></div>
-  <div class="dashboard-panel" id="stats-panel">
-    <div id="stats-container">
-      <div id="product-grid"></div
-      <!-- product grid or shop content goes here -->
+    <div class="header-left">
+      <img src="/static/images/firststring_logo_300x96.png" alt="First String Logo" />
+    </div>
+    <div class="header-right">
+      <nav class="main-menu">
+        <ul>
+          <li class="dropdown">
+            <a href="#">Shop</a>
+            <ul class="dropdown-content">
+              <li><a href="/shop/signature-collection">Mens Signature Collection</a></li>
+            </ul>
+          </li>
+          <li class="dropdown">
+            <a href="#">Stats</a>
+            <ul class="dropdown-content">
+              <li class="submenu">
+                <a href="#">MLB</a>
+                <ul class="submenu-content">
+                  <li><a href="/stats/daily-bvp">Daily Batter vs. Pitcher History</a></li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </nav>
     </div>
   </div>
-</div>
 
+  <div class="wrapper">
+    <div class="empty-container"></div>
+    <div class="dashboard-panel" id="stats-panel">
+      <div id="stats-container">
+        <div class="shop-title">Shop the Signature Collection</div>
+        <div id="product-grid"></div>
+      </div>
+    </div>
+  </div>
 
   <script>
+    fetch("/shop-data")
+      .then(res => res.json())
+      .then(response => {
+        const data = response.data || [];
+        const grid = document.getElementById("product-grid");
 
+        if (!data.length) {
+          grid.innerHTML = "<p>No products found.</p>";
+          return;
+        }
 
-      fetch("/shop-data")
-.then(res= > res.json())
-.then(response= > {
-    const
-data = response.data | | []; // Pull
-nested
-array
-safely
-const
-grid = document.getElementById("product-grid");
+        data.forEach(product => {
+          const card = document.createElement("div");
+          card.className = "product-card";
 
-if (!data.length)
-{
-    grid.innerHTML = "<p>No products found.</p>";
-return;
-}
+          const img = document.createElement("img");
+          img.className = "product-image";
+          img.src = product.images?.[0]?.src || "";
+          img.alt = product.title;
 
-data.forEach(product= > {
-    const
-card = document.createElement("div");
-card.className = "product-card";
+          const title = document.createElement("div");
+          title.className = "product-title";
+          title.textContent = product.title;
 
-const
-img = document.createElement("img");
-img.className = "product-image";
-img.src = product.images?.[0]?.src | | "";
-img.alt = product.title;
+          const price = document.createElement("div");
+          price.className = "product-price";
+          const rawPrice = product.variants?.[0]?.price;
+          price.textContent = rawPrice ? `$${(rawPrice / 100).toFixed(2)}` : "–";
 
-const
-title = document.createElement("div");
-title.className = "product-title";
-title.textContent = product.title;
-
-const
-price = document.createElement("div");
-price.className = "product-price";
-const
-rawPrice = product.variants?.[0]?.price;
-price.textContent = rawPrice ? `$${(rawPrice / 100).toFixed(2)}
-`: "–";
-
-card.appendChild(img);
-card.appendChild(title);
-card.appendChild(price);
-grid.appendChild(card);
-});
-})
-.catch(err= > {
-    console.error("Error loading products:", err);
-document.getElementById("product-grid").innerHTML = "<p>Failed to load products.</p>";
-});
+          card.appendChild(img);
+          card.appendChild(title);
+          card.appendChild(price);
+          grid.appendChild(card);
+        });
+      })
+      .catch(err => {
+        console.error("Error loading products:", err);
+        document.getElementById("product-grid").innerHTML = "<p>Failed to load products.</p>";
+      });
   </script>
 </body>
 </html>
