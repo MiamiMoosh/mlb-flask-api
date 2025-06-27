@@ -26,6 +26,12 @@ serializer = URLSafeTimedSerializer(app.secret_key)
 port = int(os.environ.get("PORT", 8080))
 CORS(app)
 
+PRINTIFY_API_TOKEN = os.environ.get("PRINTIFY_API_TOKEN")
+HEADERS = {"Authorization": f"Bearer {PRINTIFY_API_TOKEN}"}
+
+response = requests.get("https://api.printify.com/v1/shops.json", headers=HEADERS)
+print(response.json())
+
 # Connect to MongoDB using Railway-provided URI
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://mongo:MXQDxgcJWYBgTFtLPiwGdsnRXTIONzNc@trolley.proxy.rlwy.net:25766")
 client = MongoClient(MONGO_URI)
@@ -54,12 +60,13 @@ threadline_surveys = threadline_db["threadline_surveys"]
 threadline_votes = threadline_db["threadline_votes"]
 user_reputation = threadline_db["user_reputation"]
 
+MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
 app.config.update(
     MAIL_SERVER="smtp.gmail.com",
     MAIL_PORT=587,
     MAIL_USE_TLS=True,
     MAIL_USERNAME="firststring.biz@gmail.com",
-    MAIL_PASSWORD="MiamiCanes$1",
+    MAIL_PASSWORD=MAIL_PASSWORD,
     MAIL_DEFAULT_SENDER="First String <noreply@firststring.com>"
 )
 
@@ -940,6 +947,17 @@ def post_comment():
 
 @app.route("/threadline/comments/<sport>/<game_id>")
 def get_threadline_comments_by_sport(sport, game_id):
+    # Fetch game metadata for validation/context
+    game = threadline_games.find_one({"game_id": game_id})
+    if not game:
+        return jsonify({"error": "Game not found"}), 404
+
+    # Optional: Redirect if URL sport doesn't match database sport
+    if game.get("sport", "").lower() != sport.lower():
+        correct_sport = game["sport"]
+        return redirect(url_for("get_threadline_comments_by_sport", sport=correct_sport, game_id=game_id))
+
+    # Fetch comments for this game, sorted by timestamp
     comments = list(threadline_comments.find(
         {"sport": sport, "game_id": game_id},
         {"_id": 0}
@@ -948,8 +966,18 @@ def get_threadline_comments_by_sport(sport, game_id):
     for c in comments:
         if "username" not in c and "user_display" in c:
             c["username"] = c["user_display"]
+        if "timestamp" in c and isinstance(c["timestamp"], datetime):
+            c["timestamp"] = c["timestamp"].isoformat()
 
-    return jsonify(comments)
+    return jsonify({
+        "game_id": game_id,
+        "sport": game["sport"],
+        "home_team": game["home_team"],
+        "away_team": game["away_team"],
+        "scheduled_time": game["scheduled_time"],
+        "status": game.get("status", "Scheduled"),
+        "comments": comments
+    })
 
 
 def update_badges():
@@ -1080,27 +1108,42 @@ def view_threadline(game_id):
     # Load matchup info
     game = threadline_games.find_one({"game_id": game_id})
     if not game:
-        return f"Game not found: {game_id}", 404  # or render_template("not_found.html")
+        return f"Game not found: {game_id}", 404
 
+    home_team = game.get("home_team", "")
+    away_team = game.get("away_team", "")
+    scheduled_time = game.get("scheduled_time", "TBD")
+    status = game.get("status", "Scheduled")
+    sport = game.get("sport", "")
+
+    # Sport icon map
+    sport_icons = {
+        "baseball": "⚾", "basketball": "🏀", "football": "🏈",
+        "hockey": "🏒", "soccer": "⚽"
+    }
+    sport_icon = sport_icons.get(sport.lower(), "🎮")
+
+    # Extract matchup insights
     batter, pitcher = extract_matchup_pair(game_id, game)
-
     matchup_insight1 = None
     if batter and pitcher:
         matchup_insight1 = generate_or_fetch_matchup_insight(game_id, batter, pitcher, threadline_insights)
 
+    # Current game state
     game_state = extract_game_state(game)
 
+    # Check for triggerable high-leverage survey (priority)
     if is_high_leverage(game_state):
         survey = threadline_surveys.find_one({
             "game_id": game_id,
             "trigger_event": "high_leverage"
         })
-
-    # Load latest survey for the game
-    survey = threadline_surveys.find_one(
-        {"game_id": game_id},
-        sort=[("timestamp", -1)]
-    )
+    else:
+        # Otherwise show latest
+        survey = threadline_surveys.find_one(
+            {"game_id": game_id},
+            sort=[("timestamp", -1)]
+        )
 
     user_vote = None
     result_counts = {}
@@ -1136,7 +1179,12 @@ def view_threadline(game_id):
                            survey=survey,
                            user_vote=user_vote,
                            result_counts=result_counts,
-                           percentages=percentages)
+                           percentages=percentages,
+                           home_team=home_team,
+                           away_team=away_team,
+                           scheduled_time=scheduled_time,
+                           status=status,
+                           sport_icon=sport_icon)
 
 
 @app.template_filter("timeago")
@@ -1201,10 +1249,21 @@ def record_survey_vote():
 
 @app.route("/threadline")
 def threadline_home():
+    sport_icons = {
+        "baseball": "⚾",
+        "basketball": "🏀",
+        "football": "🏈",
+        "hockey": "🏒",
+        "soccer": "⚽"
+    }
     today = datetime.utcnow().date()
-    games_today = list(threadline_games.find({
-        "date": str(today)
-    }, {"_id": 0}).sort("scheduled_time", 1))
+    games_today = list(threadline_games.find(
+        {"date": str(today)},
+        {"_id": 0}
+    ).sort([
+        ("scheduled_time", 1),
+        ("sport", 1)
+    ]))
 
     username = session.get("username") or session.get("anon_name")
     if not username:
@@ -1214,6 +1273,7 @@ def threadline_home():
 
     rep = user_reputation.find_one({"username": username}) or {"score": 0}
     for game in games_today:
+        game["icon"] = sport_icons.get(game["sport"].lower(), "🎮")
         game_id = game["game_id"]
         game["comment_count"] = threadline_comments.count_documents({
             "game_id": game_id,
@@ -1251,6 +1311,56 @@ def league_games(league_id):
     mode = request.args.get("mode", "next")
     games = get_games_for_league(league_id, mode=mode)
     return jsonify(games)
+
+
+@app.route("/threadline/team/<team_name>")
+def team_schedule(team_name):
+    today = datetime.now(timezone.utc).date().isoformat()
+
+    upcoming = list(threadline_games.find({
+        "$or": [
+            {"home_team": team_name},
+            {"away_team": team_name}
+        ],
+        "date": {"$gte": today}
+    }, {"_id": 0}).sort("scheduled_time"))
+
+    return render_template("team_schedule.html", team=team_name, games=upcoming)
+
+
+@app.route("/threadline/game_status/<game_id>")
+def fetch_threadline_game_status(game_id):
+    game = threadline_games.find_one({"game_id": game_id}, {"_id": 0, "status": 1, "scheduled_time": 1})
+    if not game:
+        return jsonify({"error": "Game not found"}), 404
+
+    return jsonify({
+        "status": game.get("status", "Scheduled"),
+        "scheduled_time": game.get("scheduled_time", "TBD")
+    })
+
+
+@app.route("/threadline/game_status/<game_id>")
+def get_game_status(game_id):
+    game = threadline_games.find_one({"game_id": game_id}, {"_id": 0, "status": 1, "scheduled_time": 1})
+    if not game:
+        return jsonify({"error": "Game not found"}), 404
+
+    return jsonify({
+        "status": game.get("status", "Scheduled"),
+        "scheduled_time": game.get("scheduled_time", "TBD")
+    })
+
+
+@app.route("/shop-data")
+def get_shop_data():
+    shop_id = "your_printify_shop_id"
+    url = f"https://api.printify.com/v1/shops/{shop_id}/products.json"
+    try:
+        resp = requests.get(url, headers=HEADERS)
+        return jsonify(resp.json())
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 
 if __name__ == "__main__":

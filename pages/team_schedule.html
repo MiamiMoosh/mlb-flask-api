@@ -1,0 +1,12 @@
+<h2>{{ team }} Schedule</h2>
+{% if games %}
+  {% for g in games %}
+    <div>
+      <strong>{{ g.away_team }} @ {{ g.home_team }}</strong> — {{ g.scheduled_time }} UTC
+      ({{ g.status }})<br>
+      <a href="/threadline/comments/{{ g.sport }}/{{ g.game_id }}">🧵 Join Thread</a>
+    </div>
+  {% endfor %}
+{% else %}
+  <p>No upcoming games for {{ team }}.</p>
+{% endif %}

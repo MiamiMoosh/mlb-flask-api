@@ -4,17 +4,31 @@
   <meta charset="UTF-8" />
   <title>Threadline Home</title>
   <style>
-    body { font-family: Arial; background: #111; color: #eee; padding: 40px; }
+    body { font-family: Arial, sans-serif; background: #111; color: #eee; padding: 40px; }
     h2, h3 { color: #fff; }
+
+    .cred-box {
+      background: #222;
+      padding: 16px;
+      border-radius: 6px;
+      margin-bottom: 30px;
+    }
+
     .game-card {
       background: #1b1b1b;
       padding: 14px;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
       border-left: 5px solid #AA0000;
       border-radius: 6px;
     }
+
     .game-card:hover { background: #2b2b2b; }
-    .game-title { font-size: 16px; }
+
+    .game-title {
+      font-size: 16px;
+      margin-bottom: 6px;
+    }
+
     .survey-tag {
       background: gold;
       color: #000;
@@ -23,15 +37,47 @@
       border-radius: 4px;
       margin-left: 10px;
     }
+
+    .live-badge {
+      color: #ff4d4d;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+
+    .game-meta {
+      font-size: 13px;
+      color: #aaa;
+      margin-bottom: 4px;
+    }
+
     a.thread-link {
       color: #f5f5f5;
       text-decoration: none;
     }
-    .cred-box {
-      background: #222;
-      padding: 16px;
-      border-radius: 6px;
-      margin-bottom: 30px;
+
+    a.thread-link:hover {
+      text-decoration: underline;
+    }
+
+    .sport-tag {
+      font-size: 13px;
+      color: #ccc;
+      margin-right: 10px;
+    }
+
+    .comment-tag {
+      font-size: 12px;
+      color: #55ddff;
+      margin-left: 12px;
+    }
+
+    .team-link {
+      color: #ddd;
+      text-decoration: none;
+    }
+
+    .team-link:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
@@ -50,11 +96,29 @@
     {% for game in games %}
       <div class="game-card">
         <div class="game-title">
-          {{ game.away_team }} @ {{ game.home_team }} — {{ game.scheduled_time }}
+          <span class="sport-tag">{{ game.icon }} {{ game.sport|title }}</span>
+          <a class="team-link" href="/threadline/team/{{ game.away_team }}">{{ game.away_team }}</a>
+          @
+          <a class="team-link" href="/threadline/team/{{ game.home_team }}">{{ game.home_team }}</a>
+          — {{ game.scheduled_time }} UTC
+
+          {% if game.status == "In Progress" %}
+            <span class="live-badge">🔴 LIVE</span>
+          {% elif game.status != "Scheduled" %}
+            <span class="live-badge">({{ game.status }})</span>
+          {% endif %}
+
           {% if game.has_survey %}
             <span class="survey-tag">Survey Live</span>
           {% endif %}
         </div>
+
+        <div class="game-meta">
+          {% if game.comment_count > 0 %}
+            💬 {{ game.comment_count }} recent comments
+          {% endif %}
+        </div>
+
         <div>
           <a class="thread-link" href="/threadline/comments/{{ game.sport }}/{{ game.game_id }}">🧵 Join Thread</a>
         </div>

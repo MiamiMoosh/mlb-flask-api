@@ -62,7 +62,7 @@
 	/* Page Navigation Styling */
 	.main-menu { font-family: 'Canes', sans-serif; background: #1D1F21; }
 	.main-menu ul { list-style: none; padding: 0; margin: 0; display: flex; font-size: 16px !important;}
-	.main-menu ul li { position: relative; padding: 10px 20px; cursor: pointer; }
+	.main-menu ul li { position: relative; padding: 5px 10px; cursor: pointer; }
 	.main-menu ul li a { text-decoration: none; color: #fff; font-size: 16px ; }
 	.dropdown-content { display: none !important; position: absolute; top: 100%; left: 0; background: #1D1F21; min-width: 200px; border: 1px solid #AA0000; z-index: 1000; }
 	.submenu-content { display: none !important; position: absolute; left: 100%; top: 0; background: #1D1F21; min-width: 200px; border: 1px solid #AA0000; z-index: 1000; }
@@ -151,19 +151,23 @@
 		.nav-link, .clear-btn, .toggle-collapse, #togglePlayersBtn { padding: 12px; font-size: 14px; }
 		.date-tab {font-size: 10px;  /* Adjust font size as necessary */  }
     }
-	@media (max-width: 480px) {
-	  .date-tab {font-size: 10px;  /* Adjust font size as necessary */  }
-	}
-	@media (max-width: 768px) { .wrapper { flex-direction: column; } }
-	@media (max-width: 768px) { .empty-container, .stats-panel { width: 100%; padding-right: 0; } }
-	@media (max-width: 768px) { #stats-table { width: 100%; } }
-	@media (max-width: 768px) { #stats-container { overflow-x: auto; } }
-	@media (max-width: 768px) { table { width: 100%; font-size: 10px; } }
-	@media (max-width: 768px) { th, td { padding: 4px; } }
-	@media (max-width: 768px) { .nav-link, .clear-btn, .toggle-collapse, #togglePlayersBtn { padding: 12px; font-size: 14px; } }
-	@media (max-width: 480px) { .date-tab { font-size: 10px; } }
-	@media (max-width: 768px) { .header-left img { width: 150px; } }
-	@media (max-width: 480px) { .header-left img { width: 120px; } }
+	@media (max-width: 768px) { .wrapper { flex-direction: column; align-items: center; justify-content: center; text-align: center; } }
+	@media (max-width: 768px) { .empty-container, .stats-panel { width: 100%; padding-right: 0; text-align: center; } }
+	@media (max-width: 768px) { #stats-table { width: 100%; margin: auto; text-align: center; } }
+	@media (max-width: 768px) { #stats-container { overflow-x: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; } }
+	@media (max-width: 768px) { table { width: 100%; font-size: 10px; margin: auto; text-align: center; } }
+	@media (max-width: 768px) { th, td { padding: 4px; text-align: center; } }
+	@media (max-width: 768px) { .nav-link, .clear-btn, .toggle-collapse, #togglePlayersBtn { padding: 12px; font-size: 14px; text-align: center; } }
+	@media (max-width: 480px) { .date-tab { font-size: 10px; text-align: center; } }
+	@media (max-width: 768px) { .header-left, .header-right { width: 100%; justify-content: center; text-align: center; align-items: center; } }
+	@media (max-width: 768px) { .header-left img { width: 150px; margin: auto; display: block; } }
+	@media (max-width: 480px) { .header-left img { width: 120px; margin: auto; display: block; } }
+	@media (max-width: 768px) { .main-menu ul { flex-direction: column; justify-content: center; align-items: center; text-align: center; } }
+	@media (max-width: 768px) { .main-menu ul li { width: 100%; text-align: center; } }
+	@media (max-width: 768px) { .dropdown-content, .submenu-content { width: 100%; text-align: center; justify-content: center; } }
+	@media (max-width: 768px) { .dropdown-content li a, .submenu-content li a { display: block; width: 100%; padding: 5px; font-size: 16px; text-align: center; } }
+	@media (max-width: 768px) { .dashboard-panel { padding: 10px; margin-bottom: 15px; text-align: center; } }
+	@media (max-width: 768px) { .date-nav-container, .date-card, .card-header { text-align: center; margin: auto; } }
 
   </style>
 </head>

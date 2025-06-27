@@ -39,13 +39,50 @@
   z-index: 10;
   border-bottom: 1px solid #ccc;
 }
+.status-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 10px;
+  text-transform: uppercase;
+}
 
+.live {
+  background: #ff4444;
+  color: #fff;
+}
+
+.final {
+  background: #666;
+  color: #fff;
+}
+
+.postponed {
+  background: #555;
+  color: #ddd;
+}
 
 </style>
 </head>
 <body>
 <div class="threadline-grid">
   <div class="top-content">
+      <h2>{{ sport_icon }} {{ away_team }} @ {{ home_team }}</h2>
+  <p>Start Time: <strong>{{ scheduled_time }}</strong> UTC • Status: <strong>{{ status }}</strong></p>
+  {% if game.status == "In Progress" %}
+  <span class="status-badge live">LIVE</span>
+{% elif game.status == "Final" %}
+  <span class="status-badge final">Final</span>
+{% elif game.status == "Postponed" %}
+  <span class="status-badge postponed">Postponed</span>
+{% endif %}
+    <p>
+    <a href="/threadline/team/{{ home_team }}">🏠 {{ home_team }} Schedule</a> |
+    <a href="/threadline/team/{{ away_team }}">🛫 {{ away_team }} Schedule</a>
+  </p>
+
     <h2>🧵 Threadline: {{ game_id }}</h2>
     <p>You are posting as: <strong>{{ user_display }}</strong>{% if is_anon %} <em>(anonymous)</em>{% endif %}</p>
 
@@ -260,6 +297,68 @@ window.addEventListener("load", () => {
 });
 
 setInterval(loadComments, 2000);
+
+let previousStatus = "{{ status }}";
+let leverageAlerted = false;
+
+function showEventBanner(message) {
+  const banner = document.createElement("div");
+  banner.className = "new-comment-banner";
+  banner.innerText = message;
+  document.querySelector(".chat-section").prepend(banner);
+  setTimeout(() => banner.remove(), 8000);
+}
+
+function updateGameStatus() {
+  fetch(`/threadline/game_status/{{ game_id }}`)
+    .then(res => res.json())
+    .then(data => {
+      if (!data || !data.status) return;
+
+      const statusBox = document.getElementById("game-status");
+      statusBox.innerHTML = `Game Status: <strong>${data.status}</strong>`;
+
+      // Visual badge
+      if (data.status === "In Progress") {
+        statusBox.innerHTML += ` <span class="status-badge live">LIVE</span>`;
+      } else if (data.status === "Final") {
+        statusBox.innerHTML += ` <span class="status-badge final">Final</span>`;
+      } else if (data.status === "Postponed") {
+        statusBox.innerHTML += ` <span class="status-badge postponed">Postponed</span>`;
+      }
+
+      // React to status changes
+      if (data.status !== previousStatus) {
+        if (data.status === "In Progress") {
+          console.log("🟢 Game just went live!");
+          showEventBanner("🔴 LIVE: The game is now underway!");
+        } else if (data.status === "Final") {
+          console.log("🏁 Game concluded.");
+          showEventBanner("🏁 Final: The game has ended.");
+        } else if (data.status === "Postponed") {
+          showEventBanner("⛔ Postponed: Game has been delayed or canceled.");
+        }
+        previousStatus = data.status;
+      }
+
+      // Event flags
+      if (data.events) {
+        if (data.events.lead_change) {
+          showEventBanner("⚡ Lead Change!");
+        }
+        if (data.events.high_leverage && !leverageAlerted) {
+          leverageAlerted = true;
+          showEventBanner("⏱️ High-Leverage Situation Detected!");
+        }
+      }
+    })
+    .catch(err => {
+      console.warn("Game status fetch failed:", err);
+    });
+}
+
+updateGameStatus(); // initial load
+setInterval(updateGameStatus, 30000); // update every 30s
 </script>
 
 </body>
