@@ -153,41 +153,59 @@ body {
 
 
   <script>
-    fetch("/shop-data")
-      .then(res => res.json())
-      .then(data => {
-        const grid = document.getElementById("product-grid");
-        if (!data || data.length === 0) {
-          grid.innerHTML = "<p>No products found.</p>";
-          return;
-        }
 
-        data.forEach(product => {
-          const card = document.createElement("div");
-          card.className = "product-card";
 
-          const img = document.createElement("img");
-          img.className = "product-image";
-          img.src = product.images?.[0]?.src || "";
-          img.alt = product.title;
+      fetch("/shop-data")
+.then(res= > res.json())
+.then(response= > {
+    const
+data = response.data | | []; // Pull
+nested
+array
+safely
+const
+grid = document.getElementById("product-grid");
 
-          const title = document.createElement("div");
-          title.className = "product-title";
-          title.textContent = product.title;
+if (!data.length)
+{
+    grid.innerHTML = "<p>No products found.</p>";
+return;
+}
 
-          const price = document.createElement("div");
-          price.className = "product-price";
-          price.textContent = `$${product.variants?.[0]?.price / 100 || '–'}`;
+data.forEach(product= > {
+    const
+card = document.createElement("div");
+card.className = "product-card";
 
-          card.appendChild(img);
-          card.appendChild(title);
-          card.appendChild(price);
-          grid.appendChild(card);
-        });
-      })
-      .catch(err => {
-        console.error("Error loading products:", err);
-      });
+const
+img = document.createElement("img");
+img.className = "product-image";
+img.src = product.images?.[0]?.src | | "";
+img.alt = product.title;
+
+const
+title = document.createElement("div");
+title.className = "product-title";
+title.textContent = product.title;
+
+const
+price = document.createElement("div");
+price.className = "product-price";
+const
+rawPrice = product.variants?.[0]?.price;
+price.textContent = rawPrice ? `$${(rawPrice / 100).toFixed(2)}
+`: "–";
+
+card.appendChild(img);
+card.appendChild(title);
+card.appendChild(price);
+grid.appendChild(card);
+});
+})
+.catch(err= > {
+    console.error("Error loading products:", err);
+document.getElementById("product-grid").innerHTML = "<p>Failed to load products.</p>";
+});
   </script>
 </body>
 </html>

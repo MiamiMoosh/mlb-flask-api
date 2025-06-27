@@ -136,7 +136,7 @@ def track_view(slug):
         {"slug": slug},
         {
             "$inc": {"hits": 1},
-            "$set": {"last_viewed": datetime.utcnow()},
+            "$set": {"last_viewed": datetime.now(timezone.utc)},
             "$push": {
                 "sources": {
                     "referrer": ref,
@@ -740,7 +740,7 @@ def stats():
     if existing_entry:
         last_updated = existing_entry.get("last_updated")
         if last_updated:
-            time_elapsed = datetime.utcnow() - last_updated
+            time_elapsed = datetime.now(timezone.utc) - last_updated
 
             # If data is less than 2 hours old, return cached data
             if time_elapsed.total_seconds() < 7200:
@@ -1257,7 +1257,7 @@ def threadline_home():
         "hockey": "🏒",
         "soccer": "⚽"
     }
-    today = datetime.utcnow().date()
+    today = datetime.now(timezone.utc).date()
     games_today = list(threadline_games.find(
         {"date": str(today)},
         {"_id": 0}
@@ -1278,7 +1278,7 @@ def threadline_home():
         game_id = game["game_id"]
         game["comment_count"] = threadline_comments.count_documents({
             "game_id": game_id,
-            "timestamp": {"$gte": datetime.utcnow() - timedelta(minutes=30)}
+            "timestamp": {"$gte": datetime.now(timezone.utc) - timedelta(minutes=30)}
         })
         game["has_survey"] = threadline_surveys.find_one({
             "game_id": game_id
@@ -1351,59 +1351,6 @@ def get_game_status(game_id):
         "status": game.get("status", "Scheduled"),
         "scheduled_time": game.get("scheduled_time", "TBD")
     })
-
-
-fetch("/shop-data")
-.then(res= > res.json())
-.then(response= > {
-    const
-data = response.data | | []; // Pull
-nested
-array
-safely
-const
-grid = document.getElementById("product-grid");
-
-if (!data.length)
-{
-    grid.innerHTML = "<p>No products found.</p>";
-return;
-}
-
-data.forEach(product= > {
-    const
-card = document.createElement("div");
-card.className = "product-card";
-
-const
-img = document.createElement("img");
-img.className = "product-image";
-img.src = product.images?.[0]?.src | | "";
-img.alt = product.title;
-
-const
-title = document.createElement("div");
-title.className = "product-title";
-title.textContent = product.title;
-
-const
-price = document.createElement("div");
-price.className = "product-price";
-const
-rawPrice = product.variants?.[0]?.price;
-price.textContent = rawPrice ? `$${(rawPrice / 100).toFixed(2)}
-`: "–";
-
-card.appendChild(img);
-card.appendChild(title);
-card.appendChild(price);
-grid.appendChild(card);
-});
-})
-.catch(err= > {
-    console.error("Error loading products:", err);
-document.getElementById("product-grid").innerHTML = "<p>Failed to load products.</p>";
-});
 
 
 if __name__ == "__main__":
