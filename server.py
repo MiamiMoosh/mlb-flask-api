@@ -1356,31 +1356,12 @@ def get_game_status(game_id):
 @app.route("/shop-data")
 def get_shop_data():
     shop_id = "your_printify_shop_id"
-    url = f"https://api.printify.com/v1/shops/{shop_id}/products.json"
+    url = f"https://api.printify.com/v1/shops/22589888/products.json"
     try:
         resp = requests.get(url, headers=HEADERS)
         return jsonify(resp.json())
     except Exception as e:
         return jsonify({"error": str(e)})
-
-
-@app.route("/printify-test")
-def printify_test():
-    token = os.environ.get("PRINTIFY_API_TOKEN")
-    if not token:
-        return jsonify({"error": "Missing PRINTIFY_API_TOKEN"}), 500
-
-    headers = {"Authorization": f"Bearer {token}"}
-    url = "https://api.printify.com/v1/shops.json"
-
-    try:
-        resp = requests.get(url, headers=headers)
-        data = resp.json()
-        if resp.status_code != 200:
-            return jsonify({"error": data}), resp.status_code
-        return jsonify(data)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
