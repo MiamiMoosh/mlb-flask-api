@@ -1364,6 +1364,25 @@ def get_shop_data():
         return jsonify({"error": str(e)})
 
 
+@app.route("/printify-test")
+def printify_test():
+    token = os.environ.get("PRINTIFY_API_TOKEN")
+    if not token:
+        return jsonify({"error": "Missing PRINTIFY_API_TOKEN"}), 500
+
+    headers = {"Authorization": f"Bearer {token}"}
+    url = "https://api.printify.com/v1/shops.json"
+
+    try:
+        resp = requests.get(url, headers=headers)
+        data = resp.json()
+        if resp.status_code != 200:
+            return jsonify({"error": data}), resp.status_code
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == "__main__":
     import logging
     log = logging.getLogger("werkzeug")
