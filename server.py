@@ -1353,15 +1353,57 @@ def get_game_status(game_id):
     })
 
 
-@app.route("/shop-data")
-def get_shop_data():
-    shop_id = "your_printify_shop_id"
-    url = f"https://api.printify.com/v1/shops/22589888/products.json"
-    try:
-        resp = requests.get(url, headers=HEADERS)
-        return jsonify(resp.json())
-    except Exception as e:
-        return jsonify({"error": str(e)})
+fetch("/shop-data")
+.then(res= > res.json())
+.then(response= > {
+    const
+data = response.data | | []; // Pull
+nested
+array
+safely
+const
+grid = document.getElementById("product-grid");
+
+if (!data.length)
+{
+    grid.innerHTML = "<p>No products found.</p>";
+return;
+}
+
+data.forEach(product= > {
+    const
+card = document.createElement("div");
+card.className = "product-card";
+
+const
+img = document.createElement("img");
+img.className = "product-image";
+img.src = product.images?.[0]?.src | | "";
+img.alt = product.title;
+
+const
+title = document.createElement("div");
+title.className = "product-title";
+title.textContent = product.title;
+
+const
+price = document.createElement("div");
+price.className = "product-price";
+const
+rawPrice = product.variants?.[0]?.price;
+price.textContent = rawPrice ? `$${(rawPrice / 100).toFixed(2)}
+`: "–";
+
+card.appendChild(img);
+card.appendChild(title);
+card.appendChild(price);
+grid.appendChild(card);
+});
+})
+.catch(err= > {
+    console.error("Error loading products:", err);
+document.getElementById("product-grid").innerHTML = "<p>Failed to load products.</p>";
+});
 
 
 if __name__ == "__main__":

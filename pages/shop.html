@@ -6,87 +6,106 @@
   <link rel="stylesheet" href="/static/css/main.css" />
   <link rel="icon" href="/static/images/favicon.ico" />
   <style>
-    body {
-      background: url("/static/images/firststring_bg.png") no-repeat center center fixed;
-      background-size: cover;
-      background-color: #000;
-      font-family: 'Orbitron', sans-serif;
-      color: #fff;
-      margin: 0;
-      padding: 0;
-    }
+    /* ⛳ Background + Font Styling */
+body {
+  background: url("/static/images/firststring_bg.png") no-repeat center center fixed;
+  background-color: #000;
+  background-size: cover;
+  font-family: 'Orbitron', sans-serif;
+  color: #FFFFFF;
+  margin: 0;
+  overflow-x: hidden;
+}
 
-    .header-wrapper {
-      position: fixed;
-      top: 0;
-      width: 100%;
-      height: 80px;
-      background: url("/static/images/firststring_bg.png") no-repeat center center;
-      background-size: cover;
-      z-index: 1000;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 40px;
-    }
+/* ✅ Header stays pinned */
+.header-wrapper {
+  display: flex;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 80px;
+  background-image: url("/static/images/firststring_bg.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: inherit;
+  background-attachment: fixed;
+  z-index: 9999;
+}
 
-    .header-wrapper img {
-      height: 64px;
-      object-fit: contain;
-    }
+/* 🧱 Layout */
+.wrapper {
+  will-change: transform;
+  margin-top: 80px;
+  display: flex;
+  width: 100vw;
+  position: relative;
+}
 
-    .main {
-      margin-top: 100px;
-      padding: 40px;
-      max-width: 1200px;
-      margin-left: auto;
-      margin-right: auto;
-    }
+.empty-container {
+  flex: 1;
+  background-color: transparent;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  width: 100%;
+  padding-top: 10px;
+}
 
-    .shop-title {
-      font-size: 2rem;
-      margin-bottom: 20px;
-      text-align: center;
-      font-family: 'Canes', sans-serif;
-    }
+.dashboard-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
 
-    #product-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 30px;
-    }
+/* 🛍 Product Grid */
+#stats-container {
+  display: flex;
+  flex-direction: column;
+  padding-right: 100px;
+}
 
-    .product-card {
-      background-color: #1c1c1c;
-      border: 2px solid #AA0000;
-      padding: 16px;
-      border-radius: 8px;
-      transition: 0.3s;
-    }
+#product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 30px;
+  margin-top: 20px;
+}
 
-    .product-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 0 10px #AA0000;
-    }
+/* 🧢 Product Cards */
+.product-card {
+  background-color: #1c1c1c;
+  border: 2px solid #AA0000;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  transition: 0.3s ease-in-out;
+}
 
-    .product-image {
-      width: 100%;
-      height: 200px;
-      object-fit: cover;
-      border-radius: 4px;
-    }
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0 10px #AA0000;
+}
 
-    .product-title {
-      font-size: 14px;
-      font-weight: bold;
-      margin-top: 10px;
-    }
+.product-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 4px;
+}
 
-    .product-price {
-      color: #C0C8B6;
-      font-size: 12px;
-      margin-top: 4px;
-    }
+.product-title {
+  font-size: 14px;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.product-price {
+  color: #C0C8B6;
+  font-size: 12px;
+  margin-top: 4px;
+}
   </style>
 </head>
 <body>
@@ -94,12 +113,44 @@
     <img src="/static/images/firststring_logo_300x96.png" alt="First String Logo" />
   </div>
 
-  <div class="main">
-    <div class="shop-title">Shop the Signature Collection</div>
-    <div id="product-grid">
-      <!-- Products from Printify will load here -->
+  <div class="header-wrapper">
+  <div class="header-left">
+    <img src="{{ url_for('static', filename='images/firststring_logo_300x96.png') }}">
+  </div>
+  <div class="header-right">
+    <nav class="main-menu">
+      <ul>
+        <li class="dropdown">
+          <a href="#">Shop</a>
+          <ul class="dropdown-content">
+            <li><a href="/shop/signature-collection">Mens Signature Collection</a></li>
+          </ul>
+        </li>
+        <li class="dropdown">
+          <a href="#">Stats</a>
+          <ul class="dropdown-content">
+            <li class="submenu">
+              <a href="#">MLB</a>
+              <ul class="submenu-content">
+                <li><a href="/stats/daily-bvp">Daily Batter vs. Pitcher History</a></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</div>
+
+  <div class="wrapper">
+  <div class="empty-container"></div>
+  <div class="dashboard-panel" id="stats-panel">
+    <div id="stats-container">
+      <!-- product grid or shop content goes here -->
     </div>
   </div>
+</div>
+
 
   <script>
     fetch("/shop-data")
