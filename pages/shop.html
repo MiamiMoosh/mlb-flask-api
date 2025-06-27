@@ -106,6 +106,21 @@ body {
   font-size: 12px;
   margin-top: 4px;
 }
+.main-menu ul li:hover > .dropdown-content {
+  display: block !important;
+}
+.dropdown-content {
+  display: none !important;
+  position: absolute;
+  background: #1D1F21;
+  min-width: 200px;
+  z-index: 1000;
+}
+
+.submenu:hover > .submenu-content {
+  display: block !important;
+}
+
   </style>
 </head>
 <body>
@@ -146,6 +161,7 @@ body {
   <div class="empty-container"></div>
   <div class="dashboard-panel" id="stats-panel">
     <div id="stats-container">
+      <div id="product-grid"></div
       <!-- product grid or shop content goes here -->
     </div>
   </div>
