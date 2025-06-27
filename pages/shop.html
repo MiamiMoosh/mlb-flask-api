@@ -93,29 +93,22 @@
       font-size: 16px;
     }
     .dropdown-content,
-    .submenu-content {
-      display: none;
-      position: absolute;
-      background: #1D1F21;
-      border: 1px solid #AA0000;
-      min-width: 200px;
-      z-index: 1000;
-    }
-    .dropdown-content li a,
-    .submenu-content li a {
-      display: block;
-      padding: 10px;
-      font-size: 12px;
-      color: white;
-    }
-    .dropdown:hover > .dropdown-content {
-      display: block !important;
-    }
-    .submenu:hover > .submenu-content {
-      display: block !important;
-      left: 100%;
-      top: 0;
-    }
+.submenu-content {
+  display: none !important;
+  position: absolute;
+  background: #1D1F21;
+  border: 1px solid #AA0000;
+  min-width: 200px;
+  z-index: 1000;
+}
+
+.dropdown:hover > .dropdown-content {
+  display: block !important;
+}
+
+.submenu:hover > .submenu-content {
+  display: block !important;
+}
 
     /* Layout */
     .wrapper {
@@ -221,45 +214,46 @@
   </div>
 
   <script>
-    fetch("/shop-data")
-      .then(res => res.json())
-      .then(response => {
-        const data = response.data || [];
-        const grid = document.getElementById("product-grid");
+fetch("/shop-data")
+  .then(res => res.json())
+  .then(response => {
+    const data = response?.data ?? response; // Handles both { data: [...] } or just [...]
 
-        if (!data.length) {
-          grid.innerHTML = "<p>No products found.</p>";
-          return;
-        }
+    if (!Array.isArray(data) || !data.length) {
+      document.getElementById("product-grid").innerHTML = "<p>No products found.</p>";
+      return;
+    }
 
-        data.forEach(product => {
-          const card = document.createElement("div");
-          card.className = "product-card";
+    const grid = document.getElementById("product-grid");
 
-          const img = document.createElement("img");
-          img.className = "product-image";
-          img.src = product.images?.[0]?.src || "";
-          img.alt = product.title;
+    data.forEach(product => {
+      const card = document.createElement("div");
+      card.className = "product-card";
 
-          const title = document.createElement("div");
-          title.className = "product-title";
-          title.textContent = product.title;
+      const img = document.createElement("img");
+      img.className = "product-image";
+      img.src = product.images?.[0]?.src || "";
+      img.alt = product.title;
 
-          const price = document.createElement("div");
-          price.className = "product-price";
-          const rawPrice = product.variants?.[0]?.price;
-          price.textContent = rawPrice ? `$${(rawPrice / 100).toFixed(2)}` : "–";
+      const title = document.createElement("div");
+      title.className = "product-title";
+      title.textContent = product.title;
 
-          card.appendChild(img);
-          card.appendChild(title);
-          card.appendChild(price);
-          grid.appendChild(card);
-        });
-      })
-      .catch(err => {
-        console.error("Error loading products:", err);
-        document.getElementById("product-grid").innerHTML = "<p>Failed to load products.</p>";
-      });
-  </script>
+      const price = document.createElement("div");
+      price.className = "product-price";
+      const rawPrice = product.variants?.[0]?.price;
+      price.textContent = rawPrice ? `$${(rawPrice / 100).toFixed(2)}` : "–";
+
+      card.appendChild(img);
+      card.appendChild(title);
+      card.appendChild(price);
+      grid.appendChild(card);
+    });
+  })
+  .catch(err => {
+    console.error("Error loading products:", err);
+    document.getElementById("product-grid").innerHTML = "<p>Failed to load products.</p>";
+  });
+</script>
 </body>
 </html>
