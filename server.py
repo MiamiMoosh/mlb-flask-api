@@ -1392,9 +1392,10 @@ def shop_category(subpath):
     parts = [p.lower() for p in subpath.strip("/").split("/")]
 
     # Load metadata definitions
-    known_cities = {"pittsburgh", "chicago", "cleveland"}  # Expand as needed
+    known_cities = {"pittsburgh", "chicago", "cleveland"}
     known_sports = {"baseball", "football", "basketball"}
     known_collections = {"signature", "fan-favorite"}
+    known_types = {"shirt", "hoodie", "cap", "sticker", "sweatshirt", "tank"}
 
     # Build dynamic filter object
     filters = {}
@@ -1411,11 +1412,23 @@ def shop_category(subpath):
     slug = "-".join(parts)
 
     # Load SEO metadata
-    with open("sections.json") as f:
-        sections = json.load(f)
-    section_meta = sections.get(slug, {})
+    try:
+        with open("sections.json") as f:
+            sections = json.load(f)
+    except Exception:
+        sections = {}
 
-    return render_template("shop.html", filters=filters, subpath=subpath, meta=section_meta)
+    section_meta = sections.get(slug) or {}
+    catalog = build_navigation_structure(sections)
+
+    return render_template(
+        "shop.html",
+        filters=filters,
+        subpath=subpath,
+        meta=section_meta,
+        catalog=catalog,
+        sports=sorted(catalog.keys())
+    )
 
 
 @app.route("/admin/generate-sections")

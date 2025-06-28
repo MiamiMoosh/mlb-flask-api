@@ -1,209 +1,48 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>{{ meta.title or 'Shop – First String' }}</title>
-<meta name="description" content="{{ meta.description or 'Explore bold apparel from the First String collection. Designed for fans who live the game.' }}">
-<meta property="og:image" content="{{ meta.image or '/static/images/seo/default-banner.jpg' }}">
+{% extends "_base.html" %}
 
-  <!-- Fonts -->
-  <link rel="preload" as="font" href="/static/fonts/Orbitron-Bold.ttf" type="font/ttf" crossorigin>
-  <link rel="preload" as="font" href="/static/fonts/Canes.otf" type="font/otf" crossorigin>
+{% block title %}{{ meta.title or "Shop – First String" }}{% endblock %}
+{% block description %}{{ meta.description or "Explore bold apparel for fans who live the game." }}{% endblock %}
+{% block og_image %}{{ meta.image or "/static/images/seo/default-banner.jpg" }}{% endblock %}
+
+{% block head %}
+
   <style>
-    @font-face {
-      font-family: 'Canes';
-      src: url('/static/fonts/Canes.otf') format('opentype');
-      font-weight: normal;
-      font-style: normal;
-      font-display: swap;
-    }
-    @font-face {
-      font-family: 'Orbitron';
-      src: url('/static/fonts/Orbitron-Regular.ttf') format('truetype');
-      font-weight: normal;
-      font-style: normal;
-      font-display: swap;
-    }
-    @font-face {
-      font-family: 'Orbitron';
-      src: url('/static/fonts/Orbitron-Bold.ttf') format('truetype');
-      font-weight: bold;
-      font-style: normal;
-      font-display: swap;
-    }
-
-    body {
-      background: url("/static/images/firststring_bg.png") no-repeat center center fixed;
-      background-size: cover;
-      background-color: #000;
-      font-family: 'Orbitron', sans-serif;
-      color: white;
-      margin: 0;
-      overflow-x: hidden;
-    }
-
-    /* Header */
-    .header-wrapper {
-      display: flex;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 80px;
-      background-image: url("/static/images/firststring_bg.png");
-      background-repeat: no-repeat;
-      background-size: cover;
-      background-position: center;
-      background-attachment: fixed;
-      z-index: 9999;
-    }
-    .header-left,
-    .header-right {
-      width: 100%;
-      display: flex;
-      align-items: flex-start;
-    }
-    .header-left {
-      justify-content: flex-end;
-      padding-right: 50px;
-    }
-    .header-left img {
-      max-width: 80%;
-      width: 300px;
-      object-fit: contain;
-    }
-
-    /* Navigation */
-    .main-menu {
-      font-family: 'Canes', sans-serif;
-      background: #1D1F21;
-    }
-    .main-menu ul {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      font-size: 16px;
-    }
-    .main-menu ul li {
-      position: relative;
-      padding: 5px 10px;
-    }
-    .main-menu ul li a {
-      color: #fff;
-      text-decoration: none;
-      font-size: 16px;
-    }
-    .dropdown-content,
-.submenu-content {
-  display: none !important;
-  position: absolute;
-  background: #1D1F21;
-  border: 1px solid #AA0000;
-  min-width: 200px;
-  z-index: 1000;
-}
-
-.dropdown:hover > .dropdown-content {
-  display: block !important;
-}
-
-.submenu:hover > .submenu-content {
-  display: block !important;
-}
-
-    /* Layout */
-    .wrapper {
-      margin-top: 80px;
-      display: flex;
-      width: 100vw;
-      position: relative;
-    }
-    .empty-container {
-      flex: 1;
-    }
-    .dashboard-panel {
-      flex: 1;
-      padding: 20px;
-    }
-    #stats-container {
-      display: flex;
-      flex-direction: column;
-      padding-right: 100px;
-    }
-
-    /* Product Grid */
-    #product-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 30px;
-      margin-top: 20px;
-    }
-
-    .product-card {
-      background-color: #1c1c1c;
-      border: 2px solid #AA0000;
-      border-radius: 8px;
-      padding: 16px;
-      text-align: center;
-      transition: 0.3s ease-in-out;
-    }
-
-    .product-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 0 10px #AA0000;
-    }
-
-    .product-image {
-      width: 100%;
-      height: 200px;
-      object-fit: cover;
-      border-radius: 4px;
-    }
-
-    .product-title {
-      font-size: 14px;
-      font-weight: bold;
-      margin-top: 10px;
-    }
-
-    .product-price {
-      color: #C0C8B6;
-      font-size: 12px;
-      margin-top: 4px;
-    }
+    body { background: url("/static/images/firststring_bg.png") no-repeat center center fixed; background-size: cover; background-color: #000; font-family: 'Orbitron', sans-serif; color: white; margin: 0; overflow-x: hidden; }
+    .header-wrapper { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 80px; background-image: url("/static/images/firststring_bg.png"); background-repeat: no-repeat; background-size: cover; background-position: center; background-attachment: fixed; z-index: 9999; }
+    .header-left, .header-right { width: 100%; display: flex; align-items: flex-start; }
+    .header-left { justify-content: flex-end; padding-right: 50px; }
+    .header-left img { max-width: 80%; width: 300px; object-fit: contain; }
+    .main-menu { font-family: 'Canes', sans-serif; background: #1D1F21; }
+    .main-menu ul { list-style: none; margin: 0; padding: 0; display: flex; font-size: 16px; }
+    .main-menu ul li { position: relative; padding: 5px 10px; }
+    .main-menu ul li a { color: #fff; text-decoration: none; font-size: 16px; }
+    .dropdown-content, .submenu-content { display: none !important; position: absolute; background: #1D1F21; border: 1px solid #AA0000; min-width: 200px; z-index: 1000; }
+    .dropdown:hover > .dropdown-content { display: block !important; }
+    .submenu:hover > .submenu-content { display: block !important; }
+    .wrapper { margin-top: 80px; display: flex; width: 100vw; position: relative; }
+    .empty-container { flex: 1; }
+    .dashboard-panel { flex: 1; padding: 20px; }
+    #stats-container { display: flex; flex-direction: column; padding-right: 100px; }
+    .shop-title { font-size: 24px; font-weight: bold; margin-bottom: 1rem; }
+    .shop-filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 1rem; }
+    .shop-filters select { padding: 6px; font-size: 14px; background: #111; color: white; border: 1px solid #666; border-radius: 4px; }
+    .thumbnail-size-toggle { margin-bottom: 1rem; }
+    #product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 30px; margin-top: 20px; }
+    #product-grid.small .product-card { transform: scale(0.85); }
+    #product-grid.medium .product-card { transform: scale(1); }
+    #product-grid.large .product-card { transform: scale(1.25); }
+    #product-grid.small { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    #product-grid.medium { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+    #product-grid.large { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+    .product-card { background-color: #1c1c1c; border: 2px solid #AA0000; border-radius: 8px; padding: 16px; text-align: center; transition: 0.3s ease-in-out; }
+    .product-card:hover { transform: translateY(-5px); box-shadow: 0 0 10px #AA0000; }
+    .product-image { width: 100%; height: 200px; object-fit: cover; border-radius: 4px; }
+    .product-title { font-size: 14px; font-weight: bold; margin-top: 10px; }
+    .product-price { color: #C0C8B6; font-size: 12px; margin-top: 4px; }
   </style>
-</head>
+{% endblock %}
 
-<body>
-  <div class="header-wrapper">
-    <div class="header-left">
-      <img src="/static/images/firststring_logo_300x96.png" alt="First String Logo" />
-    </div>
-    <div class="header-right">
-      <nav class="main-menu">
-        <ul>
-          <li class="dropdown">
-            <a href="#">Shop</a>
-            <ul class="dropdown-content">
-              <li><a href="/shop/signature-collection">Mens Signature Collection</a></li>
-            </ul>
-          </li>
-          <li class="dropdown">
-            <a href="#">Stats</a>
-            <ul class="dropdown-content">
-              <li class="submenu">
-                <a href="#">MLB</a>
-                <ul class="submenu-content">
-                  <li><a href="/stats/daily-bvp">Daily Batter vs. Pitcher History</a></li>
-                </ul>
-              </li>
-            </ul>
-          </li>
-        </ul>
-      </nav>
-    </div>
-  </div>
+{% block content %}
 
   <div class="wrapper">
     <div class="empty-container"></div>
@@ -242,11 +81,21 @@
           oninput="filterGrid(this.value)"
           style="padding: 6px; width: 100%; margin-bottom: 1rem;"
         />
+        <div class="thumbnail-size-toggle" style="margin-bottom: 1rem;">
+          <label style="margin-right: 10px;">🖼️ Thumbnail Size:</label>
+          <button onclick="setThumbSize('small')">Small</button>
+          <button onclick="setThumbSize('medium')">Medium</button>
+          <button onclick="setThumbSize('large')">Large</button>
+        </div>
 
         <div id="product-grid"></div>
       </div>
     </div>
   </div>
+{% endblock %}
+
+{% block scripts %}
+
 
   <script>
   const filters = {{ filters | tojson | safe }};
@@ -310,7 +159,13 @@
       card.style.display = text.includes(query) ? "block" : "none";
     });
   }
+  function setThumbSize(size) {
+  const grid = document.getElementById("product-grid");
+  grid.classList.remove("small", "medium", "large");
+  grid.classList.add(size);
+}
+setThumbSize('medium'); // Default view
 
 </script>
-</body>
-</html>
+
+{% endblock %}

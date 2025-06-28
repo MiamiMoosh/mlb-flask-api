@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{% block title %}First String{% endblock %}</title>
+  <meta name="description" content="{% block description %}Explore bold apparel from the First String collection.{% endblock %}">
+  <meta property="og:image" content="{% block og_image %}/static/images/seo/default-banner.jpg{% endblock %}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  {% include "_header.html" %}
+  <main>{% block content %}{% endblock %}</main>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
