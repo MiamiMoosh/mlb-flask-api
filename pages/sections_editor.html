@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Section Metadata Editor</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      padding: 2rem;
+      max-width: 900px;
+      margin: auto;
+    }
+    h1 { margin-bottom: 1rem; }
+    .section {
+      border-bottom: 1px solid #ddd;
+      padding: 1rem 0;
+    }
+    label {
+      display: block;
+      font-weight: bold;
+      margin-top: 0.5rem;
+    }
+    input, textarea {
+      width: 100%;
+      font-size: 14px;
+      padding: 6px;
+      margin-top: 2px;
+      margin-bottom: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    textarea { height: 60px; resize: vertical; }
+    .searchbar {
+      width: 100%;
+      padding: 6px;
+      font-size: 15px;
+      margin-bottom: 1.5rem;
+      border: 1px solid #aaa;
+      border-radius: 4px;
+    }
+    button {
+      margin-top: 0.5rem;
+      padding: 6px 12px;
+      font-size: 14px;
+      font-weight: bold;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      background: #2266ee;
+      color: white;
+    }
+    button:hover {
+      background: #1144cc;
+    }
+  </style>
+</head>
+<body>
+  <h1>🛠 Section Metadata Editor</h1>
+  <input class="searchbar" placeholder="Search slug or text..." oninput="filterSections(this.value)" />
+
+  <div id="container">Loading sections...</div>
+
+  <p style="margin-top:2rem;">
+    <button onclick="save()">💾 Save All</button>
+  </p>
+
+  <script>
+    let data = {};
+    let debounce;
+
+    fetch("/sections.json")
+      .then(res => res.json())
+      .then(json => {
+        data = json;
+        render(json);
+      });
+
+    function render(json) {
+      const html = Object.entries(json).map(([slug, meta]) => `
+        <div class="section" data-slug="${slug}">
+          <h2>${slug}</h2>
+          <label>Title</label>
+          <input type="text" name="title" value="${escape(meta.title || '')}" />
+          <label>Description</label>
+          <textarea name="description">${escape(meta.description || '')}</textarea>
+          <button onclick="rewrite(this)">✍️ Rewrite Description</button>
+          <label>Tags (comma-separated)</label>
+          <input type="text" name="tags" value="${(meta.tags || []).join(', ')}" />
+          <label>Image URL</label>
+          <input type="text" name="image" value="${escape(meta.image || '')}" />
+        </div>
+      `).join("");
+
+      document.getElementById("container").innerHTML = html;
+    }
+
+    function save(showAlert = true) {
+      const updated = {};
+      document.querySelectorAll(".section").forEach(div => {
+        const slug = div.dataset.slug;
+        const title = div.querySelector('input[name="title"]').value.trim();
+        const description = div.querySelector('textarea[name="description"]').value.trim();
+        const tags = div.querySelector('input[name="tags"]').value.split(",").map(t => t.trim()).filter(Boolean);
+        const image = div.querySelector('input[name="image"]').value.trim();
+        updated[slug] = { title, description, tags, image };
+      });
+
+      fetch("/admin/save-sections", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updated)
+      }).then(() => {
+        if (showAlert) alert("✅ Saved!");
+      });
+    }
+
+    function filterSections(query) {
+      query = query.toLowerCase();
+      document.querySelectorAll(".section").forEach(div => {
+        const slug = div.dataset.slug;
+        const text = div.innerText.toLowerCase();
+        div.style.display = (slug.includes(query) || text.includes(query)) ? "block" : "none";
+      });
+    }
+
+    function escape(str) {
+      return str.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function rewrite(btn) {
+      const section = btn.closest(".section");
+      const descriptionEl = section.querySelector("textarea[name='description']");
+      const title = section.querySelector('input[name="title"]').value;
+
+      fetch("/admin/ai-rewrite-description", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, existing: descriptionEl.value })
+      })
+      .then(res => res.text())
+      .then(newDesc => {
+        descriptionEl.value = newDesc;
+        autoSave();
+      });
+    }
+
+    function autoSave() {
+      clearTimeout(debounce);
+      debounce = setTimeout(() => save(false), 800);
+    }
+
+    document.addEventListener("input", (e) => {
+      if (e.target.closest(".section")) autoSave();
+    });
+  </script>
+</body>
+</html>

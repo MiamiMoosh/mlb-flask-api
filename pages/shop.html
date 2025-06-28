@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Shop – First String</title>
+  <title>{{ meta.title or 'Shop – First String' }}</title>
+<meta name="description" content="{{ meta.description or 'Explore bold apparel from the First String collection. Designed for fans who live the game.' }}">
+<meta property="og:image" content="{{ meta.image or '/static/images/seo/default-banner.jpg' }}">
 
   <!-- Fonts -->
   <link rel="preload" as="font" href="/static/fonts/Orbitron-Bold.ttf" type="font/ttf" crossorigin>
@@ -214,46 +216,48 @@
   </div>
 
   <script>
-fetch("/shop-data")
-  .then(res => res.json())
-  .then(response => {
-    const data = response?.data ?? response; // Handles both { data: [...] } or just [...]
+  const filters = {{ filters | tojson | safe }};
+  const query = new URLSearchParams(filters).toString();
 
-    if (!Array.isArray(data) || !data.length) {
-      document.getElementById("product-grid").innerHTML = "<p>No products found.</p>";
-      return;
-    }
+  fetch(`/shop-data?${query}`)
+    .then(res => res.json())
+    .then(data => {
+      const grid = document.getElementById("product-grid");
 
-    const grid = document.getElementById("product-grid");
+      if (!Array.isArray(data) || !data.length) {
+        grid.innerHTML = "<p>No products found.</p>";
+        return;
+      }
 
-    data.forEach(product => {
-      const card = document.createElement("div");
-      card.className = "product-card";
+      data.forEach(product => {
+        const card = document.createElement("div");
+        card.className = "product-card";
 
-      const img = document.createElement("img");
-      img.className = "product-image";
-      img.src = product.images?.[0]?.src || "";
-      img.alt = product.title;
+        const img = document.createElement("img");
+        img.className = "product-image";
+        img.src = product.images?.[0]?.src || "";
+        img.alt = product.title;
 
-      const title = document.createElement("div");
-      title.className = "product-title";
-      title.textContent = product.title;
+        const title = document.createElement("div");
+        title.className = "product-title";
+        title.textContent = product.title;
 
-      const price = document.createElement("div");
-      price.className = "product-price";
-      const rawPrice = product.variants?.[0]?.price;
-      price.textContent = rawPrice ? `$${(rawPrice / 100).toFixed(2)}` : "–";
+        const price = document.createElement("div");
+        price.className = "product-price";
+        const prices = product.variants?.map(v => v.price) || [];
+        const minPrice = prices.length ? Math.min(...prices) : null;
+        price.textContent = minPrice ? `From $${(minPrice / 100).toFixed(2)}` : "–";
 
-      card.appendChild(img);
-      card.appendChild(title);
-      card.appendChild(price);
-      grid.appendChild(card);
+        card.appendChild(img);
+        card.appendChild(title);
+        card.appendChild(price);
+        grid.appendChild(card);
+      });
+    })
+    .catch(err => {
+      console.error("Error loading products:", err);
+      document.getElementById("product-grid").innerHTML = "<p>Failed to load products.</p>";
     });
-  })
-  .catch(err => {
-    console.error("Error loading products:", err);
-    document.getElementById("product-grid").innerHTML = "<p>Failed to load products.</p>";
-  });
 </script>
 </body>
 </html>

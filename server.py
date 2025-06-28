@@ -4,6 +4,7 @@ import datetime
 import pytz
 import subprocess
 import requests
+import slugify
 
 from flask import Flask, jsonify, render_template,  request, redirect, url_for, session, flash
 from bson import ObjectId
@@ -1352,21 +1353,106 @@ def get_game_status(game_id):
         "scheduled_time": game.get("scheduled_time", "TBD")
     })
 
+
 @app.route("/shop-data")
 def get_shop_data():
-    token = os.environ.get("PRINTIFY_API_TOKEN")
-    if not token:
-        return jsonify({"error": "Missing API token"}), 500
+    from urllib.parse import unquote
 
+    token = os.environ.get("PRINTIFY_API_TOKEN")
     headers = {"Authorization": f"Bearer {token}"}
-    shop_id = "22589888"
-    url = f"https://api.printify.com/v1/shops/{shop_id}/products.json"
+    url = f"https://api.printify.com/v1/shops/{SHOP_ID}/products.json"
 
     try:
         resp = requests.get(url, headers=headers)
-        return jsonify(resp.json())
+        products = resp.json().get("data", [])
+
+        with open("product_tags.json", "r") as f:
+            metadata = json.load(f)
+
+        for p in products:
+            if p["id"] in metadata:
+                p.update(metadata[p["id"]])
+
+        # Apply filters from query string
+        filters = request.args.to_dict()
+        for key, val in filters.items():
+            val = unquote(val).lower()
+            products = [
+                p for p in products
+                if p.get(key, "").lower() == val or val in [t.lower() for t in p.get("tags", [])]
+            ]
+
+        return jsonify(products)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/shop/<path:subpath>")
+def shop_category(subpath):
+    parts = [p.lower() for p in subpath.strip("/").split("/")]
+
+    # Load metadata definitions
+    known_cities = {"pittsburgh", "chicago", "cleveland"}  # Expand as needed
+    known_sports = {"baseball", "football", "basketball"}
+    known_collections = {"signature", "fan-favorite"}
+
+    # Build dynamic filter object
+    filters = {}
+    for part in parts:
+        if part in known_sports:
+            filters["sport"] = part
+        elif part in known_cities:
+            filters["city"] = part
+        elif part in known_collections:
+            filters["collection"] = part
+
+    slug = "-".join(parts)
+
+    # Load SEO metadata
+    with open("sections.json") as f:
+        sections = json.load(f)
+    section_meta = sections.get(slug, {})
+
+    return render_template("shop.html", filters=filters, subpath=subpath, meta=section_meta)
+
+
+@app.route("/admin/generate-sections")
+def generate_sections_admin():
+    try:
+        from generate_sections import load_product_tags, generate_sections, save_sections
+        products = load_product_tags()
+        sections = generate_sections(products)
+        save_sections(sections)
+        return f"✅ Generated {len(sections)} section entries.", 200
+    except Exception as e:
+        return f"❌ Error: {str(e)}", 500
+
+
+@app.route("/sections.json")
+def get_sections_json():
+    with open("sections.json") as f:
+        return f.read(), 200, {"Content-Type": "application/json"}
+
+@app.route("/admin/save-sections", methods=["POST"])
+def save_sections_json():
+    try:
+        data = request.get_json()
+        with open("sections.json", "w") as f:
+            json.dump(data, f, indent=2)
+        return "OK", 200
+    except Exception as e:
+        return f"Error: {str(e)}", 500
+
+
+@app.route("/admin/ai-rewrite-description", methods=["POST"])
+def ai_rewrite_description():
+    data = request.json
+    title = data.get("title", "")
+    existing = data.get("existing", "")
+    # Replace with real AI call or logic
+    improved = f"{existing} (Updated for clarity and SEO)"
+    return improved
+
 
 if __name__ == "__main__":
     import logging

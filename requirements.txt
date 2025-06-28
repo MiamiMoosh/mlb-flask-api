@@ -14,3 +14,4 @@ pycryptodome
 flask-cors
 MLB-StatsAPI
 pybaseball
+python-slugify

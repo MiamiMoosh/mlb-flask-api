@@ -1,0 +1,17 @@
+{
+  "pittsburgh-baseball-signature": {
+    "title": "Pittsburgh Baseball – Signature Collection",
+    "description": "Premium gear for Pittsburgh fans who rep black and gold every day. Sharp design meets elite comfort.",
+    "image": "/static/images/seo/pittsburgh-baseball.jpg"
+  },
+  "chicago-football-fan-favorite": {
+    "title": "Chicago Football – Fan Favorites",
+    "description": "Classic cuts. City pride. Shop Chicago's best-selling football designs from First String.",
+    "image": "/static/images/seo/chicago-football.jpg"
+  },
+  "baseball-signature": {
+    "title": "Signature Baseball Apparel",
+    "description": "Engineered for baseball culture. Statement designs made for game day — or any day.",
+    "image": "/static/images/seo/baseball-sig.jpg"
+  }
+}
