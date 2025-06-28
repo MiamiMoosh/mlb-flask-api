@@ -2,9 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>{% block title %}First String{% endblock %}</title>
-  <meta name="description" content="{% block description %}Explore bold apparel from the First String collection.{% endblock %}">
-  <meta property="og:image" content="{% block og_image %}/static/images/seo/default-banner.jpg{% endblock %}">
+  {% block meta %}
+    <title>{{ meta.title or "First String" }}</title>
+    <meta name="description" content="{{ meta.description or 'Explore bold apparel from the First String collection.' }}">
+    <meta property="og:image" content="{{ meta.image or '/static/images/seo/default-banner.jpg' }}">
+  {% endblock %}
   {% block head %}{% endblock %}
 </head>
 <body>

@@ -1,0 +1,6 @@
+{
+  "sport": ["Baseball", "Football"],
+  "city": ["Pittsburgh", "Chicago", "Cleveland"],
+  "collection": ["Signature", "Fan Favorite"],
+  "type": ["Shirt", "Hoodie", "Tank", "Sticker", "Cap"]
+}

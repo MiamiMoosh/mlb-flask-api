@@ -8,6 +8,7 @@
     "sport": "Baseball",
     "team": "Pirates",
     "collection": "Signature",
+    "type": "shirt",
     "tags": ["pittsburgh", "mlb", "steel-city", "fan-gift", "baseball-shirt"],
     "sort_order": 1,
     "featured": true,

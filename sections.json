@@ -2,7 +2,12 @@
   "pittsburgh-baseball-signature": {
     "title": "Pittsburgh Baseball – Signature Collection",
     "description": "Premium gear for Pittsburgh fans who rep black and gold every day. Sharp design meets elite comfort.",
-    "image": "/static/images/seo/pittsburgh-baseball.jpg"
+    "image": "/static/images/seo/pittsburgh-baseball.jpg",
+    "schema": {
+      "@type": "Product",
+      "brand": "First String",
+      "priceRange": "$29–$45"
+    }
   },
   "chicago-football-fan-favorite": {
     "title": "Chicago Football – Fan Favorites",

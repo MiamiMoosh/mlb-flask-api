@@ -6,6 +6,7 @@ import subprocess
 import requests
 import slugify
 import json
+import re
 
 
 from flask import Flask, jsonify, render_template,  request, redirect, url_for, session, flash
@@ -743,6 +744,8 @@ def stats():
 
     if existing_entry:
         last_updated = existing_entry.get("last_updated")
+        if last_updated.tzinfo is None:
+            last_updated = last_updated.replace(tzinfo=timezone.utc)
         if last_updated:
             time_elapsed = datetime.now(timezone.utc) - last_updated
 
@@ -1353,34 +1356,82 @@ def get_game_status(game_id):
 
 @app.route("/shop-data")
 def get_shop_data():
+    import os
+    import json
+    import re
+    import requests
     from urllib.parse import unquote
+    from collections import defaultdict
+
+    def slugify(text):
+        return re.sub(r"[^\w]+", "-", text.lower()).strip("-")
+
+    def load_tag_config():
+        try:
+            with open("tag_config.json") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+
+    def auto_tag_product(p, tag_config):
+        title = p.get("title", "").lower()
+        meta = {
+            "slug": slugify(p.get("title", "")),
+            "title": p.get("title", ""),
+            "tags": [t.lower() for t in p.get("tags", []) if isinstance(t, str)],
+            "featured": False,
+            "hide": False
+        }
+
+        for key, values in tag_config.items():
+            for val in values:
+                if val.lower() in title:
+                    meta[key] = val
+                    break
+
+        return meta
 
     token = os.environ.get("PRINTIFY_API_TOKEN")
+    shop_id = os.environ.get("PRINTIFY_SHOP_ID")
+    url = f"https://api.printify.com/v1/shops/{shop_id}/products.json"
     headers = {"Authorization": f"Bearer {token}"}
-    url = f"https://api.printify.com/v1/shops/{SHOP_ID}/products.json"
 
     try:
         resp = requests.get(url, headers=headers)
         products = resp.json().get("data", [])
 
-        with open("product_tags.json", "r") as f:
-            metadata = json.load(f)
+        # Load fallback metadata (optional overrides)
+        try:
+            with open("product_tags.json", "r") as f:
+                static_metadata = json.load(f)
+        except Exception:
+            static_metadata = {}
 
+        tag_config = load_tag_config()
+
+        enriched = []
         for p in products:
-            if p["id"] in metadata:
-                p.update(metadata[p["id"]])
+            pid = str(p["id"])
+            if pid in static_metadata:
+                p.update(static_metadata[pid])
+            else:
+                p.update(auto_tag_product(p, tag_config))
+            enriched.append(p)
 
         # Apply filters from query string
         filters = request.args.to_dict()
         for key, val in filters.items():
-            val = unquote(val).lower()
-            products = [
-                p for p in products
-                if p.get(key, "").lower() == val or val in [t.lower() for t in p.get("tags", [])]
+            val = unquote(val).strip().lower()
+            enriched = [
+                p for p in enriched
+                if val in str(p.get(key, "")).lower()
+                   or any(val in t.lower() for t in p.get("tags", []))
             ]
 
-        return jsonify(products)
+        return jsonify(enriched)
+
     except Exception as e:
+        print("get_shop_data error:", e)
         return jsonify({"error": str(e)}), 500
 
 
@@ -1407,30 +1458,89 @@ def build_navigation_structure(sections):
     return dict(catalog)
 
 
+def load_taxonomy():
+    try:
+        with open("taxonomy.json") as f:
+            raw = json.load(f)
+        values = {}
+        for key, opts in raw.items():
+            values[key] = [
+                {"value": k, **v}
+                for k, v in opts.items()
+                if not v.get("hidden")
+            ]
+            values[key].sort(key=lambda x: x.get("sort", 0))
+        return values
+    except Exception:
+        return {}
+
+
+def get_available_filter_values(metadata):
+    from collections import defaultdict
+
+    filters = defaultdict(set)
+
+    for product in metadata.values():
+        for key in ("sport", "city", "collection", "type"):
+            if key in product and product[key]:
+                filters[key].add(product[key])
+
+    # Optionally: sort results alphabetically
+    return {k: sorted(v) for k, v in filters.items()}
+
+
+def load_tag_rules():
+    with open("tag_config.json") as f:
+        return json.load(f)
+
+def slugify(text):
+    return re.sub(r"[^\w]+", "-", text.lower()).strip("-")
+
+def auto_tag_product(p, tag_rules):
+    title = p.get("title", "").lower()
+    metadata = {
+        "slug": slugify(p.get("title", "")),
+        "title": p.get("title", ""),
+        "tags": [t.lower() for t in p.get("tags", []) if isinstance(t, str)],
+        "featured": False,
+        "hide": False
+    }
+
+    for key, values in tag_rules.items():
+        for value in values:
+            if value.lower() in title:
+                metadata[key] = value
+                break
+
+    return metadata
+
+
 @app.route("/shop", defaults={"subpath": ""})
 @app.route("/shop/<path:subpath>")
 def shop(subpath):
+    import json
+
     track_view("/shop")
     parts = [p.lower() for p in subpath.strip("/").split("/")] if subpath else []
 
-    known_cities = {"pittsburgh", "chicago", "cleveland"}
-    known_sports = {"baseball", "football", "basketball"}
-    known_collections = {"signature", "fan-favorite"}
-    known_types = {"shirt", "hoodie", "cap", "sticker", "sweatshirt", "tank"}
-
+    # Extract from subpath first
     filters = {}
+
+    # ... populate filters from path parts like sport/city/etc.
+
+    # Then override with query params (query > path)
+    filters = {**filters, **request.args.to_dict()}
+
+    known_keys = {"sport", "city", "collection", "type"}
+
     for part in parts:
-        if part in known_sports:
-            filters["sport"] = part
-        elif part in known_cities:
-            filters["city"] = part
-        elif part in known_collections:
-            filters["collection"] = part
-        elif part in known_types:
-            filters["type"] = part
+        for key in known_keys:
+            if key not in filters and part:
+                filters[key] = part
 
     slug = "-".join(parts)
 
+    # Load page-level metadata and catalog nav
     try:
         with open("sections.json") as f:
             sections = json.load(f)
@@ -1444,13 +1554,34 @@ def shop(subpath):
         "image": "/static/images/seo/default-banner.jpg"
     }
 
+    # Load filter value definitions from taxonomy.json
+    def load_taxonomy():
+        try:
+            with open("taxonomy.json") as f:
+                raw = json.load(f)
+            values = {}
+            for key, items in raw.items():
+                filtered = [
+                    {"value": k, "label": v.get("label", k), "sort": v.get("sort", 0)}
+                    for k, v in items.items()
+                    if not v.get("hidden", False)
+                ]
+                values[key] = sorted(filtered, key=lambda x: x["sort"])
+            return values
+        except Exception as e:
+            print("taxonomy load error:", e)
+            return {}
+
+    available_values = load_taxonomy()
+
     return render_template(
         "shop.html",
-        filters=filters,
+        filters=filters,  # ✅ This line ensures filters is available to the template
         subpath=subpath,
         meta=section_meta,
         catalog=catalog,
-        sports=sorted(catalog.keys())
+        sports=sorted(catalog.keys()),
+        available_values=available_values
     )
 
 
@@ -1510,6 +1641,31 @@ def available_types():
         return sorted(types)
     except Exception as e:
         return {"error": str(e)}, 500
+
+@app.route("/shop-meta")
+def get_shop_meta():
+    from urllib.parse import unquote
+    try:
+        filters = {k: unquote(v).title() for k, v in request.args.items()}
+        parts = [filters.get(k) for k in ("city", "sport", "collection", "type") if filters.get(k)]
+        slug = "-".join(parts).lower()
+
+        with open("sections.json") as f:
+            sections = json.load(f)
+        meta = sections.get(slug, {})
+
+        return jsonify({
+            "title": meta.get("title") or "Shop – First String",
+            "description": meta.get("description") or "Explore bold, fan-driven apparel from the Signature Collection.",
+            "image": meta.get("image") or "/static/images/seo/default-banner.jpg"
+        })
+    except Exception as e:
+        print("shop-meta error:", e)
+        return jsonify({
+            "title": "Shop – First String",
+            "description": "Explore bold, fan-driven apparel from the Signature Collection.",
+            "image": "/static/images/seo/default-banner.jpg"
+        }), 500
 
 
 if __name__ == "__main__":

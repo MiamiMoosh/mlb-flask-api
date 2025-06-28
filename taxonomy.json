@@ -1,0 +1,18 @@
+{
+  "sport": {
+    "Baseball": { "label": "Baseball", "hidden": false, "sort": 1 },
+    "Football": { "label": "Football", "hidden": false, "sort": 2 }
+  },
+  "city": {
+    "Pittsburgh": { "label": "Pittsburgh", "hidden": false, "sort": 1 },
+    "Chicago": { "label": "Chicago", "hidden": false, "sort": 2 }
+  },
+  "collection": {
+    "Signature": { "label": "Signature Collection", "hidden": false, "sort": 1 },
+    "Fan Favorite": { "label": "Fan Favorite", "hidden": false, "sort": 2 }
+  },
+  "type": {
+    "Shirt": { "label": "Shirt", "hidden": false, "sort": 1 },
+    "Hoodie": { "label": "Hoodie", "hidden": false, "sort": 2 }
+  }
+}

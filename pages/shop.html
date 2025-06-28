@@ -1,11 +1,30 @@
 {% extends "_base.html" %}
 
-{% block title %}{{ meta.title or "Shop – First String" }}{% endblock %}
-{% block description %}{{ meta.description or "Explore bold apparel for fans who live the game." }}{% endblock %}
-{% block og_image %}{{ meta.image or "/static/images/seo/default-banner.jpg" }}{% endblock %}
+{% set available_values = available_values or {} %}
+
+{% block meta %}
+  <title>{{ meta.title or 'Shop – First String' }}</title>
+  <meta name="description" content="{{ meta.description or 'Explore bold apparel for fans who live the game.' }}">
+  <meta property="og:image" content="{{ meta.image or '/static/images/seo/default-banner.jpg' }}">
+{% endblock %}
 
 {% block head %}
+  {% set fallback_schema = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": meta.title or 'Shop – First String',
+    "description": meta.description or 'Explore bold apparel for fans who live the game.',
+    "image": meta.image or '/static/images/seo/default-banner.jpg',
+    "brand": {"@type": "Brand", "name": "First String"}
+  } %}
 
+  {% set schema = meta.schema if meta and meta.schema is mapping else fallback_schema %}
+  {% set jsonld = schema | tojson %}
+
+  <script type="application/ld+json">{{ jsonld | safe }}</script>
+{% endblock %}
+
+<link rel="canonical" href="{{ request.base_url }}{% if request.query_string %}?{{ request.query_string|safe }}{% endif %}">
   <style>
     body { background: url("/static/images/firststring_bg.png") no-repeat center center fixed; background-size: cover; background-color: #000; font-family: 'Orbitron', sans-serif; color: white; margin: 0; overflow-x: hidden; }
     .header-wrapper { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 80px; background-image: url("/static/images/firststring_bg.png"); background-repeat: no-repeat; background-size: cover; background-position: center; background-attachment: fixed; z-index: 9999; }
@@ -27,7 +46,7 @@
     .shop-filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 1rem; }
     .shop-filters select { padding: 6px; font-size: 14px; background: #111; color: white; border: 1px solid #666; border-radius: 4px; }
     .thumbnail-size-toggle { margin-bottom: 1rem; }
-    #product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 30px; margin-top: 20px; }
+    #product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 30px; margin-top: 40px; }
     #product-grid.small .product-card { transform: scale(0.85); }
     #product-grid.medium .product-card { transform: scale(1); }
     #product-grid.large .product-card { transform: scale(1.25); }
@@ -40,7 +59,6 @@
     .product-title { font-size: 14px; font-weight: bold; margin-top: 10px; }
     .product-price { color: #C0C8B6; font-size: 12px; margin-top: 4px; }
   </style>
-{% endblock %}
 
 {% block content %}
 
@@ -53,25 +71,29 @@
         <div class="shop-filters">
           <select id="filter-sport" onchange="updateShopFilters()">
             <option value="">All Sports</option>
-            <option value="baseball">Baseball</option>
-            <option value="football">Football</option>
+            {% for opt in available_values.sport %}
+              <option value="{{ opt.value|lower }}">{{ opt.label }}</option>
+            {% endfor %}
           </select>
           <select id="filter-city" onchange="updateShopFilters()">
             <option value="">All Cities</option>
-            <option value="pittsburgh">Pittsburgh</option>
-            <option value="chicago">Chicago</option>
+            {% for opt in available_values.city %}
+              <option value="{{ opt.value|lower }}">{{ opt.label }}</option>
+            {% endfor %}
           </select>
           <select id="filter-collection" onchange="updateShopFilters()">
             <option value="">All Collections</option>
-            <option value="signature">Signature</option>
-            <option value="fan-favorite">Fan Favorite</option>
+            {% for opt in available_values.collection %}
+              <option value="{{ opt.value|lower }}">{{ opt.label }}</option>
+            {% endfor %}
           </select>
           <select id="filter-type" onchange="updateShopFilters()">
             <option value="">All Types</option>
-            <option value="shirt">Shirt</option>
-            <option value="hoodie">Hoodie</option>
-            <option value="cap">Cap</option>
+            {% for opt in available_values.type %}
+              <option value="{{ opt.value|lower }}">{{ opt.label }}</option>
+            {% endfor %}
           </select>
+          <button onclick="resetShopFilters()" style="margin-top: 0.5rem; padding: 6px 12px;">Reset Filters</button>
         </div>
 
         <input
@@ -95,7 +117,6 @@
 {% endblock %}
 
 {% block scripts %}
-
 
   <script>
   const filters = {{ filters | tojson | safe }};
@@ -142,15 +163,29 @@
     });
 
     function updateShopFilters() {
-    const sport = document.getElementById("filter-sport").value;
-    const city = document.getElementById("filter-city").value;
-    const collection = document.getElementById("filter-collection").value;
-    const type = document.getElementById("filter-type").value;
+  const sport = document.getElementById("filter-sport").value;
+  const city = document.getElementById("filter-city").value;
+  const collection = document.getElementById("filter-collection").value;
+  const type = document.getElementById("filter-type").value;
 
-    const parts = [sport, city, collection, type].filter(Boolean);
-    const path = parts.join("/");
-    window.location.href = path ? `/shop/${path}` : "/shop";
-  }
+  const filters = { sport, city, collection, type };
+  const parts = [sport, city, collection, type].filter(Boolean);
+  const path = parts.join("/");
+
+  updateMetaFromFilters(filters);  // 👈 Update title/meta
+
+  window.location.href = path ? `/shop/${path}` : "/shop";
+}
+
+  function resetShopFilters() {
+      document.getElementById("filter-sport").value = "";
+      document.getElementById("filter-city").value = "";
+      document.getElementById("filter-collection").value = "";
+      document.getElementById("filter-type").value = "";
+      document.getElementById("product-search").value = "";
+      setThumbSize("medium");
+      window.location.href = "/shop";
+    }
 
   function filterGrid(query) {
     query = query.toLowerCase();
@@ -165,6 +200,19 @@
   grid.classList.add(size);
 }
 setThumbSize('medium'); // Default view
+
+function updateMetaFromFilters(filters) {
+  const query = new URLSearchParams(filters).toString();
+  fetch(`/shop-meta?${query}`)
+    .then(res => res.json())
+    .then(meta => {
+      document.title = meta.title;
+      const descTag = document.querySelector('meta[name="description"]');
+      const ogImgTag = document.querySelector('meta[property="og:image"]');
+      if (descTag) descTag.setAttribute("content", meta.description);
+      if (ogImgTag) ogImgTag.setAttribute("content", meta.image);
+    });
+}
 
 </script>
 
