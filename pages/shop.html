@@ -48,13 +48,10 @@
     .header-left img { max-width: 80%; width: 300px; object-fit: contain; }
     .main-menu { font-family: 'Canes', sans-serif; background: #1D1F21; }
     .main-menu ul { list-style: none; margin: 0; padding: 0; display: flex; font-size: 16px; }
-    .main-menu ul li { position: relative; padding: 10px 16px; white-space: nowrap; }
+    .main-menu ul li { position: relative; padding: 5px 10px; }
     .main-menu ul li a { color: #fff; text-decoration: none; font-size: 16px; }
-    .main-menu ul li .dropdown-content { margin-top: 1px; }
-    .dropdown-content, .submenu-content { display: none; position: absolute; top: 100%; left: 0; background: #1D1F21; border: 1px solid #AA0000; min-width: 200px; z-index: 1000; opacity: 0; pointer-events: none; transform: translateY(8px); transition: opacity 0.2s ease, transform 0.2s ease; }
-    .dropdown:hover > .dropdown-content, .submenu:hover > .submenu-content { display: block; opacity: 1; pointer-events: auto; transform: translateY(0); }
-    .dropdown-content a, .submenu-content a { display: block; padding: 10px 16px; color: white; text-decoration: none; font-size: 14px; border-bottom: 1px solid #2C2E31; white-space: nowrap; }
-    .dropdown-content a:hover, .submenu-content a:hover { background-color: #AA0000; color: #fff; }
+    .dropdown-content, .submenu-content { display: none !important; position: absolute; background: #1D1F21; border: 1px solid #AA0000; min-width: 200px; z-index: 1000; }
+    .dropdown:hover > .dropdown-content, .submenu:hover > .submenu-content { display: block !important; }
     .wrapper { margin-top: 80px; display: flex; width: 100vw; position: relative; }
     .empty-container { flex: 1; }
     .dashboard-panel { flex: 1; padding: 20px; }
