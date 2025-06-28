@@ -1405,6 +1405,8 @@ def shop_category(subpath):
             filters["city"] = part
         elif part in known_collections:
             filters["collection"] = part
+        elif part in known_types:
+            filters["type"] = part
 
     slug = "-".join(parts)
 
@@ -1457,6 +1459,21 @@ def ai_rewrite_description():
     # Replace with real AI call or logic
     improved = f"{existing} (Updated for clarity and SEO)"
     return improved
+
+
+@app.route("/admin/available-types")
+def available_types():
+    try:
+        with open("product_tags.json") as f:
+            products = json.load(f)
+        types = set(
+            data.get("type", "").strip()
+            for data in products.values()
+            if data.get("type")
+        )
+        return sorted(types)
+    except Exception as e:
+        return {"error": str(e)}, 500
 
 
 if __name__ == "__main__":

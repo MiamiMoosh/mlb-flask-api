@@ -64,94 +64,120 @@
     <button onclick="save()">💾 Save All</button>
   </p>
 
-  <script>
-    let data = {};
-    let debounce;
+<script>
+  let data = {};
+  let debounce;
+  let availableTypes = [];
 
-    fetch("/sections.json")
-      .then(res => res.json())
-      .then(json => {
-        data = json;
-        render(json);
-      });
-
-    function render(json) {
-      const html = Object.entries(json).map(([slug, meta]) => `
-        <div class="section" data-slug="${slug}">
-          <h2>${slug}</h2>
-          <label>Title</label>
-          <input type="text" name="title" value="${escape(meta.title || '')}" />
-          <label>Description</label>
-          <textarea name="description">${escape(meta.description || '')}</textarea>
-          <button onclick="rewrite(this)">✍️ Rewrite Description</button>
-          <label>Tags (comma-separated)</label>
-          <input type="text" name="tags" value="${(meta.tags || []).join(', ')}" />
-          <label>Image URL</label>
-          <input type="text" name="image" value="${escape(meta.image || '')}" />
-        </div>
-      `).join("");
-
-      document.getElementById("container").innerHTML = html;
-    }
-
-    function save(showAlert = true) {
-      const updated = {};
-      document.querySelectorAll(".section").forEach(div => {
-        const slug = div.dataset.slug;
-        const title = div.querySelector('input[name="title"]').value.trim();
-        const description = div.querySelector('textarea[name="description"]').value.trim();
-        const tags = div.querySelector('input[name="tags"]').value.split(",").map(t => t.trim()).filter(Boolean);
-        const image = div.querySelector('input[name="image"]').value.trim();
-        updated[slug] = { title, description, tags, image };
-      });
-
-      fetch("/admin/save-sections", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated)
-      }).then(() => {
-        if (showAlert) alert("✅ Saved!");
-      });
-    }
-
-    function filterSections(query) {
-      query = query.toLowerCase();
-      document.querySelectorAll(".section").forEach(div => {
-        const slug = div.dataset.slug;
-        const text = div.innerText.toLowerCase();
-        div.style.display = (slug.includes(query) || text.includes(query)) ? "block" : "none";
-      });
-    }
-
-    function escape(str) {
-      return str.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    }
-
-    function rewrite(btn) {
-      const section = btn.closest(".section");
-      const descriptionEl = section.querySelector("textarea[name='description']");
-      const title = section.querySelector('input[name="title"]').value;
-
-      fetch("/admin/ai-rewrite-description", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, existing: descriptionEl.value })
-      })
-      .then(res => res.text())
-      .then(newDesc => {
-        descriptionEl.value = newDesc;
-        autoSave();
-      });
-    }
-
-    function autoSave() {
-      clearTimeout(debounce);
-      debounce = setTimeout(() => save(false), 800);
-    }
-
-    document.addEventListener("input", (e) => {
-      if (e.target.closest(".section")) autoSave();
+  // Load section metadata
+  fetch("/sections.json")
+    .then(res => res.json())
+    .then(json => {
+      data = json;
+      if (availableTypes.length) render(json);
     });
-  </script>
+
+  // Load available types from product_tags.json
+  fetch("/admin/available-types")
+    .then(res => res.json())
+    .then(types => {
+      availableTypes = types;
+      if (Object.keys(data).length) render(data);
+    });
+
+  function render(json) {
+    const typeOptions = ['<option value="">—</option>']
+      .concat(availableTypes.map(t => `<option value="${t}">${t}</option>`))
+      .join("");
+
+    const html = Object.entries(json).map(([slug, meta]) => `
+      <div class="section" data-slug="${slug}">
+        <h2>${slug}</h2>
+        <label>Title</label>
+        <input type="text" name="title" value="${escape(meta.title || '')}" />
+        <label>Description</label>
+        <textarea name="description">${escape(meta.description || '')}</textarea>
+        <button onclick="rewrite(this)">✍️ Rewrite Description</button>
+        <label>Tags (comma-separated)</label>
+        <input type="text" name="tags" value="${(meta.tags || []).join(', ')}" />
+        <label>Image URL</label>
+        <input type="text" name="image" value="${escape(meta.image || '')}" />
+        <label>Type</label>
+        <select name="type">${typeOptions}</select>
+      </div>
+    `).join("");
+
+    document.getElementById("container").innerHTML = html;
+
+    // Set selected type values
+    Object.entries(json).forEach(([slug, meta]) => {
+      const section = document.querySelector(`.section[data-slug="${slug}"]`);
+      if (section && meta.type) {
+        const select = section.querySelector('select[name="type"]');
+        if (select) select.value = meta.type;
+      }
+    });
+  }
+
+  function save(showAlert = true) {
+    const updated = {};
+    document.querySelectorAll(".section").forEach(div => {
+      const slug = div.dataset.slug;
+      const title = div.querySelector('input[name="title"]').value.trim();
+      const description = div.querySelector('textarea[name="description"]').value.trim();
+      const tags = div.querySelector('input[name="tags"]').value.split(",").map(t => t.trim()).filter(Boolean);
+      const image = div.querySelector('input[name="image"]').value.trim();
+      const type = div.querySelector('select[name="type"]')?.value.trim() || "";
+      updated[slug] = { title, description, tags, image, type };
+    });
+
+    fetch("/admin/save-sections", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updated)
+    }).then(() => {
+      if (showAlert) alert("✅ Saved!");
+    });
+  }
+
+  function filterSections(query) {
+    query = query.toLowerCase();
+    document.querySelectorAll(".section").forEach(div => {
+      const slug = div.dataset.slug;
+      const text = div.innerText.toLowerCase();
+      div.style.display = (slug.includes(query) || text.includes(query)) ? "block" : "none";
+    });
+  }
+
+  function escape(str) {
+    return String(str).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function rewrite(btn) {
+    const section = btn.closest(".section");
+    const descriptionEl = section.querySelector("textarea[name='description']");
+    const title = section.querySelector('input[name="title"]').value;
+
+    fetch("/admin/ai-rewrite-description", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, existing: descriptionEl.value })
+    })
+    .then(res => res.text())
+    .then(newDesc => {
+      descriptionEl.value = newDesc;
+      autoSave();
+    });
+  }
+
+  function autoSave() {
+    clearTimeout(debounce);
+    debounce = setTimeout(() => save(false), 800);
+  }
+
+  document.addEventListener("input", (e) => {
+    if (e.target.closest(".section")) autoSave();
+  });
+</script>
 </body>
 </html>

@@ -210,6 +210,39 @@
     <div class="dashboard-panel" id="stats-panel">
       <div id="stats-container">
         <div class="shop-title">Shop the Signature Collection</div>
+
+        <div class="shop-filters">
+          <select id="filter-sport" onchange="updateShopFilters()">
+            <option value="">All Sports</option>
+            <option value="baseball">Baseball</option>
+            <option value="football">Football</option>
+          </select>
+          <select id="filter-city" onchange="updateShopFilters()">
+            <option value="">All Cities</option>
+            <option value="pittsburgh">Pittsburgh</option>
+            <option value="chicago">Chicago</option>
+          </select>
+          <select id="filter-collection" onchange="updateShopFilters()">
+            <option value="">All Collections</option>
+            <option value="signature">Signature</option>
+            <option value="fan-favorite">Fan Favorite</option>
+          </select>
+          <select id="filter-type" onchange="updateShopFilters()">
+            <option value="">All Types</option>
+            <option value="shirt">Shirt</option>
+            <option value="hoodie">Hoodie</option>
+            <option value="cap">Cap</option>
+          </select>
+        </div>
+
+        <input
+          type="text"
+          id="product-search"
+          placeholder="Search products, teams, players..."
+          oninput="filterGrid(this.value)"
+          style="padding: 6px; width: 100%; margin-bottom: 1rem;"
+        />
+
         <div id="product-grid"></div>
       </div>
     </div>
@@ -258,6 +291,26 @@
       console.error("Error loading products:", err);
       document.getElementById("product-grid").innerHTML = "<p>Failed to load products.</p>";
     });
+
+    function updateShopFilters() {
+    const sport = document.getElementById("filter-sport").value;
+    const city = document.getElementById("filter-city").value;
+    const collection = document.getElementById("filter-collection").value;
+    const type = document.getElementById("filter-type").value;
+
+    const parts = [sport, city, collection, type].filter(Boolean);
+    const path = parts.join("/");
+    window.location.href = path ? `/shop/${path}` : "/shop";
+  }
+
+  function filterGrid(query) {
+    query = query.toLowerCase();
+    document.querySelectorAll(".product-card").forEach(card => {
+      const text = card.innerText.toLowerCase();
+      card.style.display = text.includes(query) ? "block" : "none";
+    });
+  }
+
 </script>
 </body>
 </html>

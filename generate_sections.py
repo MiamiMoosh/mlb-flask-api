@@ -8,26 +8,28 @@ with open("product_tags.json", "r") as f:
 
 sections = {}
 
-# Group products by (city, sport, collection)
+# Group products by (city, sport, collection, type)
 for p_id, data in products.items():
     city = data.get("city")
     sport = data.get("sport")
     collection = data.get("collection")
+    type_ = data.get("type", "")  # New field
     team = data.get("team", "")
     players = data.get("players", [])  # Optional: ["Paul Skenes", "Andrew McCutchen"]
 
-    if not (city and sport and collection):
+    if not (city and sport and collection and type_):
         continue
 
-    slug = slugify(f"{city}-{sport}-{collection}")
+    slug = slugify(f"{city}-{sport}-{collection}-{type_}")
     team_part = f"{team} " if team else ""
     collection_name = collection.title()
+    type_name = type_.title()
 
     # Build SEO title
-    title = f"{city} {team_part}{sport.title()} – {collection_name} Collection"
+    title = f"{city} {team_part}{sport.title()} {type_name} – {collection_name} Collection"
 
     # Base description
-    description = f"Explore premium {sport.lower()} apparel for {city} fans. Featuring our {collection_name} Collection designed with passion and precision."
+    description = f"Explore premium {sport.lower()} {type_.lower()}s for {city} fans. Featuring our {collection_name} Collection designed with passion and precision."
 
     # Add player mentions
     if players:
@@ -36,23 +38,24 @@ for p_id, data in products.items():
 
     # Tag variations for SEO/ads/search matching
     keywords = [
-        f"{city} {sport} shirt",
-        f"{city} {team} tshirt",
-        f"{team} {sport} shirt",
+        f"{city} {sport} {type_}",
+        f"{city} {team} {type_}",
+        f"{team} {sport} {type_}",
         f"{city} {sport} apparel",
         f"{city} {team} gear",
         f"{sport} gifts for {city}",
     ]
 
     for player in players:
-        keywords.append(f"{player.lower()} shirt")
-        keywords.append(f"{player.lower()} {sport.lower()} tshirt")
+        keywords.append(f"{player.lower()} {type_.lower()}")
+        keywords.append(f"{player.lower()} {sport.lower()} {type_.lower()}")
 
     sections[slug] = {
         "title": title,
         "description": description,
         "tags": sorted(set([k.lower() for k in keywords])),
-        "image": f"/static/images/seo/{slug}.jpg"
+        "image": f"/static/images/seo/{slug}.jpg",
+        "type": type_
     }
 
 # Write to sections.json
