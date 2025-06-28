@@ -1387,43 +1387,16 @@ def get_shop_data():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/shop")
-def shop():
-    try:
-        with open("sections.json") as f:
-            sections = json.load(f)
-    except Exception:
-        sections = {}
-
-    meta = {
-        "title": "Shop – First String",
-        "description": "Explore bold apparel from the First String collection.",
-        "image": "/static/images/seo/default-banner.jpg"
-    }
-
-    catalog = build_navigation_structure(sections)
-
-    return render_template(
-        "shop.html",
-        filters={},
-        subpath="",
-        meta=meta,
-        catalog=catalog,
-        sports=sorted(catalog.keys())
-    )
-
-
+@app.route("/shop", defaults={"subpath": ""})
 @app.route("/shop/<path:subpath>")
-def shop_category(subpath):
-    parts = [p.lower() for p in subpath.strip("/").split("/")]
+def shop(subpath):
+    parts = [p.lower() for p in subpath.strip("/").split("/")] if subpath else []
 
-    # Load metadata definitions
     known_cities = {"pittsburgh", "chicago", "cleveland"}
     known_sports = {"baseball", "football", "basketball"}
     known_collections = {"signature", "fan-favorite"}
     known_types = {"shirt", "hoodie", "cap", "sticker", "sweatshirt", "tank"}
 
-    # Build dynamic filter object
     filters = {}
     for part in parts:
         if part in known_sports:
@@ -1437,15 +1410,18 @@ def shop_category(subpath):
 
     slug = "-".join(parts)
 
-    # Load SEO metadata
     try:
         with open("sections.json") as f:
             sections = json.load(f)
     except Exception:
         sections = {}
 
-    section_meta = sections.get(slug) or {}
     catalog = build_navigation_structure(sections)
+    section_meta = sections.get(slug) or {
+        "title": "Shop – First String",
+        "description": "Explore bold apparel from the First String collection.",
+        "image": "/static/images/seo/default-banner.jpg"
+    }
 
     return render_template(
         "shop.html",
