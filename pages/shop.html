@@ -21,7 +21,15 @@
   {% set schema = meta.schema if meta and meta.schema is mapping else fallback_schema %}
   {% set jsonld = schema | tojson %}
 
-  <script type="application/ld+json">{{ jsonld | safe }}</script>
+<script>
+  const jsonLd = {{ jsonld | tojson | safe }};
+  const script = document.createElement('script');
+  script.type = 'application/ld+json';
+  script.textContent = JSON.stringify(jsonLd);
+  document.head.appendChild(script);
+</script>
+
+
 {% endblock %}
 
 <link rel="canonical" href="{{ request.base_url }}{% if request.query_string %}?{{ request.query_string|safe }}{% endif %}">
