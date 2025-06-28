@@ -1388,20 +1388,20 @@ def get_shop_data():
 
 
 @app.route("/shop")
-def shop_root():
+def shop():
     try:
         with open("sections.json") as f:
             sections = json.load(f)
     except Exception:
         sections = {}
 
-    catalog = build_navigation_structure(sections)
-
     meta = {
         "title": "Shop – First String",
         "description": "Explore bold apparel from the First String collection.",
         "image": "/static/images/seo/default-banner.jpg"
     }
+
+    catalog = build_navigation_structure(sections)
 
     return render_template(
         "shop.html",
