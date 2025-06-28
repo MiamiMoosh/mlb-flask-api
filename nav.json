@@ -1,0 +1,31 @@
+[
+  {
+    "label": "Shop",
+    "children": [
+      {
+        "label": "Baseball",
+        "children": [
+          { "label": "Jerseys", "url": "/shop/baseball/jerseys" },
+          { "label": "Caps", "url": "/shop/baseball/caps" }
+        ]
+      },
+      {
+        "label": "Football",
+        "children": [
+          { "label": "Helmets", "url": "/shop/football/helmets" }
+        ]
+      }
+    ]
+  },
+  {
+    "label": "Stats",
+    "children": [
+      {
+        "label": "MLB",
+        "children": [
+          { "label": "Daily Batter vs. Pitcher", "url": "/stats/daily-bvp" }
+        ]
+      }
+    ]
+  }
+]

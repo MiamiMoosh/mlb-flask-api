@@ -731,7 +731,7 @@ def home():
     target_date = query_date if query_date else get_current_est_date()
     # Pass the date to the template so the client-side nav links can be built from it.
     track_view("/")
-    return render_template("MyBatterVsPitcher.html", date=target_date)
+    return render_template("MyBatterVsPitcher.html", date=target_date, nav=load_nav())
 
 
 @app.route("/stats")
@@ -1581,8 +1581,18 @@ def shop(subpath):
         meta=section_meta,
         catalog=catalog,
         sports=sorted(catalog.keys()),
-        available_values=available_values
+        available_values=available_values,
+        nav=load_nav()
     )
+
+
+def load_nav():
+    try:
+        with open("nav.json") as f:
+            return json.load(f)
+    except Exception as e:
+        print("Error loading nav.json:", e)
+        return []
 
 
 @app.route("/admin/generate-sections")
