@@ -30,6 +30,7 @@ CORS(app)
 
 PRINTIFY_API_TOKEN = os.environ.get("PRINTIFY_API_TOKEN")
 HEADERS = {"Authorization": f"Bearer {PRINTIFY_API_TOKEN}"}
+SHOP_ID = os.environ.get("PRINTIFY_SHOP_ID")
 
 response = requests.get("https://api.printify.com/v1/shops.json", headers=HEADERS)
 print(response.json())
