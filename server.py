@@ -799,12 +799,6 @@ def change_date():
     return redirect(url_for("home", date=target_date))
 
 
-@app.route("/shop")
-def shop():
-    track_view("/shop")
-    return render_template("shop.html")
-
-
 @app.route("/stats/daily-bvp")
 def daily_bvp():
     query_date = request.args.get("date")
@@ -1390,6 +1384,7 @@ def get_shop_data():
 @app.route("/shop", defaults={"subpath": ""})
 @app.route("/shop/<path:subpath>")
 def shop(subpath):
+    track_view("/shop")
     parts = [p.lower() for p in subpath.strip("/").split("/")] if subpath else []
 
     known_cities = {"pittsburgh", "chicago", "cleveland"}
