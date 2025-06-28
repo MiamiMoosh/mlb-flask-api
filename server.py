@@ -1352,6 +1352,21 @@ def get_game_status(game_id):
         "scheduled_time": game.get("scheduled_time", "TBD")
     })
 
+@app.route("/shop-data")
+def get_shop_data():
+    token = os.environ.get("PRINTIFY_API_TOKEN")
+    if not token:
+        return jsonify({"error": "Missing API token"}), 500
+
+    headers = {"Authorization": f"Bearer {token}"}
+    shop_id = "22589888"
+    url = f"https://api.printify.com/v1/shops/{shop_id}/products.json"
+
+    try:
+        resp = requests.get(url, headers=headers)
+        return jsonify(resp.json())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     import logging
