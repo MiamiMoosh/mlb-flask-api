@@ -1428,6 +1428,11 @@ def generate_sections_admin():
         return f"❌ Error: {str(e)}", 500
 
 
+@app.route("/admin/sections-editor")
+def sections_editor():
+    return render_template("sections_editor.html")
+
+
 @app.route("/sections.json")
 def get_sections_json():
     with open("sections.json") as f:
