@@ -1,25 +1,37 @@
-<nav class="main-menu">
-  <ul>
-    {% for section in nav %}
-      <li class="dropdown">
-        <a href="#">{{ section.label }}</a>
-        {% if section.children %}
+<div class="header-wrapper">
+  <div class="header-left">
+    <a href="/"><img src="/static/images/firststring_logo_300x96.png" alt="First String Logo" /></a>
+  </div>
+  <div class="header-right">
+    <nav class="main-menu">
+      <ul>
+        <li class="dropdown">
+          <a href="#">Shop</a>
           <ul class="dropdown-content">
-            {% for sub in section.children %}
+            {% for sport in sports %}
               <li class="submenu">
-                <a href="#">{{ sub.label }}</a>
-                {% if sub.children %}
-                  <ul class="submenu-content">
-                    {% for item in sub.children %}
-                      <li><a href="{{ item.url }}">{{ item.label }}</a></li>
-                    {% endfor %}
-                  </ul>
-                {% endif %}
+                <a href="#">{{ sport|title }}</a>
+                <ul class="submenu-content">
+                  {% for section in catalog[sport] %}
+                    <li><a href="{{ section.url }}">{{ section.label }}</a></li>
+                  {% endfor %}
+                </ul>
               </li>
             {% endfor %}
           </ul>
-        {% endif %}
-      </li>
-    {% endfor %}
-  </ul>
-</nav>
+        </li>
+        <li class="dropdown">
+          <a href="#">Stats</a>
+          <ul class="dropdown-content">
+            <li class="submenu">
+              <a href="#">MLB</a>
+              <ul class="submenu-content">
+                <li><a href="/stats/daily-bvp">Daily Batter vs. Pitcher</a></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</div>
