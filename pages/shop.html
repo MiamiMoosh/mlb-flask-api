@@ -75,25 +75,25 @@
           <select id="filter-sport" onchange="updateShopFilters()">
             <option value="">All Sports</option>
             {% for opt in available_values.sport %}
-              <option value="{{ opt.value|lower }}">{{ opt.label }}</option>
+              <option value="{{ opt.value|lower }}" {% if filters.sport == opt.value|lower %}selected{% endif %}>{{ opt.label }}</option>
             {% endfor %}
           </select>
           <select id="filter-city" onchange="updateShopFilters()">
             <option value="">All Cities</option>
             {% for opt in available_values.city %}
-              <option value="{{ opt.value|lower }}">{{ opt.label }}</option>
+              <option value="{{ opt.value|lower }}" {% if filters.city == opt.value|lower %}selected{% endif %}>{{ opt.label }}</option>
             {% endfor %}
           </select>
           <select id="filter-collection" onchange="updateShopFilters()">
             <option value="">All Collections</option>
             {% for opt in available_values.collection %}
-              <option value="{{ opt.value|lower }}">{{ opt.label }}</option>
+               <option value="{{ opt.value|lower }}" {% if filters.collection == opt.value|lower %}selected{% endif %}>{{ opt.label }}</option>
             {% endfor %}
           </select>
           <select id="filter-type" onchange="updateShopFilters()">
             <option value="">All Types</option>
             {% for opt in available_values.type %}
-              <option value="{{ opt.value|lower }}">{{ opt.label }}</option>
+               <option value="{{ opt.value|lower }}" {% if filters.type == opt.value|lower %}selected{% endif %}>{{ opt.label }}</option>
             {% endfor %}
           </select>
           <button onclick="resetShopFilters()" style="margin-top: 0.5rem; padding: 6px 12px;">Reset Filters</button>
@@ -153,17 +153,19 @@
     });
 
     function updateShopFilters() {
-  const sport = document.getElementById("filter-sport").value;
-  const city = document.getElementById("filter-city").value;
-  const collection = document.getElementById("filter-collection").value;
-  const type = document.getElementById("filter-type").value;
+  const filters = {
+    sport: document.getElementById("filter-sport").value,
+    city: document.getElementById("filter-city").value,
+    collection: document.getElementById("filter-collection").value,
+    type: document.getElementById("filter-type").value
+  };
 
-  const filters = { sport, city, collection, type };
-  const parts = [sport, city, collection, type].filter(Boolean);
+  const parts = [];
+  for (const key of ["sport", "city", "collection", "type"]) {
+    if (filters[key]) parts.push(filters[key]);
+  }
+
   const path = parts.join("/");
-
-  updateMetaFromFilters(filters);  // 👈 Update title/meta
-
   window.location.href = path ? `/shop/${path}` : "/shop";
 }
 
