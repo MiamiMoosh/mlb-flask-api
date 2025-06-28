@@ -1381,6 +1381,29 @@ def get_shop_data():
         return jsonify({"error": str(e)}), 500
 
 
+def build_navigation_structure(sections):
+    from collections import defaultdict
+
+    catalog = defaultdict(list)
+
+    for slug, meta in sections.items():
+        # Skip if title/URL are missing
+        if not meta.get("title") or not slug:
+            continue
+
+        # Use sport or collection as the top-level category
+        top_level = meta.get("sport") or meta.get("collection") or "general"
+        label = meta["title"]
+        url = f"/shop/{slug}"
+
+        catalog[top_level].append({
+            "label": label,
+            "url": url
+        })
+
+    return dict(catalog)
+
+
 @app.route("/shop", defaults={"subpath": ""})
 @app.route("/shop/<path:subpath>")
 def shop(subpath):
