@@ -1387,6 +1387,32 @@ def get_shop_data():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/shop")
+def shop_root():
+    try:
+        with open("sections.json") as f:
+            sections = json.load(f)
+    except Exception:
+        sections = {}
+
+    catalog = build_navigation_structure(sections)
+
+    meta = {
+        "title": "Shop – First String",
+        "description": "Explore bold apparel from the First String collection.",
+        "image": "/static/images/seo/default-banner.jpg"
+    }
+
+    return render_template(
+        "shop.html",
+        filters={},
+        subpath="",
+        meta=meta,
+        catalog=catalog,
+        sports=sorted(catalog.keys())
+    )
+
+
 @app.route("/shop/<path:subpath>")
 def shop_category(subpath):
     parts = [p.lower() for p in subpath.strip("/").split("/")]
