@@ -102,6 +102,10 @@ button:disabled {
   cursor: default;
   box-shadow: none;
 }
+.product-card {
+  cursor: pointer;
+}
+
   </style>
 {% endblock %}
 
@@ -207,6 +211,11 @@ button:disabled {
           card.appendChild(img);
           card.appendChild(title);
           card.appendChild(price);
+          card.addEventListener("click", () => {
+            if (product.slug) {
+              window.location.href = `/shop/${product.slug}`;
+            }
+          });
           grid.appendChild(card);
         });
       })

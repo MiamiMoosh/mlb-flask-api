@@ -1612,6 +1612,18 @@ def sections_editor():
     return render_template("sections_editor.html")
 
 
+@app.route("/shop/<slug>")
+def product_detail(slug):
+    with open("product_tags.json") as f:
+        product_tags = json.load(f)
+
+    product = product_tags.get(slug)
+    if not product or product.get("hide"):
+        return "Product not found", 404
+
+    return render_template("product_detail.html", product=product)
+
+
 @app.route("/sections.json")
 def get_sections_json():
     with open("sections.json") as f:
