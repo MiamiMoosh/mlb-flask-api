@@ -1,21 +1,7 @@
 [
   {
     "label": "Shop",
-    "children": [
-      {
-        "label": "Baseball",
-        "children": [
-          { "label": "Jerseys", "url": "/shop/baseball/jerseys" },
-          { "label": "Caps", "url": "/shop/baseball/caps" }
-        ]
-      },
-      {
-        "label": "Football",
-        "children": [
-          { "label": "Helmets", "url": "/shop/football/helmets" }
-        ]
-      }
-    ]
+    "url": "/shop"
   },
   {
     "label": "Stats",
