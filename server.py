@@ -1612,13 +1612,13 @@ def sections_editor():
     return render_template("sections_editor.html")
 
 
+
 @app.route("/shop/<slug>")
 def product_detail(slug):
     with open("product_tags.json") as f:
         product_tags = json.load(f)
 
-    # Search by .slug field
-    product = product_tags.get(slug)
+    product = product_tags.get(slug)  # ← NOT .values() anymore
 
     if not product or product.get("hide"):
         return "Product not found", 404
