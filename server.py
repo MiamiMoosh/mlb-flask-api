@@ -1413,7 +1413,9 @@ def get_shop_data():
         for p in products:
             slug = slugify(p.get("title", ""))
             if slug in static_metadata:
-                p.update(static_metadata[slug])
+                meta = static_metadata[slug]
+                p.update(meta)  # ← Ensure override
+                p["slug"] = slug  # ← Force your slug as canonical
             else:
                 meta = auto_tag_product(p, tag_config)
                 p.update(meta)
