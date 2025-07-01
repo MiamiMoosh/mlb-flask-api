@@ -1411,11 +1411,12 @@ def get_shop_data():
 
         enriched = []
         for p in products:
-            pid = str(p["id"])
-            if pid in static_metadata:
-                p.update(static_metadata[pid])
+            slug = slugify(p.get("title", ""))
+            if slug in static_metadata:
+                p.update(static_metadata[slug])
             else:
-                p.update(auto_tag_product(p, tag_config))
+                meta = auto_tag_product(p, tag_config)
+                p.update(meta)
             enriched.append(p)
 
         # Apply filters from query string
