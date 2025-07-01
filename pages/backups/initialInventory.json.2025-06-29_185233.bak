@@ -1,6 +1,0 @@
-[
-  { "id": 1, "name": "Pen", "quantity": 50 },
-  { "id": 2, "name": "Pencil", "quantity": 75 },
-  { "id": 3, "name": "Notepad", "quantity": 100 }
-  { "id": 3, "name": "Sticker", "quantity": 500 }
-]
