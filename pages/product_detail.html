@@ -1,14 +1,42 @@
 {% extends "_base.html" %}
 
+{% block meta %}
+  <title>{{ product.title }} – First String</title>
+  <meta name="description" content="{{ product.seo_description }}">
+  <meta property="og:title" content="{{ product.title }}">
+  <meta property="og:description" content="{{ product.seo_description }}">
+  <meta property="og:type" content="product">
+  {% if product.images %}
+    <meta property="og:image" content="{{ product.images[0].src }}">
+  {% endif %}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": "{{ product.title }}",
+    "description": "{{ product.seo_description }}",
+    "image": "{{ product.images[0].src if product.images else '' }}",
+    "brand": {
+      "@type": "Brand",
+      "name": "First String"
+    }
+  }
+  </script>
+{% endblock %}
+
 {% block content %}
   <div class="product-page">
     <h1>{{ product.title }}</h1>
+
     {% if product.video_url %}
       <video controls autoplay muted playsinline style="width:100%; border-radius:8px; margin-bottom:20px;">
         <source src="{{ product.video_url }}" type="video/mp4">
         Your browser does not support the video tag.
       </video>
+    {% elif product.images %}
+      <img src="{{ product.images[0].src }}" alt="{{ product.title }}" style="width:100%; border-radius:8px; margin-bottom:20px;">
     {% endif %}
+
     <p>{{ product.seo_description }}</p>
   </div>
 {% endblock %}

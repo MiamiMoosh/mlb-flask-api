@@ -1,0 +1,107 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  FlatList,
+  StyleSheet,
+  Button
+} from 'react-native';
+import inventoryData from '../data/initialInventory.json';
+
+export default function InventoryEditor({ navigation }) {
+  const [inventory, setInventory] = useState(inventoryData);
+  const [newItemName, setNewItemName] = useState('');
+  const [newItemQty, setNewItemQty] = useState('');
+
+  const updateQuantity = (index, qty) => {
+    const updated = [...inventory];
+    updated[index].quantity = parseInt(qty, 10) || 0;
+    setInventory(updated);
+  };
+
+  const addItem = () => {
+    const qty = parseInt(newItemQty, 10) || 0;
+    if (!newItemName.trim() || qty <= 0) {
+      alert('Please enter a valid name and quantity greater than 0.');
+      return;
+    }
+
+    const newItem = { name: newItemName.trim(), quantity: qty };
+    setInventory([...inventory, newItem]);
+    setNewItemName('');
+    setNewItemQty('');
+  };
+
+  return (
+
+    <View style={styles.container}>
+	<Button title="Back to Main" onPress={() => navigation.goBack()} />
+      <Text style={styles.title}>Edit Inventory</Text>
+
+      <View style={styles.addRow}>
+        <TextInput
+          placeholder="Item name"
+          style={styles.input}
+          value={newItemName}
+          onChangeText={setNewItemName}
+        />
+        <TextInput
+          placeholder="Qty"
+          style={styles.input}
+          keyboardType="numeric"
+          value={newItemQty}
+          onChangeText={setNewItemQty}
+        />
+        <Button title="Add" onPress={addItem} />
+      </View>
+
+
+      <FlatList
+        data={inventory}
+        keyExtractor={(_, index) => index.toString()}
+        renderItem={({ item, index }) => (
+          <View style={styles.itemRow}>
+            <Text style={styles.name}>{item.name}</Text>
+            <TextInput
+              style={styles.qtyInput}
+              keyboardType="numeric"
+              value={item.quantity.toString()}
+              onChangeText={(text) => updateQuantity(index, text)}
+            />
+          </View>
+        )}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { padding: 20, flex: 1 },
+  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 10 },
+  itemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 6
+  },
+  name: { fontSize: 16, flex: 1 },
+  qtyInput: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    width: 60,
+    padding: 4,
+    textAlign: 'center'
+  },
+  addRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#aaa',
+    padding: 6,
+    marginHorizontal: 4,
+    flex: 1
+  }
+});

@@ -1,0 +1,125 @@
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Button, TextInput, FlatList, TouchableOpacity, Image } from 'react-native';
+import AnimatedCard from './AnimatedCard';
+import { animationPresets } from '../utils/animationPresets';
+import inventoryData from '../data/initialInventory.json';
+import { useGlobalStore } from '../store/globalStore';
+import { useEffectOnce } from 'react-use';
+import { Image } from 'react-native';
+
+export default function MainFlowScreen({ navigation }) {
+const {
+  inventory,
+  finalMessage,
+  cardImage,
+  containerImage,
+  hydrate
+} = useGlobalStore();
+
+const [shuffledItems, setShuffledItems] = useState([]);
+const [numToPick, setNumToPick] = useState('');
+const [pickedItems, setPickedItems] = useState([]);
+const [revealIndex, setRevealIndex] = useState(0);
+const [showFinal, setShowFinal] = useState(false);
+
+
+  useEffectOnce(() => {
+	  hydrate();
+	  scrollThenDrop();
+	});
+
+
+  const scrollThenDrop = () => {
+    // Simulate a fast scroll by quickly iterating through names (could animate later)
+    setTimeout(() => {
+      // Simulate dropping all items into a container
+      // In future, animate this!
+    }, 3000);
+  };
+
+  const shuffleAndPick = () => {
+    const flatList = inventory.flatMap(item =>
+      Array(item.quantity).fill(item.name)
+    );
+    const shuffled = flatList.sort(() => 0.5 - Math.random());
+    setShuffledItems(shuffled);
+    const picked = shuffled.slice(0, parseInt(numToPick));
+    setPickedItems(picked);
+    setRevealIndex(0);
+    setShowFinal(false);
+  };
+
+  const showNextItem = () => {
+    if (revealIndex < pickedItems.length - 1) {
+      setRevealIndex(revealIndex + 1);
+    } else {
+      setShowFinal(true);
+    }
+  };
+
+  const replayLast = () => {
+    setShowFinal(false);
+  };
+
+  const resetOrder = () => {
+    setPickedItems([]);
+    setNumToPick('');
+    setRevealIndex(0);
+    setShowFinal(false);
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Order Picker</Text>
+
+      {!pickedItems.length ? (
+        <>
+          <Text style={styles.label}>Enter number of items to pick:</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={numToPick}
+            onChangeText={setNumToPick}
+          />
+          <Button title="Start Picking" onPress={shuffleAndPick} />
+        </>
+      ) : (
+        <>
+          <FlatList
+            data={pickedItems.slice(0, revealIndex + 1)}
+            keyExtractor={(item, index) => index.toString()}
+            numColumns={4}
+            renderItem={({ item }) => (
+              <AnimatedCard name={item} animation={animationPresets[Math.floor(Math.random() * animationPresets.length)].type} />
+            )}
+            contentContainerStyle={styles.grid}
+          />
+          {!showFinal ? (
+            <Button title="Show Next Item" onPress={showNextItem} />
+          ) : (
+            <>
+              <Text style={styles.finalMessage}>🎉 Your order is ready!</Text>
+              <Button title="Replay Last Item" onPress={replayLast} />
+              <Button title="Start New Order" onPress={resetOrder} />
+            </>
+          )}
+        </>
+      )}
+
+      <View style={styles.bottomButtons}>
+        <Button title="Edit Inventory" onPress={() => navigation.navigate('Inventory')} />
+        <Button title="Settings" onPress={() => navigation.navigate('Settings')} />
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { padding: 20, flex: 1, backgroundColor: '#fff' },
+  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 10 },
+  label: { fontSize: 16 },
+  input: { borderColor: '#ccc', borderWidth: 1, padding: 8, marginVertical: 10 },
+  grid: { alignItems: 'center', marginTop: 20 },
+  finalMessage: { fontSize: 20, fontWeight: '600', marginVertical: 20 },
+  bottomButtons: { marginTop: 30, flexDirection: 'row', justifyContent: 'space-between' }
+});

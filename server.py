@@ -1617,7 +1617,9 @@ def product_detail(slug):
     with open("product_tags.json") as f:
         product_tags = json.load(f)
 
+    # Search by .slug field
     product = product_tags.get(slug)
+
     if not product or product.get("hide"):
         return "Product not found", 404
 
