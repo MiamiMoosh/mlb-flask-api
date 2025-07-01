@@ -1400,7 +1400,7 @@ def get_shop_data():
         resp = requests.get(url, headers=headers)
         products = resp.json().get("data", [])
 
-        # Load fallback metadata (optional overrides)
+        # Load curated metadata keyed by slug
         try:
             with open("product_tags.json", "r") as f:
                 static_metadata = json.load(f)
@@ -1408,22 +1408,18 @@ def get_shop_data():
             static_metadata = {}
 
         tag_config = load_tag_config()
-
         enriched = []
-        for p in products:
-            slug = None
-            if "slug" in p:
-                slug = p["slug"]
-            elif "title" in p:
-                slug = slugify(p["title"])
 
-            if slug and slug in static_metadata:
-                meta = static_metadata[slug]
+        for p in products:
+            title_slug = slugify(p.get("title", ""))
+            meta = static_metadata.get(title_slug)
+
+            if meta:
                 p.update(meta)
-                p["slug"] = slug  # ← force override of title-based slug
+                p["slug"] = meta["slug"]  # override any Printify-generated slug
             else:
-                meta = auto_tag_product(p, tag_config)
-                p.update(meta)
+                generated_meta = auto_tag_product(p, tag_config)
+                p.update(generated_meta)
 
             enriched.append(p)
 
