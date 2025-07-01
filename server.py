@@ -1411,14 +1411,20 @@ def get_shop_data():
 
         enriched = []
         for p in products:
-            slug = slugify(p.get("title", ""))
-            if slug in static_metadata:
+            slug = None
+            if "slug" in p:
+                slug = p["slug"]
+            elif "title" in p:
+                slug = slugify(p["title"])
+
+            if slug and slug in static_metadata:
                 meta = static_metadata[slug]
-                p.update(meta)  # ← Ensure override
-                p["slug"] = slug  # ← Force your slug as canonical
+                p.update(meta)
+                p["slug"] = slug  # ← force override of title-based slug
             else:
                 meta = auto_tag_product(p, tag_config)
                 p.update(meta)
+
             enriched.append(p)
 
         # Apply filters from query string
