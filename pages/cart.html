@@ -1,0 +1,51 @@
+{% extends "_base.html" %}
+
+{% block content %}
+<div style="max-width: 900px; margin: auto; padding: 2rem;">
+  <h1>Your Cart</h1>
+  <div id="cart-content"></div>
+
+  <button id="checkout" style="margin-top: 2rem; padding: 0.75rem 1.5rem; font-size: 1rem; background-color: #000; color: #fff; border: none; border-radius: 4px;">
+    Proceed to Checkout
+  </button>
+</div>
+
+<script>
+  const cart = JSON.parse(localStorage.getItem("firststring_cart") || "[]");
+  const container = document.getElementById("cart-content");
+
+  if (cart.length === 0) {
+    container.innerHTML = "<p>Your cart is empty.</p>";
+    document.getElementById("checkout").style.display = "none";
+  } else {
+    const table = document.createElement("table");
+    table.style.width = "100%";
+    table.innerHTML = `
+      <thead>
+        <tr><th>Item</th><th>Qty</th><th></th></tr>
+      </thead>
+      <tbody>
+        ${cart.map((item, i) => `
+          <tr>
+            <td>Variant ID: ${item.variant_id}</td>
+            <td>${item.qty}</td>
+            <td><button onclick="removeItem(${i})">Remove</button></td>
+          </tr>
+        `).join("")}
+      </tbody>
+    `;
+    container.appendChild(table);
+  }
+
+  function removeItem(index) {
+    cart.splice(index, 1);
+    localStorage.setItem("firststring_cart", JSON.stringify(cart));
+    window.updateCartBadge?.();
+    location.reload();
+  }
+
+  document.getElementById("checkout")?.addEventListener("click", () => {
+    alert("You’ll be redirected to checkout soon..."); // Wire to /checkout later
+  });
+</script>
+{% endblock %}

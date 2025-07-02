@@ -15,18 +15,19 @@
 {% block content %}
 <div class="product-detail" style="max-width: 960px; margin: auto; padding: 2rem;">
 
-  <!-- 🖼️ Media -->
-  <div class="product-media" style="margin-bottom: 1.5rem;">
+  <!-- 📸 Image Carousel -->
+  <div class="product-gallery" style="margin-bottom: 1.5rem; overflow-x: auto; white-space: nowrap;">
     {% if product.video_url %}
-      <video controls autoplay muted playsinline style="width: 100%; border-radius: 8px;">
+      <video controls autoplay muted playsinline style="width: 100%; max-width: 500px; display: inline-block; border-radius: 8px; margin-right: 1rem;">
         <source src="{{ product.video_url }}" type="video/mp4">
       </video>
-    {% elif product.images %}
-      <img src="{{ product.images[0].src }}" alt="{{ product.title }}" style="width: 100%; border-radius: 8px;">
     {% endif %}
+    {% for img in product.get("images", []) %}
+      <img src="{{ img.src }}" alt="{{ product.title }}"
+           style="width: 100%; max-width: 500px; display: inline-block; border-radius: 8px; margin-right: 1rem;" />
+    {% endfor %}
   </div>
 
-  <!-- 🧾 Title and Description -->
   <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">{{ product.title }}</h1>
 
   {% if product.seo_description %}
@@ -34,12 +35,12 @@
   {% endif %}
 
   {% if product.description %}
-    <div class="full-description" style="line-height: 1.6; margin-bottom: 2rem;">
+    <div style="line-height: 1.6; margin-bottom: 2rem;">
       {{ product.description | safe }}
     </div>
   {% endif %}
 
-  <!-- 🎨 Option Selectors -->
+  <!-- 🔧 Variant Selection -->
   <form id="variant-form" style="margin-bottom: 1rem;">
     {% for option in product.get("options", []) %}
       <label for="opt-{{ option.name }}" style="display: block; font-weight: bold; margin-top: 1rem;">
@@ -54,13 +55,13 @@
     <input type="hidden" id="selected-variant-id" name="variant_id">
   </form>
 
-  <!-- 💸 Coupon + Pricing -->
+  <!-- 💰 Pricing + Coupon -->
   <div id="price-display" style="margin-bottom: 1rem; font-size: 1.25rem; font-weight: bold;"></div>
 
   <label for="coupon-code">Have a coupon?</label>
-  <input type="text" id="coupon-code" placeholder="Enter code" style="margin-bottom: 1rem; padding: 0.5rem; width: 100%;" />
+  <input type="text" id="coupon-code" placeholder="Enter code"
+         style="margin-bottom: 1rem; padding: 0.5rem; width: 100%;" />
 
-  <!-- 🛒 Add to Cart -->
   <button
     id="add-to-cart"
     data-variants='{{ product.get("variants", []) | tojson }}'
@@ -79,7 +80,7 @@
     </div>
   {% endif %}
 
-  <!-- 🗂️ Metadata -->
+  <!-- 📍 Metadata -->
   <ul style="list-style: none; margin-top: 2rem; padding: 0;">
     {% if product.collection %}<li><strong>Collection:</strong> {{ product.collection }}</li>{% endif %}
     {% if product.team %}<li><strong>Team:</strong> {{ product.team }}</li>{% endif %}
@@ -88,7 +89,7 @@
     {% if product.tags %}<li><strong>Tags:</strong> {{ product.tags | join(', ') }}</li>{% endif %}
   </ul>
 
-  <!-- 📦 Shipping Info -->
+  <!-- 🚚 Shipping -->
   <section style="margin-top: 3rem;">
     <h2>Shipping & Returns</h2>
     <p>Orders ship within 2–4 business days. Most arrive within 5–9 days depending on your location.</p>
@@ -96,7 +97,7 @@
   </section>
 </div>
 
-<!-- 🧠 JS: Variant Picker, Price Logic, Cart -->
+<!-- 🧠 JS: Variants, Cart, Pricing -->
 <script>
   const variantForm = document.getElementById("variant-form");
   const addToCartBtn = document.getElementById("add-to-cart");
@@ -123,18 +124,18 @@
     if (!variant) return priceDisplay.innerHTML = "";
 
     let discount = baseDiscount;
-    const coupon = couponField.value.trim().toLowerCase();
+    const code = couponField.value.trim().toLowerCase();
 
-    if (coupon === "summer25") discount = 25;
-    if (coupon === "freefan") discount = 100;
+    if (code === "summer25") discount = 25;
+    if (code === "freefan") discount = 100;
 
     const price = variant.price / 100;
-    const salePrice = price * (1 - discount / 100);
+    const sale = price * (1 - discount / 100);
 
     if (discount > 0 && discount < 100) {
-      priceDisplay.innerHTML = `$<s>${price.toFixed(2)}</s> → $${salePrice.toFixed(2)} (${discount}% off)`;
+      priceDisplay.innerHTML = `$<s>${price.toFixed(2)}</s> → $${sale.toFixed(2)} (${discount}% off)`;
     } else if (discount >= 100) {
-      priceDisplay.innerHTML = `🎉 <strong>Free with code!</strong>`;
+      priceDisplay.innerHTML = `<strong>🎉 Free with code!</strong>`;
     } else {
       priceDisplay.innerHTML = `$${price.toFixed(2)}`;
     }
@@ -147,7 +148,7 @@
   addToCartBtn?.addEventListener("click", () => {
     const variantId = document.getElementById("selected-variant-id").value;
     const productId = addToCartBtn.dataset.printifyId;
-    if (!variantId || !productId) return alert("Please select all options.");
+    if (!variantId) return alert("Please select a variant.");
 
     const cart = JSON.parse(localStorage.getItem("firststring_cart") || "[]");
     cart.push({ printify_id: productId, variant_id: variantId, qty: 1 });
