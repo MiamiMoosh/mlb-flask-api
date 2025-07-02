@@ -1637,22 +1637,29 @@ def sections_editor():
 
 @app.route("/shop/<slug>")
 def product_detail(slug):
-    from flask import redirect, url_for
-
     with open("product_tags.json") as f:
         product_tags = json.load(f)
 
-    # Find the product by matching internal 'slug' field
+    # Lookup by internal slug field
     product = next((p for p in product_tags.values() if p.get("slug") == slug), None)
 
     if not product or product.get("hide"):
         return "Product not found", 404
 
-    # Redirect if slug in URL does not match the canonical one
+    # 🔁 Redirect if URL slug is not canonical
     if slug != product.get("slug"):
         return redirect(url_for("product_detail", slug=product["slug"]), code=301)
 
-    return render_template("product_detail.html", product=product, is_admin=(request.cookies.get("admin") == "true"))
+    # 🩹 Fallback: if images are missing, pull from variants
+    if not product.get("images") and product.get("variants"):
+        product["images"] = [
+            {"src": v["images"][0]["src"]}
+            for v in product["variants"]
+            if v.get("images")
+        ]
+
+    is_admin = request.cookies.get("admin") == "true"
+    return render_template("product_detail.html", product=product, is_admin=is_admin)
 
 
 @app.route("/sections.json")
