@@ -1640,17 +1640,21 @@ def product_detail(slug):
     with open("product_tags.json") as f:
         product_tags = json.load(f)
 
-    # Lookup by internal slug field
     product = next((p for p in product_tags.values() if p.get("slug") == slug), None)
 
     if not product or product.get("hide"):
         return "Product not found", 404
 
-    # 🔁 Redirect if URL slug is not canonical
     if slug != product.get("slug"):
         return redirect(url_for("product_detail", slug=product["slug"]), code=301)
 
-    # 🩹 Fallback: if images are missing, pull from variants
+    # 🧪 DEBUG IMAGE OUTPUT
+    import json
+    if product.get("variants"):
+        print("=== VARIANT DEBUG ===")
+        print(json.dumps(product["variants"][0], indent=2))
+
+    # Optional image fallback from variants
     if not product.get("images") and product.get("variants"):
         product["images"] = [
             {"src": v["images"][0]["src"]}
