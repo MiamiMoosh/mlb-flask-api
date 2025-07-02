@@ -10,38 +10,23 @@
     <meta property="og:image" content="{{ product.images[0].src }}">
   {% endif %}
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org/",
-    "@type": "Product",
-    "name": "{{ product.title }}",
-    "description": "{{ product.seo_description or '' }}",
-    "image": "{{ product.images[0].src if product.images else '' }}",
-    "brand": { "@type": "Brand", "name": "First String" },
-    "sku": "{{ product.printify_id or '' }}",
-    "offers": {
-      "@type": "Offer",
-      "availability": "https://schema.org/InStock",
-      "priceCurrency": "USD"
-    }
-  }
-  </script>
 {% endblock %}
 
 {% block content %}
-<div class="product-detail" style="max-width: 900px; margin: auto; padding: 2rem;">
+<div class="product-detail" style="max-width: 960px; margin: auto; padding: 2rem;">
 
+  <!-- Media -->
   <div class="product-media" style="margin-bottom: 1.5rem;">
     {% if product.video_url %}
       <video controls autoplay muted playsinline style="width: 100%; border-radius: 8px;">
         <source src="{{ product.video_url }}" type="video/mp4">
-        Your browser does not support the video tag.
       </video>
     {% elif product.images %}
       <img src="{{ product.images[0].src }}" alt="{{ product.title }}" style="width: 100%; border-radius: 8px;">
     {% endif %}
   </div>
 
+  <!-- Title and Description -->
   <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">{{ product.title }}</h1>
 
   {% if product.seo_description %}
@@ -49,38 +34,32 @@
   {% endif %}
 
   {% if product.description %}
-    <div class="full-description" style="line-height: 1.6; margin-bottom: 2rem;">
+    <div class="full-description" style="margin-bottom: 2rem; line-height: 1.6;">
       {{ product.description | safe }}
     </div>
   {% endif %}
 
-  <ul class="product-metadata" style="list-style: none; padding: 0; margin-bottom: 2rem;">
-    {% if product.collection %}<li><strong>Collection:</strong> {{ product.collection }}</li>{% endif %}
-    {% if product.team %}<li><strong>Team:</strong> {{ product.team }}</li>{% endif %}
-    {% if product.sport %}<li><strong>Sport:</strong> {{ product.sport }}</li>{% endif %}
-    {% if product.city and product.state %}
-      <li><strong>Location:</strong> {{ product.city }}, {{ product.state }}</li>
-    {% endif %}
-    {% if product.tags %}
-      <li><strong>Tags:</strong> {{ product.tags | join(', ') }}</li>
-    {% endif %}
-  </ul>
-
-  {% if product.variants %}
-    <div class="variant-selector" style="margin-bottom: 1.5rem;">
-      <label for="variant-select" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Size / Variant:</label>
-      <select id="variant-select" style="padding: 0.5rem; font-size: 1rem; width: 100%;">
-        {% for v in product.variants %}
-          <option value="{{ v.id }}">{{ v.title }} – ${{ "%.2f" | format(v.price / 100) }}</option>
+  <!-- Options (e.g. Size, Color) -->
+  <form id="variant-form" style="margin-bottom: 1.5rem;">
+    {% for option in product.options %}
+      <label for="opt-{{ option.name }}" style="display: block; font-weight: bold; margin-top: 1rem;">
+        {{ option.name }}:
+      </label>
+      <select id="opt-{{ option.name }}" name="{{ option.name }}" style="padding: 0.5rem; width: 100%;">
+        {% for val in option.values %}
+          <option value="{{ val }}">{{ val }}</option>
         {% endfor %}
       </select>
-    </div>
-  {% endif %}
+    {% endfor %}
 
-  <button
-    id="add-to-cart"
-    data-printify-id="{{ product.printify_id }}"
-    style="padding: 0.75rem 1.5rem; font-size: 1.125rem; background-color: #000; color: #fff; border: none; border-radius: 4px; cursor: pointer;">
+    <input type="hidden" id="selected-variant-id" name="variant_id">
+  </form>
+
+  <!-- Price & Add to Cart -->
+  <button id="add-to-cart"
+          data-variants='{{ product.variants | tojson }}'
+          data-printify-id="{{ product.printify_id }}"
+          style="padding: 0.75rem 1.5rem; font-size: 1.125rem; background-color: #000; color: #fff; border: none; border-radius: 4px; cursor: pointer;">
     🛒 Add to Cart
   </button>
 
@@ -88,43 +67,59 @@
     <div style="margin-top: 2rem;">
       <a href="/admin/edit-product/{{ product.slug }}"
          class="admin-edit"
-         style="padding: 0.5rem 1rem; font-size: 0.95rem; background: #eee; border-radius: 4px; text-decoration: none; border: 1px solid #ccc;">
+         style="padding: 0.5rem 1rem; background: #eee; border-radius: 4px; text-decoration: none; border: 1px solid #ccc;">
         ✏️ Edit Product
       </a>
     </div>
   {% endif %}
 
-  <section class="shipping-return" style="margin-top: 3rem;">
-    <h2>Shipping & Returns</h2>
-    <p>Orders typically ship within 2–4 business days. Delivery varies by location but usually arrives in 5–9 business days.</p>
-    <p>Need a return? No problem — unworn items are returnable within 30 days. <a href="/return-policy">Learn more</a>.</p>
-  </section>
+  <!-- Metadata -->
+  <ul class="product-meta" style="list-style: none; margin-top: 2rem; padding: 0;">
+    {% if product.collection %}<li><strong>Collection:</strong> {{ product.collection }}</li>{% endif %}
+    {% if product.team %}<li><strong>Team:</strong> {{ product.team }}</li>{% endif %}
+    {% if product.sport %}<li><strong>Sport:</strong> {{ product.sport }}</li>{% endif %}
+    {% if product.city and product.state %}<li><strong>Location:</strong> {{ product.city }}, {{ product.state }}</li>{% endif %}
+    {% if product.tags %}<li><strong>Tags:</strong> {{ product.tags | join(', ') }}</li>{% endif %}
+  </ul>
 
-  <section class="reviews" style="margin-top: 3rem;">
-    <h2>Verified Buyer Reviews</h2>
-    {% if product.reviews %}
-      {% for review in product.reviews %}
-        <div class="review" style="margin-bottom: 1.25rem;">
-          <strong>{{ review.name }}</strong>
-          <span style="color: #fc0;">{{ "★" * review.rating }}</span>
-          <p>{{ review.comment }}</p>
-        </div>
-      {% endfor %}
-    {% else %}
-      <p>No reviews yet. Be the first to rep this look!</p>
-    {% endif %}
+  <!-- Shipping & Returns -->
+  <section style="margin-top: 3rem;">
+    <h2>Shipping & Returns</h2>
+    <p>All orders ship within 2–4 business days. Most arrive within 5–9 days depending on your location.</p>
+    <p>Returns accepted on unworn items within 30 days. <a href="/return-policy">View full policy.</a></p>
   </section>
 </div>
 
+<!-- Cart & Variant Selection Script -->
 <script>
-  document.getElementById("add-to-cart")?.addEventListener("click", () => {
-    const variantId = document.getElementById("variant-select")?.value;
-    const productId = document.getElementById("add-to-cart")?.dataset.printifyId;
+  const variantForm = document.getElementById("variant-form");
+  const addToCartBtn = document.getElementById("add-to-cart");
+  const variants = JSON.parse(addToCartBtn.dataset.variants || "[]");
 
-    if (!variantId || !productId) {
-      alert("Please select a size first.");
-      return;
-    }
+  function findMatchingVariant() {
+    const selects = variantForm.querySelectorAll("select");
+    const chosen = {};
+    selects.forEach(s => { chosen[s.name] = s.value; });
+
+    const match = variants.find(v =>
+      v.options.every((val, idx) => {
+        const optionName = Object.keys(chosen)[idx];
+        return val === chosen[optionName];
+      })
+    );
+
+    document.getElementById("selected-variant-id").value = match?.id || "";
+    return match;
+  }
+
+  variantForm.addEventListener("change", findMatchingVariant);
+  findMatchingVariant();
+
+  addToCartBtn.addEventListener("click", () => {
+    const variantId = document.getElementById("selected-variant-id").value;
+    const productId = addToCartBtn.dataset.printifyId;
+
+    if (!variantId) return alert("Please select a size or color.");
 
     const cart = JSON.parse(localStorage.getItem("firststring_cart") || "[]");
     cart.push({ printify_id: productId, variant_id: variantId, qty: 1 });
