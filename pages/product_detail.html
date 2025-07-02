@@ -2,41 +2,111 @@
 
 {% block meta %}
   <title>{{ product.title }} – First String</title>
-  <meta name="description" content="{{ product.seo_description }}">
+  <meta name="description" content="{{ product.seo_description or product.title }}">
   <meta property="og:title" content="{{ product.title }}">
-  <meta property="og:description" content="{{ product.seo_description }}">
+  <meta property="og:description" content="{{ product.seo_description or product.title }}">
   <meta property="og:type" content="product">
   {% if product.images %}
     <meta property="og:image" content="{{ product.images[0].src }}">
   {% endif %}
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <script type="application/ld+json">
   {
     "@context": "https://schema.org/",
     "@type": "Product",
     "name": "{{ product.title }}",
-    "description": "{{ product.seo_description }}",
+    "description": "{{ product.seo_description or '' }}",
     "image": "{{ product.images[0].src if product.images else '' }}",
-    "brand": {
-      "@type": "Brand",
-      "name": "First String"
+    "brand": { "@type": "Brand", "name": "First String" },
+    "sku": "{{ product.printify_id or '' }}",
+    "offers": {
+      "@type": "Offer",
+      "availability": "https://schema.org/InStock",
+      "priceCurrency": "USD"
     }
   }
   </script>
 {% endblock %}
 
 {% block content %}
-  <div class="product-page">
-    <h1>{{ product.title }}</h1>
+<div class="product-detail" style="max-width: 900px; margin: auto; padding: 2rem;">
 
+  <div class="product-media" style="margin-bottom: 1.5rem;">
     {% if product.video_url %}
-      <video controls autoplay muted playsinline style="width:100%; border-radius:8px; margin-bottom:20px;">
+      <video controls autoplay muted playsinline style="width: 100%; border-radius: 8px;">
         <source src="{{ product.video_url }}" type="video/mp4">
         Your browser does not support the video tag.
       </video>
     {% elif product.images %}
-      <img src="{{ product.images[0].src }}" alt="{{ product.title }}" style="width:100%; border-radius:8px; margin-bottom:20px;">
+      <img src="{{ product.images[0].src }}" alt="{{ product.title }}" style="width: 100%; border-radius: 8px;">
     {% endif %}
-
-    <p>{{ product.seo_description }}</p>
   </div>
+
+  <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">{{ product.title }}</h1>
+
+  {% if product.seo_description %}
+    <p style="font-size: 1.125rem; color: #555; margin-bottom: 1.5rem;">{{ product.seo_description }}</p>
+  {% endif %}
+
+  <ul class="product-metadata" style="list-style: none; padding: 0; margin-bottom: 2rem;">
+    {% if product.collection %}<li><strong>Collection:</strong> {{ product.collection }}</li>{% endif %}
+    {% if product.team %}<li><strong>Team:</strong> {{ product.team }}</li>{% endif %}
+    {% if product.sport %}<li><strong>Sport:</strong> {{ product.sport }}</li>{% endif %}
+    {% if product.city and product.state %}
+      <li><strong>Location:</strong> {{ product.city }}, {{ product.state }}</li>
+    {% endif %}
+    {% if product.tags %}
+      <li><strong>Tags:</strong> {{ product.tags | join(', ') }}</li>
+    {% endif %}
+  </ul>
+
+  {% if product.variants %}
+    <div class="variant-selector" style="margin-bottom: 1.5rem;">
+      <label for="variant-select" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Size / Variant:</label>
+      <select id="variant-select" style="padding: 0.5rem; font-size: 1rem; width: 100%;">
+        {% for v in product.variants %}
+          <option value="{{ v.id }}">{{ v.title }} – ${{ "%.2f" | format(v.price / 100) }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  {% endif %}
+
+  <button
+    id="add-to-cart"
+    data-printify-id="{{ product.printify_id }}"
+    style="padding: 0.75rem 1.5rem; font-size: 1.125rem; background-color: #000; color: #fff; border: none; border-radius: 4px; cursor: pointer;"
+  >
+    🛒 Add to Cart
+  </button>
+
+  {% if is_admin %}
+    <div style="margin-top: 2rem;">
+      <a href="/admin/edit-product/{{ product.slug }}"
+         class="admin-edit"
+         style="padding: 0.5rem 1rem; font-size: 0.95rem; background: #eee; border-radius: 4px; text-decoration: none; border: 1px solid #ccc;">
+        ✏️ Edit Product
+      </a>
+    </div>
+  {% endif %}
+
+</div>
+
+<script>
+  // Example: Store cart in localStorage
+  document.getElementById("add-to-cart")?.addEventListener("click", () => {
+    const variantId = document.getElementById("variant-select")?.value;
+    const productId = document.getElementById("add-to-cart")?.dataset.printifyId;
+
+    if (!variantId || !productId) {
+      alert("Please select a size first.");
+      return;
+    }
+
+    const cart = JSON.parse(localStorage.getItem("firststring_cart") || "[]");
+    cart.push({ printify_id: productId, variant_id: variantId, qty: 1 });
+    localStorage.setItem("firststring_cart", JSON.stringify(cart));
+    alert("Added to cart!");
+  });
+</script>
 {% endblock %}
