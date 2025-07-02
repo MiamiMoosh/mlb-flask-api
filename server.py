@@ -1637,15 +1637,22 @@ def sections_editor():
 
 @app.route("/shop/<slug>")
 def product_detail(slug):
+    from flask import redirect, url_for
+
     with open("product_tags.json") as f:
         product_tags = json.load(f)
 
-    product = product_tags.get(slug)  # ← NOT .values() anymore
+    # Find the product by matching internal 'slug' field
+    product = next((p for p in product_tags.values() if p.get("slug") == slug), None)
 
     if not product or product.get("hide"):
         return "Product not found", 404
 
-    return render_template("product_detail.html", product=product)
+    # Redirect if slug in URL does not match the canonical one
+    if slug != product.get("slug"):
+        return redirect(url_for("product_detail", slug=product["slug"]), code=301)
+
+    return render_template("product_detail.html", product=product, is_admin=(request.cookies.get("admin") == "true"))
 
 
 @app.route("/sections.json")
