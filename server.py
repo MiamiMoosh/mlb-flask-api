@@ -1666,6 +1666,23 @@ def product_detail(slug):
     return render_template("product_detail.html", product=product, is_admin=is_admin)
 
 
+@app.route("/debug/images/<slug>")
+def debug_images(slug):
+    with open("product_tags.json") as f:
+        product_tags = json.load(f)
+
+    product = next((p for p in product_tags.values() if p.get("slug") == slug), None)
+    if not product:
+        return {"error": "Product not found"}, 404
+
+    return {
+        "slug": slug,
+        "has_images": bool(product.get("images")),
+        "images": product.get("images"),
+        "variants": product.get("variants"),
+    }
+
+
 @app.route("/sections.json")
 def get_sections_json():
     with open("sections.json") as f:
