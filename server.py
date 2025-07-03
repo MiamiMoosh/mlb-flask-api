@@ -1666,6 +1666,27 @@ def product_detail(slug):
     return render_template("product_detail.html", product=product, is_admin=is_admin)
 
 
+@app.route("/admin/sync-products")
+def sync_printify_products():
+    import subprocess
+
+    is_admin = request.cookies.get("admin") == "true"
+    if not is_admin:
+        return "Unauthorized", 403
+
+    try:
+        result = subprocess.run(
+            ["python3", "sync_printify.py"],  # ✅ updated filename here
+            capture_output=True,
+            text=True,
+            timeout=15
+        )
+        output = result.stdout or result.stderr
+        return f"<pre>{output}</pre>"
+    except Exception as e:
+        return f"Error running sync: {e}", 500
+
+    
 @app.route("/debug/images/<slug>")
 def debug_images(slug):
     with open("product_tags.json") as f:
