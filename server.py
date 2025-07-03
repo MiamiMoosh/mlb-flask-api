@@ -1667,12 +1667,9 @@ def product_detail(slug):
 
 
 @app.route("/admin/sync-products")
+@admin_required
 def sync_printify_products():
     import subprocess
-
-    is_admin = request.cookies.get("admin") == "true"
-    if not is_admin:
-        return "Unauthorized", 403
 
     try:
         result = subprocess.run(
@@ -1686,7 +1683,7 @@ def sync_printify_products():
     except Exception as e:
         return f"Error running sync: {e}", 500
 
-    
+
 @app.route("/debug/images/<slug>")
 def debug_images(slug):
     with open("product_tags.json") as f:
