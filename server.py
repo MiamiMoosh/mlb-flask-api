@@ -1656,23 +1656,29 @@ def product_detail(slug):
         product_tags = json.load(f)
 
     product = product_tags.get(slug)
+    now = datetime.utcnow()
+    max_age = timedelta(hours=1)
 
-    def hydrate_from_printify(slug, fallback=None):
-        pid = fallback.get("printify_id") if fallback else None
+    def hydrate_if_stale(slug, fallback):
+        pid = fallback.get("printify_id")
         if not pid:
-            print(f"❌ No printify_id for slug: {slug}")
             return None
 
-        #print(f"🔄 Fetching {slug} from Printify")
+        hydrated_at = fallback.get("hydrated_at")
+        try:
+            if hydrated_at and datetime.fromisoformat(hydrated_at) > now - max_age:
+                return fallback
+        except Exception:
+            pass  # ignore invalid timestamps
+
         url = f"https://api.printify.com/v1/shops/{SHOP_ID}/products/{pid}.json"
         r = requests.get(url, headers={"Authorization": f"Bearer {PRINTIFY_API_TOKEN}"})
         if r.status_code != 200:
-            print(f"❌ Printify fetch failed: {r.status_code}")
-            return None
+            return fallback
 
         pdata = r.json()
 
-        # === Fallback image logic ===
+        # Fallback images from print areas or gallery
         images = []
         for area in pdata.get("print_areas", []):
             for ph in area.get("placeholders", []):
@@ -1681,8 +1687,8 @@ def product_detail(slug):
         if not images:
             images = [{"src": i["src"]} for i in pdata.get("images", []) if i.get("src")]
 
-        # === Build readable dropdown options ===
-        def rebuild_options_from_actual_variants(variants, option_meta):
+        # Filter options by available variants
+        def build_options(variants, option_meta):
             lookup_maps = []
             for opt in option_meta:
                 val_map = {
@@ -1700,10 +1706,9 @@ def product_detail(slug):
                 })
 
             collected = defaultdict(set)
-
             for v in variants:
                 if not v.get("is_enabled") or not v.get("is_available"):
-                    continue  # Skip disabled/unavailable variants
+                    continue
                 for idx, option_id in enumerate(v.get("options", [])):
                     if idx < len(lookup_maps):
                         label = lookup_maps[idx]["name"]
@@ -1725,26 +1730,27 @@ def product_detail(slug):
                 })
             return result
 
-        options = rebuild_options_from_actual_variants(pdata["variants"], pdata["options"])
+        options = build_options(pdata.get("variants", []), pdata.get("options", []))
 
-        hydrated = {
-            **(fallback or {}),
+        updated = {
+            **fallback,
             "title": pdata.get("title"),
             "variants": pdata.get("variants", []),
             "options": options,
             "images": images,
+            "hydrated_at": now.isoformat()
         }
 
-        product_tags[slug] = hydrated
+        product_tags[slug] = updated
         with open("product_tags.json", "w") as f:
             json.dump(product_tags, f, indent=2)
-        print(f"✅ Hydrated and cached: {slug}")
-        return hydrated
 
-    if product:
-        product = hydrate_from_printify(slug, fallback=product)
-    else:
-        product = None  # no product_metadata.json fallback currently
+        return updated
+
+    if not product or not product.get("printify_id"):
+        return "Product not found", 404
+
+    product = hydrate_if_stale(slug, fallback=product)
 
     if not product or product.get("hide"):
         return "Product not found", 404
@@ -1761,6 +1767,7 @@ def product_detail(slug):
 
     is_admin = request.cookies.get("admin") == "true"
     return render_template("product_detail.html", product=product, is_admin=is_admin)
+
 
 
 @app.route("/webhook/printify", methods=["POST"])

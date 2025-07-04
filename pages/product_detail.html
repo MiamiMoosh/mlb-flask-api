@@ -17,8 +17,10 @@
   <!-- Image Section -->
   <div style="flex: 1 1 400px;">
     <div id="main-image" style="text-align: center; margin-bottom: 1rem;">
-      <img id="selected-image" src="{{ product.images[0].src }}" alt="{{ product.title }}"
-           style="width: 100%; max-width: 400px; max-height: 400px; object-fit: contain; border-radius: 8px; transition: opacity 0.3s ease;" />
+      <img id="selected-image"
+     src="{{ product.images[0].src if product.images and product.images[0].src }}"
+     alt="{{ product.title }}"
+     style="width: 100%; max-width: 400px; max-height: 400px; object-fit: contain; border-radius: 8px; transition: opacity 0.3s ease;" />
     </div>
     <div id="thumbnails" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;">
       {% for img in product.images %}
@@ -42,25 +44,18 @@
   {{ product.options | tojson(indent=2) }}
 </pre>
     <form id="variant-form" style="margin-bottom: 1rem;">
-      {% for option in product.get("options", []) %}
-        <label for="opt-{{ option.name }}" style="display: block; font-weight: bold; margin-top: 1rem;">
-          {{ option.name }}:
-        </label>
-        <select id="opt-{{ option.name }}" name="{{ option.name }}" style="padding: 0.5rem; width: 100%;">
-          {% for val in option["values"] %}
-            {% if val is string %}
-              <option value="{{ val|e }}">{{ val }}</option>
-            {% elif val.name %}
-              <option value="{{ val.name|e }}">{{ val.name }}</option>
-            {% elif val["name"] %}
-              <option value="{{ val['name']|e }}">{{ val['name'] }}</option>
-            {% endif %}
+      {% for option in product.options %}
+        <label for="opt-{{ option.name }}">{{ option.name }}</label>
+        <select id="opt-{{ option.name }}" name="{{ option.name }}" data-option="{{ loop.index0 }}">
+          {% for val in option.values %}
+            <option value="{{ val.name }}">{{ val.name }}</option>
           {% endfor %}
         </select>
       {% endfor %}
       <input type="hidden" id="selected-variant-id" name="variant_id">
     </form>
 
+    <p id="variant-price" style="font-size: 1.25rem; font-weight: bold;">$—</p>
     <div id="price-display" style="margin-bottom: 1rem; font-size: 1.25rem; font-weight: bold;"></div>
 
     <label for="coupon-code">Have a coupon?</label>
@@ -111,82 +106,88 @@
 
 <script>
   function selectImage(src, el) {
-    const img = document.getElementById("selected-image");
-    img.style.opacity = 0;
-    setTimeout(() => {
-      img.src = src;
-      img.onload = () => img.style.opacity = 1;
-    }, 150);
-    document.querySelectorAll(".thumbnail").forEach(t => t.classList.remove("selected"));
-    if (el) el.classList.add("selected");
-  }
+  const img = document.getElementById("selected-image");
+  if (!img || !src) return;
+  img.style.opacity = 0;
+  setTimeout(() => {
+    img.src = src;
+    img.onload = () => (img.style.opacity = 1);
+  }, 150);
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const first = document.querySelector(".thumbnail");
-    if (first) {
-      first.classList.add("selected");
-      const preload = new Image();
-      preload.src = document.getElementById("selected-image").src;
-    }
+  document.querySelectorAll(".thumbnail").forEach(t => t.classList.remove("selected"));
+  if (el) el.classList.add("selected");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const first = document.querySelector(".thumbnail");
+  if (first) {
+    first.classList.add("selected");
+    const preload = new Image();
+    preload.src = document.getElementById("selected-image")?.src || "";
+  }
+});
+
+const variantForm = document.getElementById("variant-form");
+const addToCartBtn = document.getElementById("add-to-cart");
+const couponField = document.getElementById("coupon-code");
+const priceDisplay = document.getElementById("price-display");
+const variants = JSON.parse(addToCartBtn?.dataset.variants || "[]");
+const baseDiscount = parseFloat(addToCartBtn?.dataset.discount || 0);
+
+function findMatchingVariant() {
+  const selects = variantForm?.querySelectorAll("select") || [];
+  const chosen = {};
+  selects.forEach(s => (chosen[s.name] = s.value));
+
+  const match = variants.find(v => {
+    return v.options.every((val, idx) => {
+      const optName = Object.keys(chosen)[idx];
+      return chosen[optName] === val;
+    });
   });
 
-  const variantForm = document.getElementById("variant-form");
-  const addToCartBtn = document.getElementById("add-to-cart");
-  const couponField = document.getElementById("coupon-code");
-  const priceDisplay = document.getElementById("price-display");
-  const variants = JSON.parse(addToCartBtn.dataset.variants || "[]");
-  const baseDiscount = parseFloat(addToCartBtn.dataset.discount || 0);
+  document.getElementById("selected-variant-id").value = match?.id || "";
+  updatePriceDisplay(match);
 
-  function findMatchingVariant() {
-    const selects = variantForm.querySelectorAll("select");
-    const chosen = {};
-    selects.forEach(s => chosen[s.name] = s.value);
-
-    const match = variants.find(v =>
-      v.options.every((val, idx) => val === chosen[Object.keys(chosen)[idx]])
-    );
-
-    document.getElementById("selected-variant-id").value = match?.id || "";
-    updatePriceDisplay(match);
-    if (match?.images?.length > 0) {
-      selectImage(match.images[0].src);
-    }
-    return match;
+  if (match?.images?.length > 0) {
+    selectImage(match.images[0].src);
   }
+  return match;
+}
 
-  function updatePriceDisplay(variant) {
-    if (!variant) return priceDisplay.innerHTML = "";
+function updatePriceDisplay(variant) {
+  if (!variant) return (priceDisplay.innerHTML = "");
 
-    let discount = baseDiscount;
-    const code = couponField.value.trim().toLowerCase();
-    if (code === "summer25") discount = 25;
-    if (code === "freefan") discount = 100;
+  let discount = baseDiscount;
+  const code = couponField?.value.trim().toLowerCase();
+  if (code === "summer25") discount = 25;
+  if (code === "freefan") discount = 100;
 
-    const price = variant.price / 100;
-    const sale = price * (1 - discount / 100);
+  const price = variant.price / 100;
+  const sale = price * (1 - discount / 100);
 
-    if (discount > 0 && discount < 100) {
-      priceDisplay.innerHTML = `$<s>${price.toFixed(2)}</s> → $${sale.toFixed(2)} (${discount}% off)`;
-    } else if (discount >= 100) {
-      priceDisplay.innerHTML = `<strong>🎉 Free with code!</strong>`;
-    } else {
-      priceDisplay.innerHTML = `$${price.toFixed(2)}`;
-    }
+  if (discount > 0 && discount < 100) {
+    priceDisplay.innerHTML = `$<s>${price.toFixed(2)}</s> → $${sale.toFixed(2)} (${discount}% off)`;
+  } else if (discount >= 100) {
+    priceDisplay.innerHTML = `<strong>🎉 Free with code!</strong>`;
+  } else {
+    priceDisplay.innerHTML = `$${price.toFixed(2)}`;
   }
+}
 
-  variantForm?.addEventListener("change", findMatchingVariant);
-  couponField?.addEventListener("input", () => updatePriceDisplay(findMatchingVariant()));
-  findMatchingVariant();
+variantForm?.addEventListener("change", findMatchingVariant);
+couponField?.addEventListener("input", () => updatePriceDisplay(findMatchingVariant()));
+findMatchingVariant();
 
-  addToCartBtn?.addEventListener("click", () => {
-    const variantId = document.getElementById("selected-variant-id").value;
-    const productId = addToCartBtn.dataset.printifyId;
-    if (!variantId) return alert("Please select a variant.");
+addToCartBtn?.addEventListener("click", () => {
+  const variantId = document.getElementById("selected-variant-id").value;
+  const productId = addToCartBtn.dataset.printifyId;
+  if (!variantId) return alert("Please select a variant.");
 
-    const cart = JSON.parse(localStorage.getItem("firststring_cart") || "[]");
-    cart.push({ printify_id: productId, variant_id: variantId, qty: 1 });
-    localStorage.setItem("firststring_cart", JSON.stringify(cart));
-    alert("Added to cart!");
-  });
+  const cart = JSON.parse(localStorage.getItem("firststring_cart") || "[]");
+  cart.push({ printify_id: productId, variant_id: variantId, qty: 1 });
+  localStorage.setItem("firststring_cart", JSON.stringify(cart));
+  alert("Added to cart!");
+});
 </script>
 {% endblock %}
