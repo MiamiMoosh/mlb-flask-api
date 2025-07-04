@@ -7,6 +7,8 @@ import requests
 import slugify
 import json
 import re
+import threading
+import subprocess
 
 
 from flask import Flask, jsonify, render_template,  request, redirect, url_for, session, flash
@@ -77,6 +79,15 @@ app.config.update(
 )
 
 mail = Mail(app)
+
+
+def run_sync_script():
+    try:
+        subprocess.run(["python", "sync_printify.py"], check=True)
+    except Exception as e:
+        print(f"⚠️ Sync script failed: {e}")
+
+threading.Thread(target=run_sync_script).start()
 
 
 def extract_tags(text):
@@ -1634,13 +1645,72 @@ def sections_editor():
     return render_template("sections_editor.html")
 
 
-
 @app.route("/shop/<slug>")
 def product_detail(slug):
     with open("product_tags.json") as f:
         product_tags = json.load(f)
 
-    product = next((p for p in product_tags.values() if p.get("slug") == slug), None)
+    product = product_tags.get(slug)
+
+    def hydrate_from_printify(slug, fallback=None):
+        pid = fallback.get("printify_id") if fallback else None
+        if not pid:
+            print(f"❌ No printify_id for slug: {slug}")
+            return None
+
+        print(f"🔄 Fetching {slug} from Printify")
+        url = f"https://api.printify.com/v1/shops/{SHOP_ID}/products/{pid}.json"
+        r = requests.get(url, headers={"Authorization": f"Bearer {PRINTIFY_API_TOKEN}"})
+        if r.status_code != 200:
+            print(f"❌ Printify fetch failed: {r.status_code}")
+            return None
+
+        pdata = r.json()
+
+        # Fallback image logic
+        images = []
+        for area in pdata.get("print_areas", []):
+            for ph in area.get("placeholders", []):
+                if ph.get("src"):
+                    images.append({"src": ph["src"]})
+        if not images:
+            images = [{"src": i["src"]} for i in pdata.get("images", []) if i.get("src")]
+
+        # Clean & sort options
+        def sort_values(opt):
+            vals = [v for v in opt.get("values", []) if v.get("name")]
+            if opt.get("name", "").lower() == "size":
+                order = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"]
+                vals.sort(key=lambda v: order.index(v["name"]) if v["name"] in order else 999)
+            else:
+                vals.sort(key=lambda v: v["name"].lower())
+            return {"name": opt.get("name"), "type": opt.get("type"), "values": vals}
+
+        options = [sort_values(opt) for opt in pdata.get("options", []) if opt.get("values")]
+
+        hydrated = {
+            **(fallback or {}),
+            "title": pdata.get("title"),
+            "variants": pdata.get("variants", []),
+            "options": options,
+            "images": images,
+        }
+
+        product_tags[slug] = hydrated
+        with open("product_tags.json", "w") as f:
+            json.dump(product_tags, f, indent=2)
+        print(f"✅ Hydrated and cached: {slug}")
+        return hydrated
+
+    # Product exists and will be refreshed regardless
+    if product:
+        product = hydrate_from_printify(slug, fallback=product)
+    else:
+        # Try to find an entry by slug in unsynced metadata
+        with open("product_metadata.json") as meta_f:
+            metadata = json.load(meta_f).get(slug)
+        if metadata:
+            product = hydrate_from_printify(slug, fallback=metadata)
 
     if not product or product.get("hide"):
         return "Product not found", 404
@@ -1648,46 +1718,7 @@ def product_detail(slug):
     if slug != product.get("slug"):
         return redirect(url_for("product_detail", slug=product["slug"]), code=301)
 
-    # === Auto-hydrate from Printify if needed ===
-    def hydrate_from_printify(product, slug):
-        pid = product.get("printify_id")
-        if not pid or product.get("variants"):
-            return  # Already hydrated or no ID
-
-        print(f"🔄 Enriching {slug} from Printify")
-        url = f"https://api.printify.com/v1/shops/{SHOP_ID}/products/{pid}.json"
-        r = requests.get(url, headers={"Authorization": f"Bearer {PRINTIFY_API_TOKEN}"})
-        if r.status_code != 200:
-            print(f"❌ Printify fetch failed: {r.status_code}")
-            return
-
-        pdata = r.json()
-
-        # Extract fallback images from print_areas or top-level mockups
-        primary_images = []
-        for area in pdata.get("print_areas", []):
-            for ph in area.get("placeholders", []):
-                if ph.get("src"):
-                    primary_images.append({"src": ph["src"]})
-        if not primary_images:
-            primary_images = [{"src": img["src"]} for img in pdata.get("images", []) if img.get("src")]
-
-        # Merge enriched data
-        product.update({
-            "title": pdata["title"],
-            "variants": pdata.get("variants", []),
-            "options": pdata.get("options", []),
-            "images": primary_images
-        })
-
-        product_tags[slug] = product
-        with open("product_tags.json", "w") as f:
-            json.dump(product_tags, f, indent=2)
-        print(f"✅ Hydrated and cached: {slug}")
-
-    hydrate_from_printify(product, slug)
-
-    # Optional fallback from variant-level images
+    # Fallback to variant-level images if needed
     if not product.get("images") and product.get("variants"):
         product["images"] = [
             {"src": v["images"][0]["src"]}
@@ -1698,6 +1729,18 @@ def product_detail(slug):
     is_admin = request.cookies.get("admin") == "true"
     return render_template("product_detail.html", product=product, is_admin=is_admin)
 
+
+@app.route("/webhook/printify", methods=["POST"])
+def printify_webhook():
+    payload = request.get_json()
+    event = payload.get("event")
+    product_id = payload.get("resource", {}).get("id")
+
+    if event == "product:updated" and product_id:
+        hydrate_by_id(product_id)  # you'd define this
+        return "✅ Synced", 200
+
+    return "Ignored", 200
 
 
 @app.route("/admin/sync-products")
