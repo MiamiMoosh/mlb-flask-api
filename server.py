@@ -1728,7 +1728,7 @@ def product_detail(slug):
         ]
 
     is_admin = request.cookies.get("admin") == "true"
-    pprint.pprint(pdata.get("options"))
+    pprint.pprint(product.get("options"))
     return render_template("product_detail.html", product=product, is_admin=is_admin)
 
 
