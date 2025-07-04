@@ -9,6 +9,7 @@ import json
 import re
 import threading
 import subprocess
+import pprint
 
 
 from flask import Flask, jsonify, render_template,  request, redirect, url_for, session, flash
@@ -1707,8 +1708,8 @@ def product_detail(slug):
         product = hydrate_from_printify(slug, fallback=product)
     else:
         # Try to find an entry by slug in unsynced metadata
-        with open("product_metadata.json") as meta_f:
-            metadata = json.load(meta_f).get(slug)
+        #with open("product_metadata.json") as meta_f:
+        #    metadata = json.load(meta_f).get(slug)
         if metadata:
             product = hydrate_from_printify(slug, fallback=metadata)
 
@@ -1727,6 +1728,7 @@ def product_detail(slug):
         ]
 
     is_admin = request.cookies.get("admin") == "true"
+    pprint.pprint(pdata.get("options"))
     return render_template("product_detail.html", product=product, is_admin=is_admin)
 
 
