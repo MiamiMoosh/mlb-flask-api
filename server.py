@@ -26,6 +26,8 @@ from insight_utils import generate_or_fetch_matchup_insight, generate_matchup_in
     get_pitcher_mix, extract_matchup_pair
 from game_logic import extract_game_state, is_high_leverage
 from sportsdb_api import get_games_for_league, get_leagues
+from collections import defaultdict
+
 
 # Initialize Flask app
 app = Flask(__name__, template_folder="pages")
@@ -1669,9 +1671,8 @@ def product_detail(slug):
             return None
 
         pdata = r.json()
-        pprint.pprint(pdata["variants"][0]["options"])
 
-        # Robust image fallback
+        # === Image fallback ===
         images = []
         for area in pdata.get("print_areas", []):
             for ph in area.get("placeholders", []):
@@ -1680,29 +1681,41 @@ def product_detail(slug):
         if not images:
             images = [{"src": i["src"]} for i in pdata.get("images", []) if i.get("src")]
 
-        # Build readable option values from variant options
-        def rebuild_options_from_variants(variants, option_labels):
-            buckets = defaultdict(set)
+        # === Map option IDs to display names ===
+        def rebuild_options_using_id_lookup(variants, option_meta):
+            lookup_maps = []
+            for opt in option_meta:
+                val_map = {str(v.get("id")): v.get("name") for v in opt.get("values", []) if v.get("id") and v.get("name")}
+                lookup_maps.append({
+                    "name": opt.get("name"),
+                    "type": opt.get("type", "").lower(),
+                    "map": val_map
+                })
+
+            collected = defaultdict(set)
             for variant in variants:
-                for idx, val in enumerate(variant.get("options", [])):
-                    if idx < len(option_labels):
-                        buckets[option_labels[idx]].add(val)
+                for idx, option_id in enumerate(variant.get("options", [])):
+                    if idx < len(lookup_maps):
+                        label = lookup_maps[idx]["name"]
+                        name_map = lookup_maps[idx]["map"]
+                        display = name_map.get(str(option_id))
+                        if display:
+                            collected[label].add(display)
 
             result = []
-            for name, values in buckets.items():
-                items = [{"name": v} for v in sorted(values, key=str)]
-                if name.lower() == "size":
+            for label, values in collected.items():
+                items = [{"name": str(v)} for v in sorted(values)]
+                if label.lower() == "size":
                     order = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"]
                     items.sort(key=lambda v: order.index(v["name"]) if v["name"] in order else 999)
                 result.append({
-                    "name": name,
-                    "type": name.lower(),
+                    "name": label,
+                    "type": label.lower(),
                     "values": items
                 })
             return result
 
-        option_labels = [opt.get("name", f"Option {i+1}") for i, opt in enumerate(pdata.get("options", []))]
-        options = rebuild_options_from_variants(pdata.get("variants", []), option_labels)
+        options = rebuild_options_using_id_lookup(pdata.get("variants", []), pdata.get("options", []))
 
         hydrated = {
             **(fallback or {}),
@@ -1721,7 +1734,7 @@ def product_detail(slug):
     if product:
         product = hydrate_from_printify(slug, fallback=product)
     else:
-        product = None  # Future: fallback from metadata if needed
+        product = None  # If you plan to support metadata fallbacks, add it here
 
     if not product or product.get("hide"):
         return "Product not found", 404
@@ -1738,6 +1751,7 @@ def product_detail(slug):
 
     is_admin = request.cookies.get("admin") == "true"
     return render_template("product_detail.html", product=product, is_admin=is_admin)
+
 
 
 @app.route("/webhook/printify", methods=["POST"])
