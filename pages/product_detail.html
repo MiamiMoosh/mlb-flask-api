@@ -46,13 +46,14 @@
         <select id="opt-{{ option.name }}" name="{{ option.name }}" style="padding: 0.5rem; width: 100%;">
           {% for val in option["values"] %}
             {% if val is string %}
-              <option value="{{ val }}">{{ val }}</option>
+              <option value="{{ val|e }}">{{ val }}</option>
             {% elif val.name %}
-              <option value="{{ val.name }}">{{ val.name }}</option>
+              <option value="{{ val.name|e }}">{{ val.name }}</option>
+            {% elif val["name"] %}
+              <option value="{{ val['name']|e }}">{{ val['name'] }}</option>
             {% endif %}
           {% endfor %}
         </select>
-
       {% endfor %}
       <input type="hidden" id="selected-variant-id" name="variant_id">
     </form>
