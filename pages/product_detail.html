@@ -14,8 +14,8 @@
 
 {% block content %}
 <div style="max-width: 960px; margin: auto; padding: 2rem; display: flex; gap: 2rem; flex-wrap: wrap;">
-  <!-- 🖼️ Image Section -->
-  <div style="flex: 1 1 400px; display: flex; flex-direction: column;">
+  <!-- Image Section -->
+  <div style="flex: 1 1 400px;">
     <div id="main-image" style="text-align: center; margin-bottom: 1rem;">
       <img id="selected-image" src="{{ product.images[0].src }}" alt="{{ product.title }}"
            style="width: 100%; max-width: 400px; max-height: 400px; object-fit: contain; border-radius: 8px; transition: opacity 0.3s ease;" />
@@ -30,7 +30,7 @@
     </div>
   </div>
 
-  <!-- 🛍 Info Section -->
+  <!-- Product Details Section -->
   <div style="flex: 1 1 300px;">
     <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">{{ product.title }}</h1>
 
@@ -38,14 +38,13 @@
       <p style="font-size: 1.125rem; color: #555; margin-bottom: 1.5rem;">{{ product.seo_description }}</p>
     {% endif %}
 
-    <!-- 🔧 Variant Selection -->
     <form id="variant-form" style="margin-bottom: 1rem;">
       {% for option in product.get("options", []) %}
         <label for="opt-{{ option.name }}" style="display: block; font-weight: bold; margin-top: 1rem;">
           {{ option.name }}:
         </label>
         <select id="opt-{{ option.name }}" name="{{ option.name }}" style="padding: 0.5rem; width: 100%;">
-          {% for val in option.values %}
+          {% for val in option["values"] %}
             <option value="{{ val.name }}">{{ val.name }}</option>
           {% endfor %}
         </select>
@@ -53,7 +52,6 @@
       <input type="hidden" id="selected-variant-id" name="variant_id">
     </form>
 
-    <!-- 💰 Pricing + Coupon -->
     <div id="price-display" style="margin-bottom: 1rem; font-size: 1.25rem; font-weight: bold;"></div>
 
     <label for="coupon-code">Have a coupon?</label>
@@ -80,7 +78,6 @@
   </div>
 </div>
 
-<!-- 📍 Metadata + Shipping -->
 <div style="max-width: 960px; margin: auto; padding: 0 2rem;">
   <ul style="list-style: none; margin-top: 2rem; padding: 0;">
     {% if product.collection %}<li><strong>Collection:</strong> {{ product.collection }}</li>{% endif %}
@@ -97,7 +94,6 @@
   </section>
 </div>
 
-<!-- ✨ Interactivity -->
 <style>
   .thumbnail.selected {
     border-color: #000 !important;
@@ -143,16 +139,15 @@
 
     document.getElementById("selected-variant-id").value = match?.id || "";
     updatePriceDisplay(match);
-
     if (match?.images?.length > 0) {
       selectImage(match.images[0].src);
     }
-
     return match;
   }
 
   function updatePriceDisplay(variant) {
     if (!variant) return priceDisplay.innerHTML = "";
+
     let discount = baseDiscount;
     const code = couponField.value.trim().toLowerCase();
     if (code === "summer25") discount = 25;
