@@ -1682,7 +1682,6 @@ def sync_printify_products():
         return f"Error running sync: {e}", 500
 
 
-
 @app.route("/debug/images/<slug>")
 def debug_images(slug):
     with open("product_tags.json") as f:

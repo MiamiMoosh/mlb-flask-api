@@ -50,4 +50,6 @@ for slug, product in product_tags.items():
 with open(TAGS_FILE, "w") as f:
     json.dump(product_tags, f, indent=2)
 
+print(f"✅ Product {slug} updated in {TAGS_FILE}")
+
 print(f"\nDone! {updated} updated, {skipped} skipped (no printify_id)")
