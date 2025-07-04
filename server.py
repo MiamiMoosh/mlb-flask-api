@@ -1739,6 +1739,7 @@ def product_detail(slug):
             "options": options,
             "images": images,
             "hydrated_at": now.isoformat()
+            "description": pdata.get("description") or pdata.get("title"),
         }
 
         product_tags[slug] = updated
@@ -1768,7 +1769,6 @@ def product_detail(slug):
     is_admin = request.cookies.get("admin") == "true"
 
     print("seo_description →", product.get("seo_description"))
-    "description": pdata.get("description") or pdata.get("title"),
 
     return render_template("product_detail.html", product=product, is_admin=is_admin)
 
