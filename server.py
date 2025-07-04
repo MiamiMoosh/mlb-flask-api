@@ -1687,8 +1687,27 @@ def product_detail(slug):
                 vals.sort(key=lambda v: v["name"].lower())
             return {"name": opt.get("name"), "type": opt.get("type"), "values": vals}
 
-        options = [sort_values(opt) for opt in pdata.get("options", []) if opt.get("values")]
+        from collections import defaultdict
 
+        def rebuild_options_from_variants(variants, option_labels):
+            buckets = defaultdict(set)
+            for variant in variants:
+                for idx, val in enumerate(variant.get("options", [])):
+                    key = option_labels[idx] if idx < len(option_labels) else f"Option {idx + 1}"
+                    buckets[key].add(val)
+            result = []
+            for name, values in buckets.items():
+                vals = [{"name": v} for v in sorted(values)]
+                if name.lower() == "size":
+                    order = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"]
+                    vals.sort(key=lambda v: order.index(v["name"]) if v["name"] in order else 999)
+                result.append({"name": name, "type": name.lower(), "values": vals})
+            return result
+
+        options = rebuild_options_from_variants(
+            pdata.get("variants", []),
+            [o.get("name", f"Option {i + 1}") for i, o in enumerate(pdata.get("options", []))]
+        )
         hydrated = {
             **(fallback or {}),
             "title": pdata.get("title"),
