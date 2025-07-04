@@ -1646,6 +1646,8 @@ def sections_editor():
     return render_template("sections_editor.html")
 
 
+from collections import defaultdict
+
 @app.route("/shop/<slug>")
 def product_detail(slug):
     with open("product_tags.json") as f:
@@ -1668,7 +1670,7 @@ def product_detail(slug):
 
         pdata = r.json()
 
-        # Extract fallback images
+        # Robust image fallback
         images = []
         for area in pdata.get("print_areas", []):
             for ph in area.get("placeholders", []):
@@ -1677,9 +1679,7 @@ def product_detail(slug):
         if not images:
             images = [{"src": i["src"]} for i in pdata.get("images", []) if i.get("src")]
 
-        # Extract readable options from variants
-        from collections import defaultdict
-
+        # Build readable option values from variant options
         def rebuild_options_from_variants(variants, option_labels):
             buckets = defaultdict(set)
             for variant in variants:
@@ -1689,11 +1689,15 @@ def product_detail(slug):
 
             result = []
             for name, values in buckets.items():
-                items = [{"name": str(v)} for v in sorted(values)]
+                items = [{"name": v} for v in sorted(values, key=str)]
                 if name.lower() == "size":
                     order = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"]
                     items.sort(key=lambda v: order.index(v["name"]) if v["name"] in order else 999)
-                result.append({"name": name, "type": name.lower(), "values": items})
+                result.append({
+                    "name": name,
+                    "type": name.lower(),
+                    "values": items
+                })
             return result
 
         option_labels = [opt.get("name", f"Option {i+1}") for i, opt in enumerate(pdata.get("options", []))]
@@ -1713,11 +1717,10 @@ def product_detail(slug):
         print(f"✅ Hydrated and cached: {slug}")
         return hydrated
 
-    # Product exists and will be refreshed regardless
     if product:
         product = hydrate_from_printify(slug, fallback=product)
     else:
-        product = None  # You can optionally handle metadata fallback here
+        product = None  # Future: fallback from metadata if needed
 
     if not product or product.get("hide"):
         return "Product not found", 404
@@ -1725,7 +1728,6 @@ def product_detail(slug):
     if slug != product.get("slug"):
         return redirect(url_for("product_detail", slug=product["slug"]), code=301)
 
-    # Fallback to variant-level images if needed
     if not product.get("images") and product.get("variants"):
         product["images"] = [
             {"src": v["images"][0]["src"]}
