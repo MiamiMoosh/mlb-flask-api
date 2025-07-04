@@ -1698,7 +1698,8 @@ def product_detail(slug):
                     if idx < len(lookup_maps):
                         label = lookup_maps[idx]["name"]
                         name_map = lookup_maps[idx]["map"]
-                        display = name_map.get(str(option_id))
+                        option_key = str(option_id)
+                        display = name_map.get(option_key) or name_map.get(int(option_key))
                         if display:
                             collected[label].add(display)
 
