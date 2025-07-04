@@ -1672,14 +1672,7 @@ def product_detail(slug):
 
         pdata = r.json()
 
-        print("\n=== RAW OPTION METADATA ===")
-        pprint.pprint(pdata.get("options", []))
-
-        print("\n=== FIRST VARIANT OPTIONS ===")
-        first_variant = pdata.get("variants", [])[0]
-        pprint.pprint(first_variant.get("options", []))
-
-        # === Image fallback ===
+        # === Fallback image logic ===
         images = []
         for area in pdata.get("print_areas", []):
             for ph in area.get("placeholders", []):
@@ -1688,20 +1681,17 @@ def product_detail(slug):
         if not images:
             images = [{"src": i["src"]} for i in pdata.get("images", []) if i.get("src")]
 
-        # === Map option IDs to display names ===
+        # === Build readable dropdown options ===
         def rebuild_options_using_id_lookup(variants, option_meta):
             lookup_maps = []
             for opt in option_meta:
-                val_map = {
-                    str(v.get("id")): v.get("name")
-                    for v in opt.get("values", [])
-                    if v.get("id") is not None and v.get("name")
-                }
-                val_map.update({
-                    int(v.get("id")): v.get("name")
-                    for v in opt.get("values", [])
-                    if isinstance(v.get("id"), int) and v.get("name")
-                })
+                val_map = {}
+                for v in opt.get("values", []):
+                    id_raw = v.get("id")
+                    label = v.get("title") or v.get("name")
+                    if id_raw and label:
+                        val_map[str(id_raw)] = label
+                        val_map[int(id_raw)] = label
                 lookup_maps.append({
                     "name": opt.get("name"),
                     "type": opt.get("type", "").lower(),
@@ -1714,14 +1704,13 @@ def product_detail(slug):
                     if idx < len(lookup_maps):
                         label = lookup_maps[idx]["name"]
                         name_map = lookup_maps[idx]["map"]
-                        option_key = str(option_id)
-                        display = name_map.get(str(option_id)) or name_map.get(int(option_id))
+                        display = name_map.get(option_id)
                         if display:
                             collected[label].add(display)
 
             result = []
             for label, values in collected.items():
-                items = [{"name": str(v)} for v in sorted(values)]
+                items = [{"name": v} for v in sorted(values)]
                 if label.lower() == "size":
                     order = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"]
                     items.sort(key=lambda v: order.index(v["name"]) if v["name"] in order else 999)
@@ -1751,7 +1740,7 @@ def product_detail(slug):
     if product:
         product = hydrate_from_printify(slug, fallback=product)
     else:
-        product = None  # If you plan to support metadata fallbacks, add it here
+        product = None  # no product_metadata.json fallback currently
 
     if not product or product.get("hide"):
         return "Product not found", 404
@@ -1768,7 +1757,6 @@ def product_detail(slug):
 
     is_admin = request.cookies.get("admin") == "true"
     return render_template("product_detail.html", product=product, is_admin=is_admin)
-
 
 
 @app.route("/webhook/printify", methods=["POST"])
