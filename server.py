@@ -1685,7 +1685,16 @@ def product_detail(slug):
         def rebuild_options_using_id_lookup(variants, option_meta):
             lookup_maps = []
             for opt in option_meta:
-                val_map = {str(v.get("id")): v.get("name") for v in opt.get("values", []) if v.get("id") and v.get("name")}
+                val_map = {
+                    str(v.get("id")): v.get("name")
+                    for v in opt.get("values", [])
+                    if v.get("id") is not None and v.get("name")
+                }
+                val_map.update({
+                    int(v.get("id")): v.get("name")
+                    for v in opt.get("values", [])
+                    if isinstance(v.get("id"), int) and v.get("name")
+                })
                 lookup_maps.append({
                     "name": opt.get("name"),
                     "type": opt.get("type", "").lower(),
@@ -1699,7 +1708,7 @@ def product_detail(slug):
                         label = lookup_maps[idx]["name"]
                         name_map = lookup_maps[idx]["map"]
                         option_key = str(option_id)
-                        display = name_map.get(option_key) or name_map.get(int(option_key))
+                        display = name_map.get(str(option_id)) or name_map.get(int(option_id))
                         if display:
                             collected[label].add(display)
 
