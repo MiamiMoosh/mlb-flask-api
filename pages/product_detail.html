@@ -50,11 +50,12 @@
         {{ option.name }}:
       </label>
       <select id="opt-{{ option.name }}" name="{{ option.name }}" style="padding: 0.5rem; width: 100%;">
-        {% for val in option.values %}
+        {% for val in option['values'] %}
           <option value="{{ val.name }}">{{ val.name }}</option>
         {% endfor %}
       </select>
     {% endfor %}
+
     <input type="hidden" id="selected-variant-id" name="variant_id">
   </form>
 
