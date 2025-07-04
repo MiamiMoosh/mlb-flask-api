@@ -1656,7 +1656,7 @@ def product_detail(slug):
 
         print(f"🔄 Enriching {slug} from Printify")
         url = f"https://api.printify.com/v1/shops/{SHOP_ID}/products/{pid}.json"
-        r = requests.get(url, headers={"Authorization": f"Bearer {PRINTIFY_API_KEY}"})
+        r = requests.get(url, headers={"Authorization": f"Bearer {PRINTIFY_API_TOKEN}"})
         if r.status_code != 200:
             print(f"❌ Printify fetch failed: {r.status_code}")
             return
