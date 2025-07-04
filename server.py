@@ -1682,16 +1682,17 @@ def product_detail(slug):
             images = [{"src": i["src"]} for i in pdata.get("images", []) if i.get("src")]
 
         # === Build readable dropdown options ===
-        def rebuild_options_using_id_lookup(variants, option_meta):
+        def rebuild_options_from_actual_variants(variants, option_meta):
             lookup_maps = []
             for opt in option_meta:
-                val_map = {}
-                for v in opt.get("values", []):
-                    id_raw = v.get("id")
-                    label = v.get("title") or v.get("name")
-                    if id_raw and label:
-                        val_map[str(id_raw)] = label
-                        val_map[int(id_raw)] = label
+                val_map = {
+                    str(v.get("id")): v.get("title") or v.get("name")
+                    for v in opt.get("values", [])
+                    if v.get("id") and (v.get("title") or v.get("name"))
+                }
+                val_map.update({
+                    int(k): v for k, v in val_map.items() if k.isdigit()
+                })
                 lookup_maps.append({
                     "name": opt.get("name"),
                     "type": opt.get("type", "").lower(),
@@ -1699,18 +1700,21 @@ def product_detail(slug):
                 })
 
             collected = defaultdict(set)
-            for variant in variants:
-                for idx, option_id in enumerate(variant.get("options", [])):
+
+            for v in variants:
+                if not v.get("is_enabled") or not v.get("is_available"):
+                    continue  # Skip disabled/unavailable variants
+                for idx, option_id in enumerate(v.get("options", [])):
                     if idx < len(lookup_maps):
                         label = lookup_maps[idx]["name"]
                         name_map = lookup_maps[idx]["map"]
-                        display = name_map.get(option_id)
-                        if display:
-                            collected[label].add(display)
+                        name = name_map.get(option_id) or name_map.get(str(option_id))
+                        if name:
+                            collected[label].add(name)
 
             result = []
             for label, values in collected.items():
-                items = [{"name": v} for v in sorted(values)]
+                items = [{"name": val} for val in sorted(values)]
                 if label.lower() == "size":
                     order = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"]
                     items.sort(key=lambda v: order.index(v["name"]) if v["name"] in order else 999)
@@ -1721,7 +1725,7 @@ def product_detail(slug):
                 })
             return result
 
-        options = rebuild_options_using_id_lookup(pdata.get("variants", []), pdata.get("options", []))
+        options = rebuild_options_from_actual_variants(pdata["variants"], pdata["options"])
 
         hydrated = {
             **(fallback or {}),
