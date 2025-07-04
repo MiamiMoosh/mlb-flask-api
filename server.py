@@ -1669,6 +1669,7 @@ def product_detail(slug):
             return None
 
         pdata = r.json()
+        pprint.pprint(pdata["variants"][0]["options"])
 
         # Robust image fallback
         images = []
