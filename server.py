@@ -1648,12 +1648,46 @@ def product_detail(slug):
     if slug != product.get("slug"):
         return redirect(url_for("product_detail", slug=product["slug"]), code=301)
 
-    # 🧪 DEBUG IMAGE OUTPUT
-    if product.get("variants"):
-        print("=== VARIANT DEBUG ===")
-        print(json.dumps(product["variants"][0], indent=2))
+    # === Auto-hydrate from Printify if needed ===
+    def hydrate_from_printify(product, slug):
+        pid = product.get("printify_id")
+        if not pid or product.get("variants"):
+            return  # Already hydrated or no ID
 
-    # Optional image fallback from variants
+        print(f"🔄 Enriching {slug} from Printify")
+        url = f"https://api.printify.com/v1/shops/{SHOP_ID}/products/{pid}.json"
+        r = requests.get(url, headers={"Authorization": f"Bearer {PRINTIFY_API_KEY}"})
+        if r.status_code != 200:
+            print(f"❌ Printify fetch failed: {r.status_code}")
+            return
+
+        pdata = r.json()
+
+        # Extract fallback images from print_areas or top-level mockups
+        primary_images = []
+        for area in pdata.get("print_areas", []):
+            for ph in area.get("placeholders", []):
+                if ph.get("src"):
+                    primary_images.append({"src": ph["src"]})
+        if not primary_images:
+            primary_images = [{"src": img["src"]} for img in pdata.get("images", []) if img.get("src")]
+
+        # Merge enriched data
+        product.update({
+            "title": pdata["title"],
+            "variants": pdata.get("variants", []),
+            "options": pdata.get("options", []),
+            "images": primary_images
+        })
+
+        product_tags[slug] = product
+        with open("product_tags.json", "w") as f:
+            json.dump(product_tags, f, indent=2)
+        print(f"✅ Hydrated and cached: {slug}")
+
+    hydrate_from_printify(product, slug)
+
+    # Optional fallback from variant-level images
     if not product.get("images") and product.get("variants"):
         product["images"] = [
             {"src": v["images"][0]["src"]}
@@ -1663,6 +1697,7 @@ def product_detail(slug):
 
     is_admin = request.cookies.get("admin") == "true"
     return render_template("product_detail.html", product=product, is_admin=is_admin)
+
 
 
 @app.route("/admin/sync-products")
