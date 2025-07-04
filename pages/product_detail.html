@@ -45,7 +45,9 @@
         </label>
         <select id="opt-{{ option.name }}" name="{{ option.name }}" style="padding: 0.5rem; width: 100%;">
           {% for val in option["values"] %}
-            {% if val.name %}
+            {% if val is string %}
+              <option value="{{ val }}">{{ val }}</option>
+            {% elif val.name %}
               <option value="{{ val.name }}">{{ val.name }}</option>
             {% endif %}
           {% endfor %}
