@@ -1,26 +1,25 @@
 {% extends "_base.html" %}
 
-{% block meta %}
-  <title>{{ product.title }} – First String</title>
-  <meta name="description" content="{{ product.seo_description or product.title }}">
-  <meta property="og:title" content="{{ product.title }}">
-  <meta property="og:description" content="{{ product.seo_description or product.title }}">
-  <meta property="og:type" content="product">
-  {% if product.images %}
-    <meta property="og:image" content="{{ product.images[0].src }}">
-  {% endif %}
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-{% endblock %}
+{% if product %}
+  {% block meta %}
+    <title>{{ product.title }} – First String</title>
+    <meta name="description" content="{{ product.seo_description or product.title }}">
+    <meta property="og:title" content="{{ product.title }}">
+    <meta property="og:description" content="{{ product.seo_description or product.title }}">
+    <meta property="og:type" content="product">
+    {% if product.images %}
+      <meta property="og:image" content="{{ product.images[0].src }}">
+    {% endif %}
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% endblock %}
+{% endif %}
 
 {% block content %}
 <div style="max-width: 960px; margin: auto; padding: 2rem; display: flex; gap: 2rem; flex-wrap: wrap;">
   <!-- Image Section -->
   <div style="flex: 1 1 400px;">
     <div id="main-image" style="text-align: center; margin-bottom: 1rem;">
-      <img id="selected-image"
-     src="{{ product.images[0].src if product.images and product.images[0].src }}"
-     alt="{{ product.title }}"
-     style="width: 100%; max-width: 400px; max-height: 400px; object-fit: contain; border-radius: 8px; transition: opacity 0.3s ease;" />
+      <img id="selected-image" src="{{ product.images[0].src if product.images and product.images[0].src }}" alt="{{ product.title }}" style="width: 100%; max-width: 400px; max-height: 400px; object-fit: contain; border-radius: 8px; transition: opacity 0.3s ease;" />
     </div>
     <div id="thumbnails" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;">
       {% for img in product.images %}
