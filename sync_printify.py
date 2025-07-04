@@ -3,8 +3,8 @@ import json
 import os
 
 # === CONFIG ===
-PRINTIFY_API_KEY = os.getenv("PRINTIFY_API_KEY") or "YOUR_API_KEY_HERE"
-SHOP_ID = os.getenv("PRINTIFY_SHOP_ID") or "YOUR_SHOP_ID_HERE"
+PRINTIFY_API_KEY = os.getenv("PRINTIFY_API_TOKEN")
+SHOP_ID = os.getenv("PRINTIFY_SHOP_ID")
 TAGS_FILE = "product_tags.json"
 
 # === LOAD EXISTING TAGS ===
