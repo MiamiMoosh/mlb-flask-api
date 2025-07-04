@@ -13,78 +13,75 @@
 {% endblock %}
 
 {% block content %}
-<div class="product-detail" style="max-width: 960px; margin: auto; padding: 2rem;">
-
-  <!-- 🖼️ Main Image + Thumbnails -->
-  <div style="margin-bottom: 1.5rem;">
+<div style="max-width: 960px; margin: auto; padding: 2rem; display: flex; gap: 2rem; flex-wrap: wrap;">
+  <!-- 🖼️ Image Section -->
+  <div style="flex: 1 1 400px; display: flex; flex-direction: column;">
     <div id="main-image" style="text-align: center; margin-bottom: 1rem;">
       <img id="selected-image" src="{{ product.images[0].src }}" alt="{{ product.title }}"
-           style="max-width: 100%; max-height: 500px; object-fit: contain; border-radius: 8px;" />
+           style="width: 100%; max-width: 400px; max-height: 400px; object-fit: contain; border-radius: 8px; transition: opacity 0.3s ease;" />
     </div>
-    <div id="thumbnails" style="text-align: center;">
+    <div id="thumbnails" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;">
       {% for img in product.images %}
         <img src="{{ img.src }}" alt="Thumbnail"
              class="thumbnail"
              onclick="selectImage('{{ img.src }}', this)"
-             style="width: 80px; height: 80px; object-fit: cover; margin: 4px; border-radius: 4px; cursor: pointer; border: 2px solid transparent;" />
+             style="width: 100%; height: 80px; object-fit: cover; border-radius: 4px; cursor: pointer; border: 2px solid transparent;" />
       {% endfor %}
     </div>
   </div>
 
-  <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">{{ product.title }}</h1>
+  <!-- 🛍 Info Section -->
+  <div style="flex: 1 1 300px;">
+    <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">{{ product.title }}</h1>
 
-  {% if product.seo_description %}
-    <p style="font-size: 1.125rem; color: #555; margin-bottom: 1.5rem;">{{ product.seo_description }}</p>
-  {% endif %}
+    {% if product.seo_description %}
+      <p style="font-size: 1.125rem; color: #555; margin-bottom: 1.5rem;">{{ product.seo_description }}</p>
+    {% endif %}
 
-  {% if product.description %}
-    <div style="line-height: 1.6; margin-bottom: 2rem;">
-      {{ product.description | safe }}
-    </div>
-  {% endif %}
+    <!-- 🔧 Variant Selection -->
+    <form id="variant-form" style="margin-bottom: 1rem;">
+      {% for option in product.get("options", []) %}
+        <label for="opt-{{ option.name }}" style="display: block; font-weight: bold; margin-top: 1rem;">
+          {{ option.name }}:
+        </label>
+        <select id="opt-{{ option.name }}" name="{{ option.name }}" style="padding: 0.5rem; width: 100%;">
+          {% for val in option.values %}
+            <option value="{{ val.name }}">{{ val.name }}</option>
+          {% endfor %}
+        </select>
+      {% endfor %}
+      <input type="hidden" id="selected-variant-id" name="variant_id">
+    </form>
 
-  <!-- 🔧 Variant Selection -->
-  <form id="variant-form" style="margin-bottom: 1rem;">
-    {% for option in product.get("options", []) %}
-      <label for="opt-{{ option.name }}" style="display: block; font-weight: bold; margin-top: 1rem;">
-        {{ option.name }}:
-      </label>
-      <select id="opt-{{ option.name }}" name="{{ option.name }}" style="padding: 0.5rem; width: 100%;">
-        {% for val in option['values'] %}
-          <option value="{{ val.name }}">{{ val.name }}</option>
-        {% endfor %}
-      </select>
-    {% endfor %}
+    <!-- 💰 Pricing + Coupon -->
+    <div id="price-display" style="margin-bottom: 1rem; font-size: 1.25rem; font-weight: bold;"></div>
 
-    <input type="hidden" id="selected-variant-id" name="variant_id">
-  </form>
+    <label for="coupon-code">Have a coupon?</label>
+    <input type="text" id="coupon-code" placeholder="Enter code"
+           style="margin-bottom: 1rem; padding: 0.5rem; width: 100%;" />
 
-  <!-- 💰 Pricing + Coupon -->
-  <div id="price-display" style="margin-bottom: 1rem; font-size: 1.25rem; font-weight: bold;"></div>
+    <button
+      id="add-to-cart"
+      data-variants='{{ product.get("variants", []) | tojson }}'
+      data-printify-id="{{ product.printify_id }}"
+      data-discount="{{ product.discount_percent | default(0) }}"
+      style="padding: 0.75rem 1.5rem; font-size: 1.125rem; background-color: #000; color: #fff; border: none; border-radius: 4px; cursor: pointer;">
+      🛒 Add to Cart
+    </button>
 
-  <label for="coupon-code">Have a coupon?</label>
-  <input type="text" id="coupon-code" placeholder="Enter code"
-         style="margin-bottom: 1rem; padding: 0.5rem; width: 100%;" />
+    {% if is_admin %}
+      <div style="margin-top: 2rem;">
+        <a href="/admin/edit-product/{{ product.slug }}"
+           style="padding: 0.5rem 1rem; background: #eee; border-radius: 4px; text-decoration: none; border: 1px solid #ccc;">
+          ✏️ Edit Product
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</div>
 
-  <button
-    id="add-to-cart"
-    data-variants='{{ product.get("variants", []) | tojson }}'
-    data-printify-id="{{ product.printify_id }}"
-    data-discount="{{ product.discount_percent | default(0) }}"
-    style="padding: 0.75rem 1.5rem; font-size: 1.125rem; background-color: #000; color: #fff; border: none; border-radius: 4px; cursor: pointer;">
-    🛒 Add to Cart
-  </button>
-
-  {% if is_admin %}
-    <div style="margin-top: 2rem;">
-      <a href="/admin/edit-product/{{ product.slug }}"
-         style="padding: 0.5rem 1rem; background: #eee; border-radius: 4px; text-decoration: none; border: 1px solid #ccc;">
-        ✏️ Edit Product
-      </a>
-    </div>
-  {% endif %}
-
-  <!-- 📍 Metadata -->
+<!-- 📍 Metadata + Shipping -->
+<div style="max-width: 960px; margin: auto; padding: 0 2rem;">
   <ul style="list-style: none; margin-top: 2rem; padding: 0;">
     {% if product.collection %}<li><strong>Collection:</strong> {{ product.collection }}</li>{% endif %}
     {% if product.team %}<li><strong>Team:</strong> {{ product.team }}</li>{% endif %}
@@ -93,7 +90,6 @@
     {% if product.tags %}<li><strong>Tags:</strong> {{ product.tags | join(', ') }}</li>{% endif %}
   </ul>
 
-  <!-- 🚚 Shipping -->
   <section style="margin-top: 3rem;">
     <h2>Shipping & Returns</h2>
     <p>Orders ship within 2–4 business days. Most arrive within 5–9 days depending on your location.</p>
@@ -101,7 +97,7 @@
   </section>
 </div>
 
-<!-- 🧠 JS: Variants, Cart, Pricing, Image Swapping -->
+<!-- ✨ Interactivity -->
 <style>
   .thumbnail.selected {
     border-color: #000 !important;
@@ -110,14 +106,23 @@
 
 <script>
   function selectImage(src, el) {
-    document.getElementById("selected-image").src = src;
-    document.querySelectorAll(".thumbnail").forEach(img => img.classList.remove("selected"));
+    const img = document.getElementById("selected-image");
+    img.style.opacity = 0;
+    setTimeout(() => {
+      img.src = src;
+      img.onload = () => img.style.opacity = 1;
+    }, 150);
+    document.querySelectorAll(".thumbnail").forEach(t => t.classList.remove("selected"));
     if (el) el.classList.add("selected");
   }
 
   document.addEventListener("DOMContentLoaded", () => {
     const first = document.querySelector(".thumbnail");
-    if (first) first.classList.add("selected");
+    if (first) {
+      first.classList.add("selected");
+      const preload = new Image();
+      preload.src = document.getElementById("selected-image").src;
+    }
   });
 
   const variantForm = document.getElementById("variant-form");
@@ -139,7 +144,6 @@
     document.getElementById("selected-variant-id").value = match?.id || "";
     updatePriceDisplay(match);
 
-    // 🔄 Auto-swap image if variant has one
     if (match?.images?.length > 0) {
       selectImage(match.images[0].src);
     }
@@ -149,10 +153,8 @@
 
   function updatePriceDisplay(variant) {
     if (!variant) return priceDisplay.innerHTML = "";
-
     let discount = baseDiscount;
     const code = couponField.value.trim().toLowerCase();
-
     if (code === "summer25") discount = 25;
     if (code === "freefan") discount = 100;
 
