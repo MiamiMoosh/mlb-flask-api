@@ -1672,6 +1672,13 @@ def product_detail(slug):
 
         pdata = r.json()
 
+        print("\n=== RAW OPTION METADATA ===")
+        pprint.pprint(pdata.get("options", []))
+
+        print("\n=== FIRST VARIANT OPTIONS ===")
+        first_variant = pdata.get("variants", [])[0]
+        pprint.pprint(first_variant.get("options", []))
+
         # === Image fallback ===
         images = []
         for area in pdata.get("print_areas", []):
