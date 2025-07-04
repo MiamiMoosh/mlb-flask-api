@@ -46,7 +46,7 @@
       {% for option in product.options %}
         <label for="opt-{{ option.name }}">{{ option.name }}</label>
         <select id="opt-{{ option.name }}" name="{{ option.name }}" data-option="{{ loop.index0 }}">
-          {% for val in option.values %}
+          {% for val in option["values"] %}
             <option value="{{ val.name }}">{{ val.name }}</option>
           {% endfor %}
         </select>
