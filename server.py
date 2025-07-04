@@ -1738,8 +1738,8 @@ def product_detail(slug):
             "variants": pdata.get("variants", []),
             "options": options,
             "images": images,
-            "hydrated_at": now.isoformat()
-            "description": pdata.get("description") or pdata.get("title"),
+            "hydrated_at": now.isoformat(),
+            "description": pdata.get("description") or pdata.get("title")
         }
 
         product_tags[slug] = updated
