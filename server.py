@@ -1668,7 +1668,7 @@ def product_detail(slug):
 
         pdata = r.json()
 
-        # Fallback image logic
+        # Extract fallback images
         images = []
         for area in pdata.get("print_areas", []):
             for ph in area.get("placeholders", []):
@@ -1677,16 +1677,7 @@ def product_detail(slug):
         if not images:
             images = [{"src": i["src"]} for i in pdata.get("images", []) if i.get("src")]
 
-        # Clean & sort options
-        def sort_values(opt):
-            vals = [v for v in opt.get("values", []) if v.get("name")]
-            if opt.get("name", "").lower() == "size":
-                order = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"]
-                vals.sort(key=lambda v: order.index(v["name"]) if v["name"] in order else 999)
-            else:
-                vals.sort(key=lambda v: v["name"].lower())
-            return {"name": opt.get("name"), "type": opt.get("type"), "values": vals}
-
+        # Extract readable options from variants
         from collections import defaultdict
 
         def rebuild_options_from_variants(variants, option_labels):
@@ -1705,8 +1696,9 @@ def product_detail(slug):
                 result.append({"name": name, "type": name.lower(), "values": items})
             return result
 
-        option_labels = [opt.get("name", f"Option {i + 1}") for i, opt in enumerate(pdata.get("options", []))]
+        option_labels = [opt.get("name", f"Option {i+1}") for i, opt in enumerate(pdata.get("options", []))]
         options = rebuild_options_from_variants(pdata.get("variants", []), option_labels)
+
         hydrated = {
             **(fallback or {}),
             "title": pdata.get("title"),
@@ -1725,11 +1717,7 @@ def product_detail(slug):
     if product:
         product = hydrate_from_printify(slug, fallback=product)
     else:
-        # Try to find an entry by slug in unsynced metadata
-        #with open("product_metadata.json") as meta_f:
-        #    metadata = json.load(meta_f).get(slug)
-        if metadata:
-            product = hydrate_from_printify(slug, fallback=metadata)
+        product = None  # You can optionally handle metadata fallback here
 
     if not product or product.get("hide"):
         return "Product not found", 404
@@ -1746,7 +1734,6 @@ def product_detail(slug):
         ]
 
     is_admin = request.cookies.get("admin") == "true"
-    pprint.pprint(product.get("options"))
     return render_template("product_detail.html", product=product, is_admin=is_admin)
 
 
