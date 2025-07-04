@@ -15,17 +15,20 @@
 {% block content %}
 <div class="product-detail" style="max-width: 960px; margin: auto; padding: 2rem;">
 
-  <!-- 📸 Image Carousel -->
-  <div class="product-gallery" style="margin-bottom: 1.5rem; overflow-x: auto; white-space: nowrap;">
-    {% if product.video_url %}
-      <video controls autoplay muted playsinline style="width: 100%; max-width: 500px; display: inline-block; border-radius: 8px; margin-right: 1rem;">
-        <source src="{{ product.video_url }}" type="video/mp4">
-      </video>
-    {% endif %}
-    {% for img in product.get("images", []) %}
-      <img src="{{ img.src }}" alt="{{ product.title }}"
-           style="width: 100%; max-width: 500px; display: inline-block; border-radius: 8px; margin-right: 1rem;" />
-    {% endfor %}
+  <!-- 🖼️ Main Image + Thumbnails -->
+  <div style="margin-bottom: 1.5rem;">
+    <div id="main-image" style="text-align: center; margin-bottom: 1rem;">
+      <img id="selected-image" src="{{ product.images[0].src }}" alt="{{ product.title }}"
+           style="max-width: 100%; max-height: 500px; object-fit: contain; border-radius: 8px;" />
+    </div>
+    <div id="thumbnails" style="text-align: center;">
+      {% for img in product.images %}
+        <img src="{{ img.src }}" alt="Thumbnail"
+             class="thumbnail"
+             onclick="selectImage('{{ img.src }}', this)"
+             style="width: 80px; height: 80px; object-fit: cover; margin: 4px; border-radius: 4px; cursor: pointer; border: 2px solid transparent;" />
+      {% endfor %}
+    </div>
   </div>
 
   <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">{{ product.title }}</h1>
@@ -47,8 +50,8 @@
         {{ option.name }}:
       </label>
       <select id="opt-{{ option.name }}" name="{{ option.name }}" style="padding: 0.5rem; width: 100%;">
-        {% for val in option.values() %}
-          <option value="{{ val }}">{{ val }}</option>
+        {% for val in option.values %}
+          <option value="{{ val.name }}">{{ val.name }}</option>
         {% endfor %}
       </select>
     {% endfor %}
@@ -97,8 +100,25 @@
   </section>
 </div>
 
-<!-- 🧠 JS: Variants, Cart, Pricing -->
+<!-- 🧠 JS: Variants, Cart, Pricing, Image Swapping -->
+<style>
+  .thumbnail.selected {
+    border-color: #000 !important;
+  }
+</style>
+
 <script>
+  function selectImage(src, el) {
+    document.getElementById("selected-image").src = src;
+    document.querySelectorAll(".thumbnail").forEach(img => img.classList.remove("selected"));
+    if (el) el.classList.add("selected");
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const first = document.querySelector(".thumbnail");
+    if (first) first.classList.add("selected");
+  });
+
   const variantForm = document.getElementById("variant-form");
   const addToCartBtn = document.getElementById("add-to-cart");
   const couponField = document.getElementById("coupon-code");
@@ -117,6 +137,12 @@
 
     document.getElementById("selected-variant-id").value = match?.id || "";
     updatePriceDisplay(match);
+
+    // 🔄 Auto-swap image if variant has one
+    if (match?.images?.length > 0) {
+      selectImage(match.images[0].src);
+    }
+
     return match;
   }
 
