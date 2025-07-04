@@ -1649,7 +1649,6 @@ def product_detail(slug):
         return redirect(url_for("product_detail", slug=product["slug"]), code=301)
 
     # 🧪 DEBUG IMAGE OUTPUT
-    import json
     if product.get("variants"):
         print("=== VARIANT DEBUG ===")
         print(json.dumps(product["variants"][0], indent=2))
@@ -1670,7 +1669,6 @@ def product_detail(slug):
 @admin_required
 def sync_printify_products():
     import subprocess
-
     try:
         result = subprocess.run(
             ["python3", "sync_printify.py"],  # ✅ updated filename here
