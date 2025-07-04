@@ -1716,7 +1716,7 @@ def product_detail(slug):
                         name = name_map.get(option_id) or name_map.get(str(option_id))
                         if name:
                             collected[label].add(name)
-
+            print("Collected size values:", values)
             result = []
             for label, values in collected.items():
                 items = [{"name": val} for val in sorted(values)]
@@ -1766,6 +1766,10 @@ def product_detail(slug):
         ]
 
     is_admin = request.cookies.get("admin") == "true"
+
+    print("seo_description →", product.get("seo_description"))
+    "description": pdata.get("description") or pdata.get("title"),
+
     return render_template("product_detail.html", product=product, is_admin=is_admin)
 
 

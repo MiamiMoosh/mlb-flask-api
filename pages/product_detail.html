@@ -38,7 +38,7 @@
     {% if product.seo_description %}
       <p style="font-size: 1.125rem; color: #555; margin-bottom: 1.5rem;">{{ product.seo_description }}</p>
     {% endif %}
-    
+
     <form id="variant-form" style="margin-bottom: 1rem;">
       {% for option in product.options %}
         <label for="opt-{{ option.name }}">{{ option.name }}</label>
