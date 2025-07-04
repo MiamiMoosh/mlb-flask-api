@@ -1663,7 +1663,7 @@ def product_detail(slug):
             print(f"❌ No printify_id for slug: {slug}")
             return None
 
-        print(f"🔄 Fetching {slug} from Printify")
+        #print(f"🔄 Fetching {slug} from Printify")
         url = f"https://api.printify.com/v1/shops/{SHOP_ID}/products/{pid}.json"
         r = requests.get(url, headers={"Authorization": f"Bearer {PRINTIFY_API_TOKEN}"})
         if r.status_code != 200:
