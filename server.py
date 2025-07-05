@@ -2,14 +2,12 @@ import os
 import asyncio
 import datetime
 import pytz
-import subprocess
 import requests
 import slugify
 import json
 import re
 import threading
 import subprocess
-import pprint
 
 
 from flask import Flask, jsonify, render_template,  request, redirect, url_for, session, flash
@@ -1677,6 +1675,9 @@ def product_detail(slug):
             return fallback
 
         pdata = r.json()
+        import pprint
+        print(f"\n🔍 Hydrated Printify JSON for {slug}:")
+        pprint.pprint(pdata)
 
         # Fallback images from print areas or gallery
         images = []
@@ -1739,8 +1740,10 @@ def product_detail(slug):
             "variants": pdata.get("variants", []),
             "options": options,
             "images": images,
-            "hydrated_at": now.isoformat(),
-            "description": pdata.get("description") or pdata.get("title")
+            "description": pdata.get("description") or pdata.get("title"),
+            "seo_description": pdata.get("description") or pdata.get("title"),
+            "hydrated_at": now.isoformat()
+
         }
 
         product_tags[slug] = updated
