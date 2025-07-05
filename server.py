@@ -1656,7 +1656,7 @@ def product_detail(slug):
         product_tags = json.load(f)
 
     product = product_tags.get(slug)
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     max_age = timedelta(hours=1)
 
     def hydrate_if_stale(slug, fallback):
@@ -1716,9 +1716,10 @@ def product_detail(slug):
                         name = name_map.get(option_id) or name_map.get(str(option_id))
                         if name:
                             collected[label].add(name)
-            print("Collected size values:", values)
+
             result = []
             for label, values in collected.items():
+                print("Collected size values:", values)
                 items = [{"name": val} for val in sorted(values)]
                 if label.lower() == "size":
                     order = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"]
