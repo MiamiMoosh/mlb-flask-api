@@ -138,24 +138,29 @@ const baseDiscount = parseFloat(addToCartBtn?.dataset.discount || 0);
 
 function findMatchingVariant() {
   const selects = variantForm?.querySelectorAll("select") || [];
-  const chosenLabels = Array.from(selects).map(s => s.value);
+  const chosen = {};
+  selects.forEach(s => (chosen[s.name] = s.value));
 
-  // Optional: log selections for debugging
-  console.log("🧩 Selected dropdown values:", chosenLabels);
+  console.log("🎯 Chosen labels:", chosen);
 
-  const match = product.variants.find(v => {
-    return v.options.every((optId, idx) => {
-      const optMeta = product.options?.[idx];
-      const lookup = optMeta?.values?.find(val =>
-        val.id === optId || val.name === optId
-      );
-      return lookup && lookup.name === chosenLabels[idx];
-    });
+  // Convert chosen labels (e.g. "M") to option IDs (e.g. 15)
+  const selectedOptionIds = product.options.map(opt => {
+    const selectedLabel = chosen[opt.name];
+    const match = opt.values.find(v => v.name === selectedLabel);
+    return match?.id || null;
   });
 
-  console.log("🎯 Matched variant:", match);
+  console.log("🧩 Translated to IDs:", selectedOptionIds);
+
+  // Find matching variant with those option IDs
+  const match = product.variants.find(v =>
+    v.options.every((optId, idx) => selectedOptionIds[idx] === optId)
+  );
+
+  console.log("✅ Matched variant:", match);
 
   document.getElementById("selected-variant-id").value = match?.id || "";
+
   updatePriceDisplay(match);
 
   if (match?.images?.length > 0) {
