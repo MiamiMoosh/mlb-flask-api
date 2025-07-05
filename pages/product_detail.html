@@ -100,6 +100,11 @@
 </style>
 
 <script>
+<script>
+  const product = {
+    options: {{ product.options | tojson }}
+  };
+</script>
   function selectImage(src, el) {
   const img = document.getElementById("selected-image");
   if (!img || !src) return;
