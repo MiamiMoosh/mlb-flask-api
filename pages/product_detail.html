@@ -136,17 +136,20 @@ const baseDiscount = parseFloat(addToCartBtn?.dataset.discount || 0);
 
 function findMatchingVariant() {
   const selects = variantForm?.querySelectorAll("select") || [];
-  const chosen = {};
-  selects.forEach(s => (chosen[s.name] = s.value));
+  const selectedOptionIds = [];
 
-  const selectedOptionIds = product.options.map(opt => {
-    const selectedLabel = chosen[opt.name];
-    const match = opt.values.find(v => v.name === selectedLabel);
-    return match?.id || null;
-  });
+  for (let i = 0; i < selects.length; i++) {
+    const select = selects[i];
+    const label = select.name;
+    const selectedName = select.value;
+
+    const option = product.options.find(o => o.name === label);
+    const match = option?.values.find(v => v.name === selectedName);
+    selectedOptionIds.push(match?.id);
+  }
 
   const match = product.variants.find(v =>
-    v.options.every((optId, idx) => selectedOptionIds[idx] === optId)
+    JSON.stringify(v.options) === JSON.stringify(selectedOptionIds)
   );
 
   document.getElementById("selected-variant-id").value = match?.id || "";
