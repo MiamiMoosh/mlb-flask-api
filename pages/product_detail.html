@@ -140,17 +140,24 @@ function findMatchingVariant() {
   const selects = variantForm?.querySelectorAll("select") || [];
   const chosenLabels = Array.from(selects).map(s => s.value);
 
+  // Optional: log selections for debugging
+  console.log("🧩 Selected dropdown values:", chosenLabels);
+
   const match = product.variants.find(v => {
     return v.options.every((optId, idx) => {
-      const lookup = product.options?.[idx]?.values?.find(val =>
+      const optMeta = product.options?.[idx];
+      const lookup = optMeta?.values?.find(val =>
         val.id === optId || val.name === optId
       );
       return lookup && lookup.name === chosenLabels[idx];
     });
   });
 
+  console.log("🎯 Matched variant:", match);
+
   document.getElementById("selected-variant-id").value = match?.id || "";
   updatePriceDisplay(match);
+
   if (match?.images?.length > 0) {
     selectImage(match.images[0].src);
   }

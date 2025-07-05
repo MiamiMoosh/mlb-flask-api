@@ -1679,7 +1679,7 @@ def product_detail(slug):
         print(f"\n🔍 Hydrated Printify JSON for {slug}:")
         pprint.pprint(pdata)
 
-        # Fallback images from print areas or gallery
+        # Fallback images
         images = []
         for area in pdata.get("print_areas", []):
             for ph in area.get("placeholders", []):
@@ -1688,7 +1688,17 @@ def product_detail(slug):
         if not images:
             images = [{"src": i["src"]} for i in pdata.get("images", []) if i.get("src")]
 
-        # Filter options by available variants
+        # Filtered variants
+        filtered_variants = []
+        for v in pdata.get("variants", []):
+            if v.get("is_enabled") and v.get("is_available"):
+                filtered_variants.append(v)
+
+        print(f"✅ {len(filtered_variants)} variants included (enabled + available)")
+        for v in filtered_variants:
+            print(f"- {v.get('title')} → ${v.get('price') / 100:.2f} | options: {v.get('options')}")
+
+        # Build option dropdowns
         def build_options(variants, option_meta):
             lookup_maps = []
             for opt in option_meta:
@@ -1708,8 +1718,6 @@ def product_detail(slug):
 
             collected = defaultdict(set)
             for v in variants:
-                if not v.get("is_enabled") or not v.get("is_available"):
-                    continue
                 for idx, option_id in enumerate(v.get("options", [])):
                     if idx < len(lookup_maps):
                         label = lookup_maps[idx]["name"]
@@ -1720,9 +1728,9 @@ def product_detail(slug):
 
             result = []
             for label, values in collected.items():
-                print("Collected size values:", values)
+                print(f"Collected values for {label}: {values}")
                 items = [{"name": val} for val in sorted(values)]
-                if label.lower() == "size":
+                if "size" in label.lower():
                     order = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"]
                     items.sort(key=lambda v: order.index(v["name"]) if v["name"] in order else 999)
                 result.append({
@@ -1732,18 +1740,17 @@ def product_detail(slug):
                 })
             return result
 
-        options = build_options(pdata.get("variants", []), pdata.get("options", []))
+        options = build_options(filtered_variants, pdata.get("options", []))
 
         updated = {
             **fallback,
             "title": pdata.get("title"),
-            "variants": pdata.get("variants", []),
+            "variants": filtered_variants,
             "options": options,
             "images": images,
             "description": pdata.get("description") or pdata.get("title"),
             "seo_description": pdata.get("description") or pdata.get("title"),
             "hydrated_at": now.isoformat()
-
         }
 
         product_tags[slug] = updated
@@ -1775,7 +1782,6 @@ def product_detail(slug):
     print("seo_description →", product.get("seo_description"))
 
     return render_template("product_detail.html", product=product, is_admin=is_admin)
-
 
 
 @app.route("/webhook/printify", methods=["POST"])
