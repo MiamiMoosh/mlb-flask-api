@@ -100,6 +100,13 @@
 </style>
 
 <script>
+  const product = {
+    options: {{ product.options | tojson }},
+    variants: {{ product.variants | tojson }}
+  };
+</script>
+
+<script>
 
   function selectImage(src, el) {
   const img = document.getElementById("selected-image");
@@ -132,22 +139,19 @@ const baseDiscount = parseFloat(addToCartBtn?.dataset.discount || 0);
 
 function findMatchingVariant() {
   const selects = variantForm?.querySelectorAll("select") || [];
-  const chosen = {};
-  selects.forEach(s => (chosen[s.name] = s.value));
+  const chosenLabels = Array.from(selects).map(s => s.value);
 
-  const match = variants.find(v => {
-    const optNames = Object.keys(chosen);
-    return optNames.every((label, idx) => {
-      const selected = chosen[label];
-      const variantValue = product.options?.[idx]?.values?.find(v => v.name === selected);
-      const variantId = variantValue?.id || selected;
-      return v.options[idx] === variantId || v.options[idx] === selected;
+  const match = product.variants.find(v => {
+    return v.options.every((optId, idx) => {
+      const lookup = product.options?.[idx]?.values?.find(val =>
+        val.id === optId || val.name === optId
+      );
+      return lookup && lookup.name === chosenLabels[idx];
     });
   });
 
   document.getElementById("selected-variant-id").value = match?.id || "";
   updatePriceDisplay(match);
-
   if (match?.images?.length > 0) {
     selectImage(match.images[0].src);
   }
@@ -191,9 +195,4 @@ addToCartBtn?.addEventListener("click", () => {
 });
 </script>
 
-<script>
-  const product = {
-    options: {{ product.options | tojson }}
-  };
-</script>
 {% endblock %}
