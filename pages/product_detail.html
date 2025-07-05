@@ -44,7 +44,7 @@
         <label for="opt-{{ option.name }}">{{ option.name }}</label>
         <select id="opt-{{ option.name }}" name="{{ option.name }}" data-option="{{ loop.index0 }}">
           {% for val in option["values"] %}
-            <option value="{{ val.name }}">{{ val.name }}</option>
+            <option value="{{<select id="opt-{{ option.name | lower }}" name="{{ option.name | lower }}" data-option="{{ loop.index0 }}"> val.name }}">{{ val.name }}</option>
           {% endfor %}
         </select>
       {% endfor %}
@@ -139,10 +139,10 @@ function findMatchingVariant() {
   const selectedOptionIds = [];
 
   for (let s of selects) {
-    const label = s.name;
+    const label = s.name.toLowerCase();
     const selectedName = s.value;
 
-    const optMeta = product.options.find(o => o.name === label);
+    const optMeta = product.options.find(o => o.name.toLowerCase() === label);
     const valMatch = optMeta?.values?.find(v => v.name === selectedName);
 
     if (valMatch?.id == null) {
