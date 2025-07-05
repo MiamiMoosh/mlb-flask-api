@@ -100,11 +100,7 @@
 </style>
 
 <script>
-<script>
-  const product = {
-    options: {{ product.options | tojson }}
-  };
-</script>
+
   function selectImage(src, el) {
   const img = document.getElementById("selected-image");
   if (!img || !src) return;
@@ -193,5 +189,11 @@ addToCartBtn?.addEventListener("click", () => {
   localStorage.setItem("firststring_cart", JSON.stringify(cart));
   alert("Added to cart!");
 });
+</script>
+
+<script>
+  const product = {
+    options: {{ product.options | tojson }}
+  };
 </script>
 {% endblock %}
