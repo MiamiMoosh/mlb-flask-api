@@ -103,9 +103,7 @@
     options: {{ product.options | tojson }},
     variants: {{ product.variants | tojson }}
   };
-</script>
 
-<script>
 
   function selectImage(src, el) {
   const img = document.getElementById("selected-image");
@@ -141,26 +139,17 @@ function findMatchingVariant() {
   const chosen = {};
   selects.forEach(s => (chosen[s.name] = s.value));
 
-  console.log("🎯 Chosen labels:", chosen);
-
-  // Convert chosen labels (e.g. "M") to option IDs (e.g. 15)
   const selectedOptionIds = product.options.map(opt => {
     const selectedLabel = chosen[opt.name];
     const match = opt.values.find(v => v.name === selectedLabel);
     return match?.id || null;
   });
 
-  console.log("🧩 Translated to IDs:", selectedOptionIds);
-
-  // Find matching variant with those option IDs
   const match = product.variants.find(v =>
     v.options.every((optId, idx) => selectedOptionIds[idx] === optId)
   );
 
-  console.log("✅ Matched variant:", match);
-
   document.getElementById("selected-variant-id").value = match?.id || "";
-
   updatePriceDisplay(match);
 
   if (match?.images?.length > 0) {
