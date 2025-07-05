@@ -1675,9 +1675,9 @@ def product_detail(slug):
             return fallback
 
         pdata = r.json()
-        import pprint
-        print(f"\n🔍 Hydrated Printify JSON for {slug}:")
-        pprint.pprint(pdata)
+        #import pprint
+        #print(f"\n🔍 Hydrated Printify JSON for {slug}:")
+        #pprint.pprint(pdata)
 
         # Fallback images
         images = []
