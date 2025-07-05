@@ -160,7 +160,11 @@ function findMatchingVariant() {
 }
 
 function updatePriceDisplay(variant) {
-  if (!variant) return (priceDisplay.innerHTML = "");
+  if (!variant || typeof variant.price !== "number") {
+    priceDisplay.innerHTML = "Price unavailable";
+    console.warn("❌ No price found on variant:", variant);
+    return;
+  }
 
   let discount = baseDiscount;
   const code = couponField?.value.trim().toLowerCase();
