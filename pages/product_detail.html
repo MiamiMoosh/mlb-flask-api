@@ -135,9 +135,12 @@ function findMatchingVariant() {
   selects.forEach(s => (chosen[s.name] = s.value));
 
   const match = variants.find(v => {
-    return v.options.every((val, idx) => {
-      const optName = Object.keys(chosen)[idx];
-      return chosen[optName] === val;
+    const optNames = Object.keys(chosen);
+    return optNames.every((label, idx) => {
+      const selected = chosen[label];
+      const variantValue = product.options?.[idx]?.values?.find(v => v.name === selected);
+      const variantId = variantValue?.id || selected;
+      return v.options[idx] === variantId || v.options[idx] === selected;
     });
   });
 
@@ -147,6 +150,7 @@ function findMatchingVariant() {
   if (match?.images?.length > 0) {
     selectImage(match.images[0].src);
   }
+
   return match;
 }
 
