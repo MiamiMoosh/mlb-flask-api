@@ -59,7 +59,6 @@
 
     <button
       id="add-to-cart"
-      data-variants='{{ product.get("variants", []) | tojson }}'
       data-printify-id="{{ product.printify_id }}"
       data-discount="{{ product.discount_percent | default(0) }}"
       style="padding: 0.75rem 1.5rem; font-size: 1.125rem; background-color: #000; color: #fff; border: none; border-radius: 4px; cursor: pointer;">
@@ -134,7 +133,7 @@ const variantForm = document.getElementById("variant-form");
 const addToCartBtn = document.getElementById("add-to-cart");
 const couponField = document.getElementById("coupon-code");
 const priceDisplay = document.getElementById("price-display");
-const variants = JSON.parse(addToCartBtn?.dataset.variants || "[]");
+const variants = product.variants || [];
 const baseDiscount = parseFloat(addToCartBtn?.dataset.discount || 0);
 
 function findMatchingVariant() {
