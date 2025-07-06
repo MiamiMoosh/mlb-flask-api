@@ -245,6 +245,14 @@ button:disabled { background-color: #444; color: #999; cursor: default; box-shad
         }
       });
     }
+    const sizeSelect = document.getElementById("opt-size");
+    if (sizeSelect) {
+      new Choices(sizeSelect, {
+        allowHTML: true,
+        itemSelectText: '',
+        shouldSort: false
+      });
+    }
   });
 </script>
 {% endblock %}
