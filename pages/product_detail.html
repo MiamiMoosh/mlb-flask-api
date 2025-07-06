@@ -46,9 +46,10 @@
 .variant-select-group label { display: block; font-size: 13px; margin-bottom: 4px; color: #ccc; }
 .price-display { font-size: 20px; font-weight: bold; color: #C0C8B6; margin: 1rem 0; }
 .price-and-cart { display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin-bottom: 2rem; }
-.choices__inner { background-color: #111 !important; border: 1px solid #666; border-radius: 4px; padding: 4px 6px; font-size: 13px; color: white; max-width: 400px; min-width: 280px; width: 100%; height: 38px !important; }
+.choices__inner { background-color: #111 !important; border: 1px solid #666; border-radius: 4px; padding: 4px 6px; font-size: 13px; color: white; max-width: 400px; min-width: 280px; width: 100%; height: 32px !important; line-height: 1.2; box-sizing: border-box; }
 .choices[data-type*=select-one] .choices__inner { padding-bottom: 0; }
-.choices__list--dropdown, .choices__list[aria-expanded] { width: 100% !important; max-width: 400px; }.choices__list--dropdown .choices__item { color: white; padding: 8px 12px; }
+.choices__list--dropdown, .choices__list[aria-expanded] { background-color: #111 !important; color: white !important; border: 1px solid #AA0000; box-sizing: border-box; width: 100% !important; max-width: 400px; overflow-y: auto; }
+.choices__list--dropdown .choices__item { color: white !important; padding: 6px 12px; font-size: 13px; line-height: 1.2; }
 .choices__list--dropdown { background-color: #1D1F21; }
 .choices__item--selectable:hover, .choices__item--selectable.is-highlighted { background-color: #AA0000 !important; color: #fff !important; }
 .thumbnail.selected { border-color: #AA0000 !important; }
