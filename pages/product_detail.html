@@ -204,14 +204,84 @@
       box-shadow: none;
     }
   </style>
-{% endblock %}
 
-{% block content %}
 <div class="wrapper">
   <div class="empty-container"></div>
   <div class="dashboard-panel">
-    <!-- Your product content goes here -->
-    {{ self.super() }}
+    <h1 class="product-title">{{ product.title }}</h1>
+
+    {% if product.seo_description %}
+      <p class="product-description">{{ product.seo_description }}</p>
+    {% endif %}
+
+    <div id="main-image" style="text-align: center; margin-bottom: 1rem;">
+      <img id="selected-image"
+           src="{{ product.images[0].src if product.images and product.images[0].src }}"
+           alt="{{ product.title }}"
+           style="width: 100%; max-width: 400px; max-height: 400px; object-fit: contain; border-radius: 8px;" />
+    </div>
+
+    <div id="thumbnails" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 2rem;">
+      {% for img in product.images %}
+        <img src="{{ img.src }}"
+             alt="Thumbnail"
+             class="thumbnail"
+             onclick="selectImage('{{ img.src }}', this)"
+             style="width: 100%; height: 80px; object-fit: cover; border-radius: 4px; cursor: pointer; border: 2px solid transparent;" />
+      {% endfor %}
+    </div>
+
+    <form id="variant-form" style="margin-bottom: 1rem;">
+      {% for option in product.options %}
+        {% set safe_id = "opt-" + option.name | lower | replace(' ', '-') %}
+        <label for="{{ safe_id }}">{{ option.name }}</label>
+        <select id="{{ safe_id }}" name="{{ option.name }}" data-option="{{ loop.index0 }}">
+          {% for val in option["values"] %}
+            {% set img_url = "/static/images/Tshirt Colors/" + val.name + ".png" %}
+            <option value="{{ val.name }}"
+                    data-custom-properties='{{ {"image": img_url} | tojson | escape }}'>
+              {{ val.name }}
+            </option>
+          {% endfor %}
+        </select>
+      {% endfor %}
+      <input type="hidden" id="selected-variant-id" name="variant_id">
+    </form>
+
+    <p id="price-display" class="price-display">$—</p>
+
+    <label for="coupon-code">Have a coupon?</label>
+    <input type="text" id="coupon-code" placeholder="Enter code"
+           style="margin-bottom: 1rem; padding: 0.5rem; width: 100%;" />
+
+    <button id="add-to-cart"
+            data-printify-id="{{ product.printify_id }}"
+            data-discount="{{ product.discount_percent | default(0) }}">
+      🛒 Add to Cart
+    </button>
+
+    {% if is_admin %}
+      <div style="margin-top: 2rem;">
+        <a href="/admin/edit-product/{{ product.slug }}"
+           style="padding: 0.5rem 1rem; background: #eee; border-radius: 4px; text-decoration: none; border: 1px solid #ccc;">
+          ✏️ Edit Product
+        </a>
+      </div>
+    {% endif %}
+
+    <ul style="list-style: none; margin-top: 2rem; padding: 0;">
+      {% if product.collection %}<li><strong>Collection:</strong> {{ product.collection }}</li>{% endif %}
+      {% if product.team %}<li><strong>Team:</strong> {{ product.team }}</li>{% endif %}
+      {% if product.sport %}<li><strong>Sport:</strong> {{ product.sport }}</li>{% endif %}
+      {% if product.city and product.state %}<li><strong>Location:</strong> {{ product.city }}, {{ product.state }}</li>{% endif %}
+      {% if product.tags %}<li><strong>Tags:</strong> {{ product.tags | join(', ') }}</li>{% endif %}
+    </ul>
+
+    <section style="margin-top: 3rem;">
+      <h2>Shipping & Returns</h2>
+      <p>Orders ship within 2–4 business days. Most arrive within 5–9 days depending on your location.</p>
+      <p>Returns accepted on unworn items within 30 days. <a href="/return-policy">Learn more</a>.</p>
+    </section>
   </div>
 </div>
 {% endblock %}
