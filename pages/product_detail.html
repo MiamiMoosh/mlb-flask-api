@@ -18,191 +18,63 @@
 
 {% block head %}
   <style>
-    body {
-      background: url("/static/images/firststring_bg.png") no-repeat center center fixed;
-      background-size: cover;
-      background-color: #000;
-      font-family: 'Orbitron', sans-serif;
-      color: white;
-      margin: 0;
-      overflow-x: hidden;
-    }
+    body { background: url("/static/images/firststring_bg.png") no-repeat center center fixed; background-size: cover; background-color: #000; font-family: 'Orbitron', sans-serif; color: white; margin: 0; overflow-x: hidden; }
 
-    @font-face {
-      font-family: 'Canes';
-      src: url('{{ url_for('static', filename='fonts/Canes.otf') }}') format('opentype');
-      font-weight: normal;
-      font-style: normal;
-      font-display: swap;
-    }
+@font-face { font-family: 'Canes'; src: url('{{ url_for('static', filename='fonts/Canes.otf') }}') format('opentype'); font-weight: normal; font-style: normal; font-display: swap; }
 
-    @font-face {
-      font-family: 'Orbitron';
-      src: url('{{ url_for('static', filename='fonts/Orbitron-Regular.ttf') }}') format('truetype');
-      font-weight: normal;
-      font-style: normal;
-      font-display: swap;
-    }
+@font-face { font-family: 'Orbitron'; src: url('{{ url_for('static', filename='fonts/Orbitron-Regular.ttf') }}') format('truetype'); font-weight: normal; font-style: normal; font-display: swap; }
 
-    @font-face {
-      font-family: 'Orbitron';
-      src: url('{{ url_for('static', filename='fonts/Orbitron-Bold.ttf') }}') format('truetype');
-      font-weight: bold;
-      font-style: normal;
-      font-display: swap;
-    }
+@font-face { font-family: 'Orbitron'; src: url('{{ url_for('static', filename='fonts/Orbitron-Bold.ttf') }}') format('truetype'); font-weight: bold; font-style: normal; font-display: swap; }
 
-    .header-wrapper {
-      display: flex;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 80px;
-      background-image: url("/static/images/firststring_bg.png");
-      background-repeat: no-repeat;
-      background-size: cover;
-      background-position: center;
-      background-attachment: fixed;
-      z-index: 9999;
-    }
+.header-wrapper { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 80px; background-image: url("/static/images/firststring_bg.png"); background-repeat: no-repeat; background-size: cover; background-position: center; background-attachment: fixed; z-index: 9999; }
 
-    .header-left,
-    .header-right {
-      width: 100%;
-      display: flex;
-      align-items: flex-start;
-    }
+.header-left, .header-right { width: 100%; display: flex; align-items: flex-start; }
 
-    .header-left {
-      justify-content: flex-end;
-      padding-right: 50px;
-    }
+.header-left { justify-content: flex-end; padding-right: 50px; }
 
-    .header-left img {
-      max-width: 80%;
-      width: 300px;
-      object-fit: contain;
-    }
+.header-left img { max-width: 80%; width: 300px; object-fit: contain; }
 
-    .main-menu {
-      font-family: 'Canes', sans-serif;
-      background: #1D1F21;
-    }
+.main-menu { font-family: 'Canes', sans-serif; background: #1D1F21; }
 
-    .main-menu ul {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      font-size: 16px;
-    }
+.main-menu ul { list-style: none; margin: 0; padding: 0; display: flex; font-size: 16px; }
 
-    .main-menu ul li {
-      position: relative;
-      padding: 5px 10px;
-    }
+.main-menu ul li { position: relative; padding: 5px 10px; }
 
-    .main-menu ul li a {
-      color: #fff;
-      text-decoration: none;
-      font-size: 16px;
-    }
+.main-menu ul li a { color: #fff; text-decoration: none; font-size: 16px; }
 
-    .dropdown-content,
-    .submenu-content {
-      display: none !important;
-      position: absolute;
-      background: #1D1F21;
-      border: 1px solid #AA0000;
-      min-width: 200px;
-      z-index: 1000;
-    }
+.dropdown-content, .submenu-content { display: none !important; position: absolute; background: #1D1F21; border: 1px solid #AA0000; min-width: 200px; z-index: 1000; }
 
-    .dropdown:hover > .dropdown-content,
-    .submenu:hover > .submenu-content {
-      display: block !important;
-    }
+.dropdown:hover > .dropdown-content, .submenu:hover > .submenu-content { display: block !important; }
 
-    .wrapper {
-      margin-top: 80px;
-      display: flex;
-      width: 100vw;
-      position: relative;
-    }
+.wrapper { margin-top: 80px; display: flex; width: 100vw; position: relative; }
 
-    .empty-container {
-      flex: 1;
-    }
+.empty-container { flex: 1; }
 
-    .dashboard-panel {
-      flex: 1;
-      padding: 20px;
-    }
+.dashboard-panel { flex: 1; padding: 20px; }
 
-    .product-title {
-      font-family: 'Canes', sans-serif;
-      font-size: 28px;
-      margin-bottom: 1rem;
-    }
+.product-title { font-family: 'Orbitron', sans-serif; font-weight: bold; font-size: 24px; margin-bottom: 1rem; color: white; }
 
-    .product-description {
-      font-size: 14px;
-      margin-bottom: 1.5rem;
-      color: #ccc;
-    }
+.product-description { font-size: 13px; color: #ccc; background-color: rgba(30, 30, 30, 0.75); padding: 10px; border-radius: 4px; line-height: 1.5; max-width: 600px; }
 
-    .price-display {
-      font-size: 16px;
-      color: #C0C8B6;
-      margin: 1rem 0;
-    }
+.price-display { font-size: 16px; color: #C0C8B6; margin: 1rem 0; }
 
-    .choices__inner {
-      background-color: #111;
-      border: 1px solid #666;
-      border-radius: 4px;
-      padding: 6px 8px;
-      font-size: 14px;
-      color: #fff;
-      min-height: 38px;
-      line-height: 1.2;
-    }
+.choices__inner { background-color: #111 !important; border: 1px solid #666; border-radius: 4px; padding: 4px 6px; font-size: 13px; color: white; max-width: 280px; height: 38px !important; }
 
-    .choices__list--dropdown {
-      background-color: #1D1F21;
-      border: 1px solid #AA0000;
-      max-height: 240px;
-      overflow-y: auto;
-    }
+.choices[data-type*=select-one] .choices__inner { padding-bottom: 0; }
 
-    .thumbnail.selected {
-      border-color: #AA0000 !important;
-    }
+.choices__list--dropdown, .choices__list[aria-expanded] { background-color: #000 !important; border: 1px solid #AA0000; color: white; font-size: 13px; }
 
-    button {
-      background-color: #AA0000;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      padding: 8px 16px;
-      font-size: 14px;
-      font-family: 'Orbitron', sans-serif;
-      cursor: pointer;
-      transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    }
+.choices__list--dropdown .choices__item { color: white; padding: 8px 12px; }
 
-    button:hover {
-      background-color: #CC0000;
-      box-shadow: 0 0 6px #AA0000;
-    }
+.choices__list--dropdown .choices__item--selectable:hover { background-color: #1D1F21; }
 
-    button:disabled {
-      background-color: #444;
-      color: #999;
-      cursor: default;
-      box-shadow: none;
-    }
+.thumbnail.selected { border-color: #AA0000 !important; }
+
+button { background-color: #AA0000; color: white; border: none; border-radius: 4px; padding: 8px 16px; font-size: 14px; font-family: 'Orbitron', sans-serif; cursor: pointer; transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
+
+button:hover { background-color: #CC0000; box-shadow: 0 0 6px #AA0000; }
+
+button:disabled { background-color: #444; color: #999; cursor: default; box-shadow: none; }
   </style>
 
 <div class="wrapper">
