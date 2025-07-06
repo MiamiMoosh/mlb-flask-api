@@ -243,12 +243,7 @@ document.addEventListener("DOMContentLoaded", function () {
     callbackOnCreateTemplates: function (template) {
       return {
         choice: (classNames, data) => {
-          let image = '';
-          try {
-            image = JSON.parse(data.customProperties || '{}').image || '';
-          } catch (e) {
-            console.warn("⚠️ Failed to parse customProperties:", data.customProperties);
-          }
+          let image = data.customProperties?.image || '';
 
           return template(`
             <div class="${classNames.item} choices__item--selectable" data-id="${data.id}" data-value="${data.value}" role="option">
