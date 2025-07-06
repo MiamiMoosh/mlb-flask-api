@@ -12,13 +12,12 @@
     {% endif %}
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
-
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-    {% endif %}
+  {% endif %}
 {% endblock %}
 
 {% block content %}
-<div class="wrapper">
+<div class="wrapper" style="margin-top: 80px;">
   <div class="empty-container"></div>
   <div class="dashboard-panel">
     <h1 class="product-title">{{ product.title }}</h1>
@@ -118,7 +117,6 @@
   button {background-color: #AA0000;color: white;border: none;border-radius: 4px;padding: 8px 16px;font-size: 14px;font-family: 'Orbitron', sans-serif;cursor: pointer;transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;}
   button:hover {background-color: #CC0000;box-shadow: 0 0 6px #AA0000;}
   button:disabled {background-color: #444;color: #999;cursor: default;box-shadow: none;}
-
 </style>
 
 <script>
@@ -127,72 +125,52 @@
     variants: {{ product.variants | tojson }}
   };
 
-
   function selectImage(src, el) {
-  const img = document.getElementById("selected-image");
-  if (!img || !src) return;
-  img.style.opacity = 0;
-  setTimeout(() => {
-    img.src = src;
-    img.onload = () => (img.style.opacity = 1);
-  }, 150);
-
-  document.querySelectorAll(".thumbnail").forEach(t => t.classList.remove("selected"));
-  if (el) el.classList.add("selected");
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  const first = document.querySelector(".thumbnail");
-  if (first) {
-    first.classList.add("selected");
-    const preload = new Image();
-    preload.src = document.getElementById("selected-image")?.src || "";
+    const img = document.getElementById("selected-image");
+    if (!img || !src) return;
+    img.style.opacity = 0;
+    setTimeout(() => {
+      img.src = src;
+      img.onload = () => (img.style.opacity = 1);
+    }, 150);
+    document.querySelectorAll(".thumbnail").forEach(t => t.classList.remove("selected"));
+    if (el) el.classList.add("selected");
   }
-});
 
-const variantForm = document.getElementById("variant-form");
-const addToCartBtn = document.getElementById("add-to-cart");
-const couponField = document.getElementById("coupon-code");
-const priceDisplay = document.getElementById("price-display");
-const variants = product.variants || [];
-const baseDiscount = parseFloat(addToCartBtn?.dataset.discount || 0);
+  document.addEventListener("DOMContentLoaded", () => {
+    const first = document.querySelector(".thumbnail");
+    if (first) {
+      first.classList.add("selected");
+      const preload = new Image();
+      preload.src = document.getElementById("selected-image")?.src || "";
+    }
+  });
 
-function normalizeName(name) {
-  return name.trim().toLowerCase().replace(/\s+/g, "-");
-}
+  const variantForm = document.getElementById("variant-form");
+  const addToCartBtn = document.getElementById("add-to-cart");
+  const couponField = document.getElementById("coupon-code");
+  const priceDisplay = document.getElementById("price-display");
+  const variants = product.variants || [];
+  const baseDiscount = parseFloat(addToCartBtn?.dataset.discount || 0);
 
-function normalize(str) {
-  return str?.trim().toLowerCase().replace(/\s+/g, "-");
-}
+  function findMatchingVariant() {
+    const selects = variantForm?.querySelectorAll("select") || [];
+    const selectedOptionIds = [];
 
-function findMatchingVariant() {
-  const selects = variantForm?.querySelectorAll("select") || [];
-  const selectedOptionIds = [];
-
-  for (let s of selects) {
-    const label = s.name;
-    const optMeta = product.options.find(o => o.name === label);
-
-    const selectedName = s.value;
-    const valMatch = optMeta?.values?.find(v => v.name === selectedName);
-
-    if (valMatch?.id == null) {
-      console.warn(`❌ Couldn't find ID for "${label}" → "${selectedName}"`);
-      return null;
+    for (let s of selects) {
+      const label = s.name;
+      const optMeta = product.options.find(o => o.name === label);
+      const selectedName = s.value;
+      const valMatch = optMeta?.values?.find(v => v.name === selectedName);
+      if (valMatch?.id == null) return null;
+      selectedOptionIds.push(valMatch.id);
     }
 
-    selectedOptionIds.push(valMatch.id);
-  }
+    const match = product.variants.find(v =>
+      JSON.stringify(v.options) === JSON.stringify(selectedOptionIds)
+    );
 
-  const match = product.variants.find(v =>
-    JSON.stringify(v.options) === JSON.stringify(selectedOptionIds)
-  );
-
-  if (!match) {
-    console.warn("🚫 No matching variant for IDs:", selectedOptionIds);
-  }
-
-  document.getElementById("selected-variant-id").value = match?.id || "";
+    document.getElementById("selected-variant-id").value = match?.id || "";
   updatePriceDisplay(match);
 
   if (match?.images?.length > 0) {
