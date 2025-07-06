@@ -1780,11 +1780,18 @@ def product_detail(slug):
     product = product_tags.get(slug)
 
     if not product:
-        print(f"🔄 Slug '{slug}' not in product_tags — attempting hydration from Printify…")
-        product = hydrate_if_stale(slug, {"printify_id": slug, "slug": slug})
-
-        if not product or not product.get("printify_id"):
-            print("❌ Hydration failed — redirecting to /shop")
+        print(f"🔄 Slug '{slug}' not in product_tags — attempting direct hydration from Printify…")
+        # Try to fetch product metadata directly from Printify
+        r = requests.get(f"https://api.printify.com/v1/shops/{SHOP_ID}/products/{slug}.json",
+                         headers={"Authorization": f"Bearer {PRINTIFY_API_TOKEN}"})
+        if r.status_code == 200:
+            pdata = r.json()
+            product = hydrate_if_stale(slug, {
+                "printify_id": pdata.get("id"),
+                "slug": slug
+            })
+        else:
+            print("❌ Direct hydration failed — redirecting to /shop")
             return redirect(url_for("shop"))
 
     product = hydrate_if_stale(slug, fallback=product)
