@@ -148,9 +148,9 @@ function findMatchingVariant() {
 
   for (let s of selects) {
     const label = s.name;
-    const selectedName = s.value;
-
     const optMeta = product.options.find(o => o.name === label);
+
+    const selectedName = s.value;
     const valMatch = optMeta?.values?.find(v => v.name === selectedName);
 
     if (valMatch?.id == null) {
