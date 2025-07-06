@@ -1742,6 +1742,27 @@ def product_detail(slug):
 
         options = build_options(filtered_variants, pdata.get("options", []))
 
+        # 🆕 Inject IDs into each option value
+        # This maps (option index + value name) → ID from the first matching variant that uses it
+        option_id_map = defaultdict(dict)
+        for variant in filtered_variants:
+            for idx, option_value_id in enumerate(variant["options"]):
+                try:
+                    opt_meta = pdata["options"][idx]
+                    val_meta = next((v for v in opt_meta["values"] if v["id"] == option_value_id), None)
+                    if val_meta:
+                        name = val_meta.get("title") or val_meta.get("name")
+                        if name:
+                            option_id_map[opt_meta["name"]][name] = option_value_id
+                except Exception:
+                    continue
+
+        # 🧩 Apply mapped IDs to options used on frontend
+        for opt in options:
+            opt_name = opt["name"]
+            for val in opt["values"]:
+                val["id"] = option_id_map.get(opt_name, {}).get(val["name"])
+
         updated = {
             **fallback,
             "title": pdata.get("title"),
