@@ -37,8 +37,9 @@
 .image-cluster { display: flex; gap: 12px; align-items: center; }
 .thumbnail-stack { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 80px; gap: 6px; }
 .thumbnail-stack img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 2px solid transparent; cursor: pointer; }
-.main-image-frame { width: 400px; height: 400px; display: flex; align-items: center; justify-content: center; }
+.main-image-frame { position: relative; width: 400px; height: 400px; display: flex; align-items: center; justify-content: center; }
 #selected-image { width: 100%; height: 100%; object-fit: contain; border-radius: 8px; }
+#selected-image:hover + .magnifier-icon { opacity: 1; }
 .dashboard-panel { flex: 1; padding: 20px; }
 .product-title { font-family: 'Orbitron', sans-serif; font-weight: bold; font-size: 18px; background-color: rgba(20, 20, 20, 0.8); padding: 8px 12px; border-radius: 4px; color: white; margin-bottom: 1rem; max-width: 600px; }
 .product-description { font-size: 13px; color: #ccc; background-color: rgba(30, 30, 30, 0.75); padding: 10px; border-radius: 4px; line-height: 1.5; max-width: 600px; margin-top: 2rem; }
@@ -56,7 +57,8 @@
 button { background-color: #AA0000; color: white; border: 1px solid white; border-radius: 4px; padding: 8px 16px; font-size: 14px; font-family: 'Orbitron', sans-serif; cursor: pointer; transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
 button:hover { background-color: #CC0000; box-shadow: 0 0 6px #AA0000; }
 button:disabled { background-color: #444; color: #999; cursor: default; box-shadow: none; }
-  </style>
+.magnifier-icon { content: ""; position: absolute; right: 12px; bottom: 12px; width: 24px; height: 24px; background: url('/static/icons/magnify.svg') no-repeat center center; background-size: contain; opacity: 0; transition: opacity 0.2s ease-in-out; pointer-events: none; }
+</style>
 
 <div class="wrapper">
   <div class="empty-container">
@@ -71,6 +73,7 @@ button:disabled { background-color: #444; color: #999; cursor: default; box-shad
     <img id="selected-image"
          src="{{ product.images[0].src if product.images and product.images[0].src }}"
          alt="{{ product.title }}">
+    <span class="magnifier-icon"></span>
   </div>
 </div>
     </div>
@@ -151,16 +154,32 @@ button:disabled { background-color: #444; color: #999; cursor: default; box-shad
   };
 
   function selectImage(src, el) {
-    const img = document.getElementById("selected-image");
-    if (!img || !src) return;
-    img.style.opacity = 0;
-    setTimeout(() => {
-      img.src = src;
-      img.onload = () => (img.style.opacity = 1);
-    }, 150);
-    document.querySelectorAll(".thumbnail").forEach(t => t.classList.remove("selected"));
-    if (el) el.classList.add("selected");
+  const img = document.getElementById("selected-image");
+  if (!img || !src) return;
+  img.style.opacity = 0;
+  setTimeout(() => {
+    img.src = src;
+    img.onload = () => (img.style.opacity = 1);
+  }, 150);
+  document.querySelectorAll(".thumbnail").forEach(t => t.classList.remove("selected"));
+  if (el) el.classList.add("selected");
+
+  // 🎯 Set color select if matching variant found
+  const match = product.variants.find(v => v.images?.[0]?.src === src);
+  if (match) {
+    const colorOption = product.options.find(o => o.name.toLowerCase() === "color" || o.name.toLowerCase() === "colors");
+    const colorIndex = product.options.indexOf(colorOption);
+    const colorValueId = match.options[colorIndex];
+    const colorValue = colorOption.values.find(v => v.id === colorValueId)?.name;
+    if (colorValue) {
+      const colorSelect = document.getElementById("opt-colors")?._choices;
+      if (colorSelect) {
+        colorSelect.setChoiceByValue(colorValue);
+        findMatchingVariant();
+      }
+    }
   }
+}
 
   function updatePriceDisplay(variant) {
     const priceDisplay = document.getElementById("price-display");
@@ -272,5 +291,14 @@ button:disabled { background-color: #444; color: #999; cursor: default; box-shad
   }
 
   });
+
+  // 🎯 When color changes, update image to variant's image
+document.getElementById("opt-colors")?.addEventListener("change", () => {
+  const variant = findMatchingVariant();
+  if (variant?.images?.[0]?.src) {
+    selectImage(variant.images[0].src);
+  }
+});
+
 </script>
 {% endblock %}
