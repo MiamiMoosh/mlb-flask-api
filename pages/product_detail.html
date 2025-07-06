@@ -41,9 +41,8 @@
 
     <form id="variant-form" style="margin-bottom: 1rem;">
       {% for option in product.options %}
-        {% set normalized = option.name | lower | replace(' ', '-') %}
-        <label for="opt-{{ normalized }}">{{ option.name }}</label>
-        <select id="opt-{{ normalized }}" name="{{ normalized }}" data-option="{{ loop.index0 }}">
+        <label for="opt-{{ option.name }}">{{ option.name }}</label>
+        <select id="opt-{{ option.name }}" name="{{ option.name }}" data-option="{{ loop.index0 }}">
           {% for val in option["values"] %}
             <option value="{{ val.name }}">{{ val.name }}</option>
           {% endfor %}
@@ -148,10 +147,10 @@ function findMatchingVariant() {
   const selectedOptionIds = [];
 
   for (let s of selects) {
-    const label = normalize(s.name);
+    const label = s.name;
     const selectedName = s.value;
 
-    const optMeta = product.options.find(o => normalize(o.name) === label);
+    const optMeta = product.options.find(o => o.name === label);
     const valMatch = optMeta?.values?.find(v => v.name === selectedName);
 
     if (valMatch?.id == null) {
