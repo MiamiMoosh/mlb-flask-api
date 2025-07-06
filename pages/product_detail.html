@@ -52,7 +52,7 @@
           {% for val in option["values"] %}
             {% set img_url = "/static/images/Tshirt Colors/" + val.name + ".png" %}
             <option value="{{ val.name }}"
-                    data-custom-properties='{{ {"image": "/static/images/Tshirt Colors/" + val.name + ".png"} | tojson }}'>
+                    data-custom-properties='{{ {"image": "/static/images/Tshirt Colors/" + val.name + ".png"} | tojson | escape }}'>
               {{ val.name }}
             </option>
           {% endfor %}
