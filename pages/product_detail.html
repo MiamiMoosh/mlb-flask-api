@@ -16,8 +16,101 @@
   {% endif %}
 {% endblock %}
 
+{% block head %}
+  <style>
+    body {
+      background: url("/static/images/firststring_bg.png") no-repeat center center fixed;
+      background-size: cover;
+      background-color: #000;
+      font-family: 'Orbitron', sans-serif;
+      color: white;
+      margin: 0;
+      overflow-x: hidden;
+    }
+
+    .wrapper {
+      margin-top: 80px;
+      display: flex;
+      width: 100vw;
+    }
+
+    .empty-container {
+      flex: 1;
+    }
+
+    .dashboard-panel {
+      flex: 1;
+      padding: 20px;
+    }
+
+    .product-title {
+      font-family: 'Canes', sans-serif;
+      font-size: 28px;
+      margin-bottom: 1rem;
+    }
+
+    .product-description {
+      font-size: 14px;
+      margin-bottom: 1.5rem;
+      color: #ccc;
+    }
+
+    .price-display {
+      font-size: 16px;
+      color: #C0C8B6;
+      margin: 1rem 0;
+    }
+
+    .choices__inner {
+      background-color: #111;
+      border: 1px solid #666;
+      border-radius: 4px;
+      padding: 6px 8px;
+      font-size: 14px;
+      color: #fff;
+      min-height: 38px;
+      line-height: 1.2;
+    }
+
+    .choices__list--dropdown {
+      background-color: #1D1F21;
+      border: 1px solid #AA0000;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+
+    .thumbnail.selected {
+      border-color: #AA0000 !important;
+    }
+
+    button {
+      background-color: #AA0000;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      font-size: 14px;
+      font-family: 'Orbitron', sans-serif;
+      cursor: pointer;
+      transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+
+    button:hover {
+      background-color: #CC0000;
+      box-shadow: 0 0 6px #AA0000;
+    }
+
+    button:disabled {
+      background-color: #444;
+      color: #999;
+      cursor: default;
+      box-shadow: none;
+    }
+  </style>
+{% endblock %}
+
 {% block content %}
-<div class="wrapper" style="margin-top: 80px;">
+<div class="wrapper">
   <div class="empty-container"></div>
   <div class="dashboard-panel">
     <h1 class="product-title">{{ product.title }}</h1>
@@ -96,39 +189,9 @@
     </section>
   </div>
 </div>
+{% endblock %}
 
-<style>
-  .product-title { font-family: 'Canes', sans-serif; font-size: 28px; margin-bottom: 1rem; }
-  .product-description { font-size: 14px; margin-bottom: 1.5rem; color: #ccc; }
-  .price-display { font-size: 16px; color: #C0C8B6; margin: 1rem 0; }
-  .choices__inner {
-    background-color: #111; border: 1px solid #666; border-radius: 4px;
-    padding: 6px 8px; font-size: 14px; color: #fff; min-height: 38px; line-height: 1.2;
-  }
-  .choices__list--dropdown {
-    background-color: #1D1F21; border: 1px solid #AA0000;
-    max-height: 240px; overflow-y: auto;
-  }
-  .thumbnail.selected { border-color: #AA0000 !important; }
-  button {
-    background-color: #AA0000; color: white; border: none;
-    border-radius: 4px; padding: 8px 16px;
-    font-size: 14px; font-family: 'Orbitron', sans-serif;
-    cursor: pointer;
-    transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-  }
-  button:hover {
-    background-color: #CC0000;
-    box-shadow: 0 0 6px #AA0000;
-  }
-  button:disabled {
-    background-color: #444;
-    color: #999;
-    cursor: default;
-    box-shadow: none;
-  }
-</style>
-
+{% block scripts %}
 <script>
   const product = {
     options: {{ product.options | tojson }},
@@ -147,23 +210,35 @@
     if (el) el.classList.add("selected");
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const first = document.querySelector(".thumbnail");
-    if (first) {
-      first.classList.add("selected");
-      const preload = new Image();
-      preload.src = document.getElementById("selected-image")?.src || "";
-    }
-  });
+  function updatePriceDisplay(variant) {
+    const priceDisplay = document.getElementById("price-display");
+    const couponField = document.getElementById("coupon-code");
+    const baseDiscount = parseFloat(document.getElementById("add-to-cart")?.dataset.discount || 0);
 
-  const variantForm = document.getElementById("variant-form");
-  const addToCartBtn = document.getElementById("add-to-cart");
-  const couponField = document.getElementById("coupon-code");
-  const priceDisplay = document.getElementById("price-display");
-  const baseDiscount = parseFloat(addToCartBtn?.dataset.discount || 0);
+    if (!variant || typeof variant.price !== "number") {
+      priceDisplay.innerHTML = "Price unavailable";
+      return;
+    }
+
+    let discount = baseDiscount;
+    const code = couponField?.value.trim().toLowerCase();
+    if (code === "summer25") discount = 25;
+    if (code === "freefan") discount = 100;
+
+    const price = variant.price / 100;
+    const sale = price * (1 - discount / 100);
+
+    if (discount >= 100) {
+      priceDisplay.innerHTML = `<strong>🎉 Free with code!</strong>`;
+    } else if (discount > 0) {
+      priceDisplay.innerHTML = `$<s>${price.toFixed(2)}</s> → $${sale.toFixed(2)} (${discount}% off)`;
+    } else {
+      priceDisplay.innerHTML = `$${price.toFixed(2)}`;
+    }
+  }
 
   function findMatchingVariant() {
-    const selects = variantForm?.querySelectorAll("select") || [];
+    const selects = document.querySelectorAll("#variant-form select");
     const selectedOptionIds = [];
 
     for (let s of selects) {
@@ -181,80 +256,55 @@
 
     document.getElementById("selected-variant-id").value = match?.id || "";
     updatePriceDisplay(match);
+    if (match?.images?.length > 0) {
+      selectImage(match.images[0].src);
+    }
 
-    if (match?.images?.length > 0)
-    selectImage(match.images[0].src);
+    return match;
   }
 
-  return match;
-}
+  document.addEventListener("DOMContentLoaded", () => {
+    const first = document.querySelector(".thumbnail");
+    if (first) first.classList.add("selected");
 
-function updatePriceDisplay(variant) {
-  if (!variant || typeof variant.price !== "number") {
-    priceDisplay.innerHTML = "Price unavailable";
-    console.warn("❌ No price found on variant:", variant);
-    return;
-  }
+    findMatchingVariant();
 
-  let discount = baseDiscount;
-  const code = couponField?.value.trim().toLowerCase();
-  if (code === "summer25") discount = 25;
-  if (code === "freefan") discount = 100;
+    document.getElementById("variant-form")?.addEventListener("change", findMatchingVariant);
+    document.getElementById("coupon-code")?.addEventListener("input", () => {
+      updatePriceDisplay(findMatchingVariant());
+    });
 
-  const price = variant.price / 100;
-  const sale = price * (1 - discount / 100);
+    document.getElementById("add-to-cart")?.addEventListener("click", () => {
+      const variantId = document.getElementById("selected-variant-id").value;
+      const productId = document.getElementById("add-to-cart").dataset.printifyId;
+      if (!variantId) return alert("Please select a variant.");
 
-  if (discount > 0 && discount < 100) {
-    priceDisplay.innerHTML = `$<s>${price.toFixed(2)}</s> → $${sale.toFixed(2)} (${discount}% off)`;
-  } else if (discount >= 100) {
-    priceDisplay.innerHTML = `<strong>🎉 Free with code!</strong>`;
-  } else {
-    priceDisplay.innerHTML = `$${price.toFixed(2)}`;
-  }
-  console.log("💡 variant in updatePriceDisplay:", variant);
-}
+      const cart = JSON.parse(localStorage.getItem("firststring_cart") || "[]");
+      cart.push({ printify_id: productId, variant_id: variantId, qty: 1 });
+      localStorage.setItem("firststring_cart", JSON.stringify(cart));
+      alert("Added to cart!");
+    });
 
-variantForm?.addEventListener("change", findMatchingVariant);
-couponField?.addEventListener("input", () => updatePriceDisplay(findMatchingVariant()));
-findMatchingVariant();
-
-addToCartBtn?.addEventListener("click", () => {
-  const variantId = document.getElementById("selected-variant-id").value;
-  const productId = addToCartBtn.dataset.printifyId;
-  if (!variantId) return alert("Please select a variant.");
-
-  const cart = JSON.parse(localStorage.getItem("firststring_cart") || "[]");
-  cart.push({ printify_id: productId, variant_id: variantId, qty: 1 });
-  localStorage.setItem("firststring_cart", JSON.stringify(cart));
-  alert("Added to cart!");
-});
-
-document.addEventListener("DOMContentLoaded", function () {
-  const el = document.getElementById("opt-colors");
-  if (!el) {
-    console.warn("❌ #opt-colors not found");
-    return;
-  }
-
-  new Choices(el, {
-    allowHTML: true,
-    itemSelectText: '',
-    callbackOnCreateTemplates: function (template) {
-      return {
-        choice: (classNames, data) => {
-          let image = data.customProperties?.image || '';
-
-          return template(`
-            <div class="${classNames.item} choices__item--selectable" data-id="${data.id}" data-value="${data.value}" role="option">
-              <img src="${image}" alt="" style="width:20px; height:20px; object-fit:cover; border-radius:3px; margin-right:8px; vertical-align:middle;" />
-              ${data.label}
-            </div>
-          `);
+    const colorSelect = document.getElementById("opt-colors");
+    if (colorSelect) {
+      new Choices(colorSelect, {
+        allowHTML: true,
+        itemSelectText: '',
+        callbackOnCreateTemplates: function (template) {
+          return {
+            choice: (classNames, data) => {
+              let image = data.customProperties?.image || '';
+              return template(`
+                <div class="${classNames.item} choices__item--selectable" data-id="${data.id}" data-value="${data.value}" role="option">
+                  <img src="${image}" alt="" style="width:20px; height:20px; object-fit:cover; border-radius:3px; margin-right:8px; vertical-align:middle;" />
+                  ${data.label}
+                </div>
+              `);
+            }
+          };
         }
-      };
+      });
     }
   });
-});
 </script>
-
 {% endblock %}
