@@ -1692,6 +1692,10 @@ def product_detail(slug):
         for v in filtered_variants:
             print(f"- {v.get('title')} → ${v.get('price') / 100:.2f} | options: {v.get('options')}")
 
+        if not filtered_variants:
+            print(f"⚠️ No usable variants for slug '{slug}' — hydration aborted.")
+            return fallback
+
         def build_options(variants, option_meta):
             lookup_maps = []
             for opt in option_meta:
@@ -1753,6 +1757,7 @@ def product_detail(slug):
 
         updated = {
             **fallback,
+            "slug": fallback.get("slug", slug),
             "title": pdata.get("title"),
             "variants": filtered_variants,
             "options": options,
@@ -1770,10 +1775,9 @@ def product_detail(slug):
 
     product = product_tags.get(slug)
 
-    # 🔁 Try hydration if slug not found
     if not product:
         print(f"🔄 Slug '{slug}' not in product_tags — attempting hydration from Printify…")
-        product = hydrate_if_stale(slug, {"printify_id": slug})
+        product = hydrate_if_stale(slug, {"printify_id": slug, "slug": slug})
 
         if not product or not product.get("printify_id"):
             print("❌ Hydration failed — redirecting to /shop")
@@ -1784,7 +1788,6 @@ def product_detail(slug):
     if not product or product.get("hide"):
         return redirect(url_for("shop"))
 
-    # 🔐 Prevent crash if 'slug' is missing after hydration
     if slug != product.get("slug"):
         if product.get("slug"):
             return redirect(url_for("product_detail", slug=product["slug"]), code=301)
