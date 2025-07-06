@@ -11,6 +11,11 @@
       <meta property="og:image" content="{{ product.images[0].src }}">
     {% endif %}
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Choices.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+
+    <!-- Choices.js JS -->
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
   {% endblock %}
 {% endif %}
 
@@ -41,13 +46,15 @@
 
     <form id="variant-form" style="margin-bottom: 1rem;">
       {% for option in product.options %}
-        <label for="opt-{{ option.name }}">{{ option.name }}</label>
-        <select id="opt-{{ option.name }}" name="{{ option.name }}" data-option="{{ loop.index0 }}">
+        {% set safe_id = "opt-" + option.name | lower | replace(' ', '-') %}
+        <label for="{{ safe_id }}">{{ option.name }}</label>
+        <select id="{{ safe_id }}" name="{{ option.name }}" data-option="{{ loop.index0 }}">
           {% for val in option["values"] %}
             <option value="{{ val.name }}">{{ val.name }}</option>
           {% endfor %}
         </select>
       {% endfor %}
+
       <input type="hidden" id="selected-variant-id" name="variant_id">
     </form>
 
@@ -217,6 +224,30 @@ addToCartBtn?.addEventListener("click", () => {
   cart.push({ printify_id: productId, variant_id: variantId, qty: 1 });
   localStorage.setItem("firststring_cart", JSON.stringify(cart));
   alert("Added to cart!");
+});
+document.addEventListener("DOMContentLoaded", function () {
+  const colorDropdown = document.getElementById("opt-Colors");
+
+  new Choices(colorDropdown, {
+    allowHTML: true,
+    itemSelectText: '',
+    classNames: {
+      containerInner: 'choices__inner custom-swatch'
+    },
+    callbackOnCreateTemplates: function (template) {
+      return {
+        option: (classNames, data) => {
+          const image = JSON.parse(data.customProperties || '{}').image || '';
+          return template(`
+            <div class="${classNames.item} choices__item--selectable">
+              <img src="${image}" alt="" style="width:20px; height:20px; object-fit:cover; border-radius:3px; margin-right:8px; vertical-align:middle;" />
+              ${data.label}
+            </div>
+          `);
+        }
+      };
+    }
+  });
 });
 </script>
 
