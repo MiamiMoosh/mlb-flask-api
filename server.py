@@ -87,7 +87,6 @@ def run_sync_script():
     except Exception as e:
         print(f"⚠️ Sync script failed: {e}")
 
-
 threading.Thread(target=run_sync_script).start()
 
 
@@ -1815,7 +1814,9 @@ def product_detail(slug):
     is_admin = request.cookies.get("admin") == "true"
     print("seo_description →", product.get("seo_description"))
 
-    return render_template("product_detail.html", product=product, is_admin=is_admin)
+
+
+    return render_template("product_detail.html", product=product, is_admin=is_admin, nav=load_nav())
 
 
 @app.route("/webhook/printify", methods=["POST"])
