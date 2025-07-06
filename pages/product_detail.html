@@ -135,18 +135,23 @@ const priceDisplay = document.getElementById("price-display");
 const variants = product.variants || [];
 const baseDiscount = parseFloat(addToCartBtn?.dataset.discount || 0);
 
+function normalizeName(name) {
+  return name.trim().toLowerCase().replace(/\s+/g, "-");
+}
+
+function normalize(str) {
+  return str?.trim().toLowerCase().replace(/\s+/g, "-");
+}
+
 function findMatchingVariant() {
   const selects = variantForm?.querySelectorAll("select") || [];
   const selectedOptionIds = [];
 
   for (let s of selects) {
-    const label = s.name.trim().toLowerCase().replace(/\s+/g, "-");
+    const label = normalize(s.name);
     const selectedName = s.value;
 
-    const optMeta = product.options.find(o =>
-      o.name.trim().toLowerCase().replace(/\s+/g, "-") === label
-    );
-
+    const optMeta = product.options.find(o => normalize(o.name) === label);
     const valMatch = optMeta?.values?.find(v => v.name === selectedName);
 
     if (valMatch?.id == null) {
