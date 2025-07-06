@@ -58,10 +58,7 @@ button:disabled { background-color: #444; color: #999; cursor: default; box-shad
   </style>
 
 <div class="wrapper">
-  <div class="empty-container"></div>
-  <div class="dashboard-panel">
-    <h1 class="product-title">{{ product.title }}</h1>
-
+  <div class="empty-container">
     <div class="product-section">
       <div class="right-image-block">
         <div class="thumbnail-panel">
@@ -76,6 +73,10 @@ button:disabled { background-color: #444; color: #999; cursor: default; box-shad
         </div>
       </div>
     </div>
+
+  </div>
+  <div class="dashboard-panel">
+    <h1 class="product-title">{{ product.title }}</h1>
 
     <form id="variant-form">
       <div class="variant-options-row">
