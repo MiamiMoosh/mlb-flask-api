@@ -227,13 +227,13 @@ addToCartBtn?.addEventListener("click", () => {
 });
 
 document.addEventListener("DOMContentLoaded", function () {
-  const el = document.getElementById("opt-Colors");
-  if (!el) {
-    console.warn("❌ #opt-Colors not found in DOM");
+  const colorDropdown = document.querySelector('select[name="Colors"]');
+  if (!colorDropdown) {
+    console.warn("❌ Color dropdown not found in DOM");
     return;
   }
 
-  new Choices(el, {
+  new Choices(colorDropdown, {
     allowHTML: true,
     itemSelectText: '',
     callbackOnCreateTemplates: function (template) {
