@@ -225,19 +225,27 @@ addToCartBtn?.addEventListener("click", () => {
   localStorage.setItem("firststring_cart", JSON.stringify(cart));
   alert("Added to cart!");
 });
-document.addEventListener("DOMContentLoaded", function () {
-  const colorDropdown = document.getElementById("opt-Colors");
 
-  new Choices(colorDropdown, {
+document.addEventListener("DOMContentLoaded", function () {
+  const el = document.getElementById("opt-Colors");
+  if (!el) {
+    console.warn("❌ #opt-Colors not found in DOM");
+    return;
+  }
+
+  new Choices(el, {
     allowHTML: true,
     itemSelectText: '',
-    classNames: {
-      containerInner: 'choices__inner custom-swatch'
-    },
     callbackOnCreateTemplates: function (template) {
       return {
         option: (classNames, data) => {
-          const image = JSON.parse(data.customProperties || '{}').image || '';
+          let image = '';
+          try {
+            image = JSON.parse(data.customProperties || '{}').image || '';
+          } catch (e) {
+            console.warn("⚠️ Failed to parse customProperties:", data.customProperties);
+          }
+
           return template(`
             <div class="${classNames.item} choices__item--selectable">
               <img src="${image}" alt="" style="width:20px; height:20px; object-fit:cover; border-radius:3px; margin-right:8px; vertical-align:middle;" />
