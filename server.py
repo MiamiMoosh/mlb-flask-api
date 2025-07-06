@@ -24,7 +24,6 @@ from insight_utils import generate_or_fetch_matchup_insight, generate_matchup_in
     get_pitcher_mix, extract_matchup_pair
 from game_logic import extract_game_state, is_high_leverage
 from sportsdb_api import get_games_for_league, get_leagues
-from collections import defaultdict
 
 
 # Initialize Flask app
@@ -87,6 +86,7 @@ def run_sync_script():
         subprocess.run(["python", "sync_printify.py"], check=True)
     except Exception as e:
         print(f"⚠️ Sync script failed: {e}")
+
 
 threading.Thread(target=run_sync_script).start()
 
@@ -1373,7 +1373,6 @@ def get_shop_data():
     import re
     import requests
     from urllib.parse import unquote
-    from collections import defaultdict
 
     def slugify(text):
         return re.sub(r"[^\w]+", "-", text.lower()).strip("-")
