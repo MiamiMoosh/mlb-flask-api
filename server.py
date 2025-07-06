@@ -1784,8 +1784,13 @@ def product_detail(slug):
     if not product or product.get("hide"):
         return redirect(url_for("shop"))
 
+    # 🔐 Prevent crash if 'slug' is missing after hydration
     if slug != product.get("slug"):
-        return redirect(url_for("product_detail", slug=product["slug"]), code=301)
+        if product.get("slug"):
+            return redirect(url_for("product_detail", slug=product["slug"]), code=301)
+        else:
+            print("⚠️ Product missing 'slug' after hydration — redirecting to /shop")
+            return redirect(url_for("shop"))
 
     if not product.get("images") and product.get("variants"):
         product["images"] = [
