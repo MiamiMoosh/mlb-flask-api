@@ -51,7 +51,8 @@
         <select id="{{ safe_id }}" name="{{ option.name }}" data-option="{{ loop.index0 }}">
           {% for val in option["values"] %}
             {% set img_url = "/static/images/Tshirt Colors/" + val.name + ".png" %}
-            <option value="{{ val.name }}" data-custom-properties='{{ {"image": "/static/images/Tshirt Colors/" + val.name + ".png"} | tojson }}'>
+            <option value="{{ val.name }}"
+                    data-custom-properties='{{ {"image": "/static/images/Tshirt Colors/" + val.name + ".png"} | tojson }}'>
               {{ val.name }}
             </option>
           {% endfor %}
