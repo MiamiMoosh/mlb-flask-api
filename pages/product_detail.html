@@ -58,21 +58,50 @@ button:disabled { background-color: #444; color: #999; cursor: default; box-shad
   </style>
 
 <div class="wrapper">
-  <div class="empty-container">
+  <div class="empty-container"></div>
+  <div class="dashboard-panel">
+    <h1 class="product-title">{{ product.title }}</h1>
+
     <div class="product-section">
-      <div class="thumbnail-panel">
-        {% for img in product.images %}
-          <img src="{{ img.src }}" class="thumbnail" alt="Thumbnail" onclick="selectImage('{{ img.src }}', this)">
-        {% endfor %}
-      </div>
-      <div class="main-image-container">
-        <img id="selected-image"
-             src="{{ product.images[0].src if product.images and product.images[0].src }}"
-             alt="{{ product.title }}">
+      <div class="right-image-block">
+        <div class="thumbnail-panel">
+          {% for img in product.images %}
+            <img src="{{ img.src }}" class="thumbnail" alt="Thumbnail" onclick="selectImage('{{ img.src }}', this)">
+          {% endfor %}
+        </div>
+        <div class="main-image-container">
+          <img id="selected-image"
+               src="{{ product.images[0].src if product.images and product.images[0].src }}"
+               alt="{{ product.title }}">
+        </div>
       </div>
     </div>
-  </div>
-  <div class="dashboard-panel">
+
+    <form id="variant-form">
+      <div class="variant-options-row">
+        <div class="variant-select-group">
+          <label for="opt-colors">Color:</label>
+          <select id="opt-colors" name="{{ product.options[0].name }}" data-option="0">
+            {% for val in product.options[0]["values"] %}
+              {% set img_url = "/static/images/Tshirt Colors/" + val.name + ".png" %}
+              <option value="{{ val.name }}" data-custom-properties='{{ {"image": img_url} | tojson | escape }}'>
+                {{ val.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="variant-select-group">
+          <label for="opt-size">Size:</label>
+          <select id="opt-size" name="{{ product.options[1].name }}" data-option="1">
+            {% for val in product.options[1]["values"] %}
+              <option value="{{ val.name }}">{{ val.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <input type="hidden" id="selected-variant-id" name="variant_id">
+      </div>
+    </form>
+
     <div class="price-and-cart">
       <p id="price-display" class="price-display">$—</p>
       <button id="add-to-cart"
@@ -81,31 +110,6 @@ button:disabled { background-color: #444; color: #999; cursor: default; box-shad
         🛒 Add to Cart
       </button>
     </div>
-    <h1 class="product-title">{{ product.title }}</h1>
-
-    <form id="variant-form">
-  <div class="variant-options-row">
-    <label for="opt-colors">Color:</label>
-    <select id="opt-colors" name="{{ product.options[0].name }}" data-option="0">
-      {% for val in product.options[0]["values"] %}
-        {% set img_url = "/static/images/Tshirt Colors/" + val.name + ".png" %}
-        <option value="{{ val.name }}" data-custom-properties='{{ {"image": img_url} | tojson | escape }}'>
-          {{ val.name }}
-        </option>
-      {% endfor %}
-    </select>
-    <label for="opt-size">Size:</label>
-    <select id="opt-size" name="{{ product.options[1].name }}" data-option="1">
-      {% for val in product.options[1]["values"] %}
-        <option value="{{ val.name }}">{{ val.name }}</option>
-      {% endfor %}
-    </select>
-
-    <input type="hidden" id="selected-variant-id" name="variant_id">
-  </div>
-</form>
-
-
 
     {% if product.seo_description %}
       <p class="product-description">{{ product.seo_description }}</p>
@@ -258,6 +262,7 @@ button:disabled { background-color: #444; color: #999; cursor: default; box-shad
     new Choices(sizeSelect, {
       allowHTML: true,
       itemSelectText: '',
+      searchEnabled: false,
       shouldSort: false
     });
   }
