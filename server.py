@@ -1773,7 +1773,7 @@ def product_detail(slug):
     # 🔁 Try hydration if slug not found
     if not product:
         print(f"🔄 Slug '{slug}' not in product_tags — attempting hydration from Printify…")
-        product = hydrate_if_stale(slug, {"printify_id": slug, "slug": slug})
+        product = hydrate_if_stale(slug, {"printify_id": slug})
 
         if not product or not product.get("printify_id"):
             print("❌ Hydration failed — redirecting to /shop")
