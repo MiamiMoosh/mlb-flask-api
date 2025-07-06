@@ -1758,19 +1758,23 @@ def product_detail(slug):
         updated = {
             **fallback,
             "slug": fallback.get("slug", slug),
-            "title": pdata.get("title"),
+            "title": pdata.get("title") or "Untitled",
             "variants": filtered_variants,
             "options": options,
             "images": images,
-            "description": pdata.get("description") or pdata.get("title"),
-            "seo_description": pdata.get("description") or pdata.get("title"),
+            "description": pdata.get("description") or pdata.get("title") or "No description",
+            "seo_description": pdata.get("description") or pdata.get("title") or "No description",
             "hydrated_at": now.isoformat()
         }
 
         product_tags[slug] = updated
         with open("product_tags.json", "w") as f:
-            json.dump(product_tags, f, indent=2)
-
+            try:
+                json.dump(product_tags, f, indent=2)
+            except TypeError as e:
+                print("❌ Failed to serialize product_tags:", e)
+                print("🔍 Offending product:", json.dumps(updated, indent=2, default=str))
+                raise
         return updated
 
     product = product_tags.get(slug)
