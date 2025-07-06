@@ -41,10 +41,10 @@
 
     <form id="variant-form" style="margin-bottom: 1rem;">
       {% for option in product.options %}
-        <label for="opt-{{ option.name }}">{{ option.name }}</label>
-        <select id="opt-{{ option.name }}" name="{{ option.name }}" data-option="{{ loop.index0 }}">
-          {% for val in option["values"] %}
-            <option value="{{<select id="opt-{{ option.name | lower }}" name="{{ option.name | lower }}" data-option="{{ loop.index0 }}"> val.name }}">{{ val.name }}</option>
+        <label for="opt-{{ option.name | lower }}">{{ option.name }}</label>
+        <select id="opt-{{ option.name | lower }}" name="{{ option.name | lower }}" data-option="{{ loop.index0 }}">
+          {% for val in option.values %}
+            <option value="{{ val.name }}">{{ val.name }}</option>
           {% endfor %}
         </select>
       {% endfor %}
