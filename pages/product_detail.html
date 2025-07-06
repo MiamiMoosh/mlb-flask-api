@@ -230,18 +230,18 @@ addToCartBtn?.addEventListener("click", () => {
 });
 
 document.addEventListener("DOMContentLoaded", function () {
-  const colorDropdown = document.querySelector('select[name="Colors"]');
-  if (!colorDropdown) {
-    console.warn("❌ Color dropdown not found in DOM");
+  const el = document.getElementById("opt-colors");
+  if (!el) {
+    console.warn("❌ #opt-colors not found");
     return;
   }
 
-  new Choices(colorDropdown, {
+  new Choices(el, {
     allowHTML: true,
     itemSelectText: '',
     callbackOnCreateTemplates: function (template) {
       return {
-        option: (classNames, data) => {
+        choice: (classNames, data) => {
           let image = '';
           try {
             image = JSON.parse(data.customProperties || '{}').image || '';
@@ -250,7 +250,7 @@ document.addEventListener("DOMContentLoaded", function () {
           }
 
           return template(`
-            <div class="${classNames.item} choices__item--selectable">
+            <div class="${classNames.item} choices__item--selectable" data-id="${data.id}" data-value="${data.value}" role="option">
               <img src="${image}" alt="" style="width:20px; height:20px; object-fit:cover; border-radius:3px; margin-right:8px; vertical-align:middle;" />
               ${data.label}
             </div>

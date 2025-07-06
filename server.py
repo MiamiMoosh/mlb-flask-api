@@ -1653,7 +1653,6 @@ def product_detail(slug):
     with open("product_tags.json") as f:
         product_tags = json.load(f)
 
-    product = product_tags.get(slug)
     now = datetime.now(timezone.utc)
     max_age = timedelta(hours=1)
 
@@ -1667,7 +1666,7 @@ def product_detail(slug):
             if hydrated_at and datetime.fromisoformat(hydrated_at) > now - max_age:
                 return fallback
         except Exception:
-            pass  # ignore invalid timestamps
+            pass
 
         url = f"https://api.printify.com/v1/shops/{SHOP_ID}/products/{pid}.json"
         r = requests.get(url, headers={"Authorization": f"Bearer {PRINTIFY_API_TOKEN}"})
@@ -1675,11 +1674,7 @@ def product_detail(slug):
             return fallback
 
         pdata = r.json()
-        #import pprint
-        #print(f"\n🔍 Hydrated Printify JSON for {slug}:")
-        #pprint.pprint(pdata)
 
-        # Fallback images
         images = []
         for area in pdata.get("print_areas", []):
             for ph in area.get("placeholders", []):
@@ -1688,7 +1683,6 @@ def product_detail(slug):
         if not images:
             images = [{"src": i["src"]} for i in pdata.get("images", []) if i.get("src")]
 
-        # Filtered variants
         filtered_variants = []
         for v in pdata.get("variants", []):
             if v.get("is_enabled") and v.get("is_available"):
@@ -1698,7 +1692,6 @@ def product_detail(slug):
         for v in filtered_variants:
             print(f"- {v.get('title')} → ${v.get('price') / 100:.2f} | options: {v.get('options')}")
 
-        # Build option dropdowns
         def build_options(variants, option_meta):
             lookup_maps = []
             for opt in option_meta:
@@ -1707,9 +1700,7 @@ def product_detail(slug):
                     for v in opt.get("values", [])
                     if v.get("id") and (v.get("title") or v.get("name"))
                 }
-                val_map.update({
-                    int(k): v for k, v in val_map.items() if k.isdigit()
-                })
+                val_map.update({int(k): v for k, v in val_map.items() if k.isdigit()})
                 lookup_maps.append({
                     "name": opt.get("name"),
                     "type": opt.get("type", "").lower(),
@@ -1742,8 +1733,6 @@ def product_detail(slug):
 
         options = build_options(filtered_variants, pdata.get("options", []))
 
-        # 🆕 Inject IDs into each option value
-        # This maps (option index + value name) → ID from the first matching variant that uses it
         option_id_map = defaultdict(dict)
         for variant in filtered_variants:
             for idx, option_value_id in enumerate(variant["options"]):
@@ -1757,7 +1746,6 @@ def product_detail(slug):
                 except Exception:
                     continue
 
-        # 🧩 Apply mapped IDs to options used on frontend
         for opt in options:
             opt_name = opt["name"]
             for val in opt["values"]:
@@ -1780,13 +1768,21 @@ def product_detail(slug):
 
         return updated
 
-    if not product or not product.get("printify_id"):
-        return "Product not found", 404
+    product = product_tags.get(slug)
+
+    # 🔁 Try hydration if slug not found
+    if not product:
+        print(f"🔄 Slug '{slug}' not in product_tags — attempting hydration from Printify…")
+        product = hydrate_if_stale(slug, {"printify_id": slug})
+
+        if not product or not product.get("printify_id"):
+            print("❌ Hydration failed — redirecting to /shop")
+            return redirect(url_for("shop"))
 
     product = hydrate_if_stale(slug, fallback=product)
 
     if not product or product.get("hide"):
-        return "Product not found", 404
+        return redirect(url_for("shop"))
 
     if slug != product.get("slug"):
         return redirect(url_for("product_detail", slug=product["slug"]), code=301)
@@ -1799,7 +1795,6 @@ def product_detail(slug):
         ]
 
     is_admin = request.cookies.get("admin") == "true"
-
     print("seo_description →", product.get("seo_description"))
 
     return render_template("product_detail.html", product=product, is_admin=is_admin)
