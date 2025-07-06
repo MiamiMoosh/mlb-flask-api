@@ -84,28 +84,20 @@ button:disabled { background-color: #444; color: #999; cursor: default; box-shad
 
     <form id="variant-form">
   <div class="variant-options-row">
-    {# Color dropdown #}
-    {% set color_option = product.options | selectattr("name", "lower", "colors") | list | first %}
-    {% if color_option %}
-      <select id="opt-colors" name="{{ color_option.name }}" data-option="{{ loop.index0 }}">
-        {% for val in color_option["values"] %}
-          {% set img_url = "/static/images/Tshirt Colors/" + val.name + ".png" %}
-          <option value="{{ val.name }}" data-custom-properties='{{ {"image": img_url} | tojson | escape }}'>
-            {{ val.name }}
-          </option>
-        {% endfor %}
-      </select>
-    {% endif %}
+    <select id="opt-colors" name="{{ product.options[0].name }}" data-option="0">
+      {% for val in product.options[0]["values"] %}
+        {% set img_url = "/static/images/Tshirt Colors/" + val.name + ".png" %}
+        <option value="{{ val.name }}" data-custom-properties='{{ {"image": img_url} | tojson | escape }}'>
+          {{ val.name }}
+        </option>
+      {% endfor %}
+    </select>
 
-    {# Size dropdown #}
-    {% set size_option = product.options | selectattr("name", "lower", "size") | list | first %}
-    {% if size_option %}
-      <select id="opt-size" name="{{ size_option.name }}" data-option="{{ loop.index0 }}">
-        {% for val in size_option["values"] %}
-          <option value="{{ val.name }}">{{ val.name }}</option>
-        {% endfor %}
-      </select>
-    {% endif %}
+    <select id="opt-size" name="{{ product.options[1].name }}" data-option="1">
+      {% for val in product.options[1]["values"] %}
+        <option value="{{ val.name }}">{{ val.name }}</option>
+      {% endfor %}
+    </select>
 
     <input type="hidden" id="selected-variant-id" name="variant_id">
   </div>
