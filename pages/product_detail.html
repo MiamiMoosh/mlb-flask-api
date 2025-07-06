@@ -18,7 +18,7 @@
 
 {% block head %}
   <style>
-    body { background: url("/static/images/firststring_bg.png") no-repeat center center fixed; background-size: cover; background-color: #000; font-family: 'Orbitron', sans-serif; color: white; margin: 0; overflow-x: hidden; }
+    body { background: url("/static/images/firststring_bg.png") no-repeat center center fixed; background-size: cover; background-color: #000; font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; color: white; margin: 0; overflow-x: hidden; }
 @font-face { font-family: 'Canes'; src: url('{{ url_for('static', filename='fonts/Canes.otf') }}') format('opentype'); font-weight: normal; font-style: normal; font-display: swap; }
 @font-face { font-family: 'Orbitron'; src: url('{{ url_for('static', filename='fonts/Orbitron-Regular.ttf') }}') format('truetype'); font-weight: normal; font-style: normal; font-display: swap; }
 @font-face { font-family: 'Orbitron'; src: url('{{ url_for('static', filename='fonts/Orbitron-Bold.ttf') }}') format('truetype'); font-weight: bold; font-style: normal; font-display: swap; }
@@ -43,7 +43,8 @@
 .choices[data-type*=select-one] .choices__inner { padding-bottom: 0; }
 .choices__list--dropdown, .choices__list[aria-expanded] { background-color: #000 !important; border: 1px solid #AA0000; color: white; font-size: 13px; }
 .choices__list--dropdown .choices__item { color: white; padding: 8px 12px; }
-.choices__list--dropdown .choices__item--selectable:hover { background-color: #1D1F21; }
+.choices__list--dropdown { background-color: #1D1F21; }
+.choices__item--selectable:hover { background-color: #333 !important; color: #fff !important; }
 .product-section { display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap; }
 .thumbnail-panel { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(5, 1fr); gap: 8px; max-height: 400px; }
 .thumbnail-panel img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 2px solid transparent; cursor: pointer; }
@@ -84,6 +85,7 @@ button:disabled { background-color: #444; color: #999; cursor: default; box-shad
 
     <form id="variant-form">
   <div class="variant-options-row">
+    <label for="opt-colors">Color:</label>
     <select id="opt-colors" name="{{ product.options[0].name }}" data-option="0">
       {% for val in product.options[0]["values"] %}
         {% set img_url = "/static/images/Tshirt Colors/" + val.name + ".png" %}
@@ -92,7 +94,7 @@ button:disabled { background-color: #444; color: #999; cursor: default; box-shad
         </option>
       {% endfor %}
     </select>
-
+    <label for="opt-size">Size:</label>
     <select id="opt-size" name="{{ product.options[1].name }}" data-option="1">
       {% for val in product.options[1]["values"] %}
         <option value="{{ val.name }}">{{ val.name }}</option>
@@ -234,6 +236,7 @@ button:disabled { background-color: #444; color: #999; cursor: default; box-shad
     new Choices(colorSelect, {
       allowHTML: true,
       itemSelectText: '',
+      searchEnabled: false,
       callbackOnCreateTemplates: function (template) {
         return {
           choice: (classNames, data) => {
