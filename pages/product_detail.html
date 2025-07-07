@@ -58,7 +58,7 @@ button { background-color: #AA0000; color: white; border: 1px solid white; borde
 button:hover { background-color: #CC0000; box-shadow: 0 0 6px #AA0000; }
 button:disabled { background-color: #444; color: #999; cursor: default; box-shadow: none; }
 .magnifier-icon { content: ""; position: absolute; right: 12px; bottom: 12px; width: 24px; height: 24px; background: url('/static/icons/magnify.svg') no-repeat center center; background-size: contain; opacity: 0; transition: opacity 0.2s ease-in-out; pointer-events: none; }
-.share-row { display: flex; align-items: center; gap: 12px; margin: 1rem 0; font-size: 14px; color: white; }
+.share-row { display: flex; align-items: center; gap: 12px; margin: 1rem 0; font-size: 14px; color: white; max-width: 600px}
 .share-icon { text-decoration: none; font-size: 16px; padding: 4px 6px; border-radius: 4px; transition: background 0.2s ease-in-out; }
 .share-icon:hover { background-color: #222; }
 .share-button { background-color: transparent; border: 1px solid #fff; color: white; padding: 4px 10px; border-radius: 4px; font-size: 13px; cursor: pointer; font-family: 'Orbitron', sans-serif; transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
@@ -89,10 +89,8 @@ button:disabled { background-color: #444; color: #999; cursor: default; box-shad
   <div class="dashboard-panel">
     <h1 class="product-title">{{ product.title }}</h1>
     <div class="share-row">
-  <span>Share:</span>
-  <a class="share-icon" href="https://twitter.com/intent/tweet?url={{ request.url }}" target="_blank" title="Share on X"><img src ="/static/icons/share_on_x.png"></a>
-  <a class="share-icon" href="https://www.facebook.com/sharer/sharer.php?u={{ request.url }}" target="_blank" title="Share on Facebook"><img src ="/static/icons/share_on_fb.png"></a>
-  <a class="share-icon" href="https://www.threads.net/share?url={{ request.url }}" target="_blank" title="Share on Threads"><img src ="/static/icons/share_on_threads.png"></a>
+  <a class="share-icon" href="https://twitter.com/intent/tweet?url={{ request.url }}" target="_blank" title="Share on X"><img src ="/static/icons/share_on_x1.png"></a>
+  <a class="share-icon" href="https://www.facebook.com/sharer/sharer.php?u={{ request.url }}" target="_blank" title="Share on Facebook"><img src ="/static/icons/share_on_fb1.png"></a>
   <button id="share-button" class="share-button" title="Copy link">🔗</button>
 </div>
     <form id="variant-form">
