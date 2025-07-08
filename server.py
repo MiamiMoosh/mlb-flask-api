@@ -30,6 +30,7 @@ from sportsdb_api import get_games_for_league, get_leagues
 # Initialize Flask app
 app = Flask(__name__, template_folder="pages")
 admin_bp = Blueprint("admin", __name__)
+is_admin = request.cookies.get("admin") == "true"
 app.secret_key = "The5Weapon!33534"  # Replace this with a strong, unique string in production
 serializer = URLSafeTimedSerializer(app.secret_key)
 port = int(os.environ.get("PORT", 8080))
