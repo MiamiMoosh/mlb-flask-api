@@ -2,13 +2,13 @@
 
 {% block meta %}
   {% if product %}
-    <title>{{ title }} – First String</title>
-    <meta name="description" content="{{ description or title }}">
-    <meta property="og:title" content="{{ title }}">
-    <meta property="og:description" content="{{ description or title }}">
+    <title>{{ product.title }} – First String</title>
+    <meta name="description" content="{{ product.seo_description or product.title }}">
+    <meta property="og:title" content="{{ product.title }}">
+    <meta property="og:description" content="{{ product.seo_description or product.title }}">
     <meta property="og:type" content="product">
-    {% if thumbnails %}
-      <meta property="og:image" content="{{ thumbnails[0].src }}">
+    {% if product.images %}
+      <meta property="og:image" content="{{ product.images[0].src }}">
     {% endif %}
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
@@ -38,8 +38,8 @@
 .thumbnail-stack { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 80px; gap: 6px; }
 .thumbnail-stack img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 2px solid transparent; cursor: pointer; }
 .main-image-frame { position: relative; width: 400px; height: 400px; display: flex; align-items: center; justify-content: center; }
-.main-image-frame:hover .magnifier-icon { opacity: 1; transition: opacity 0.2s ease-in-out; }
-#selected-image { cursor: zoom-in; width: 100%; height: 100%; object-fit: contain; border-radius: 8px; }
+#selected-image { width: 100%; height: 100%; object-fit: contain; border-radius: 8px; }
+#selected-image:hover + .magnifier-icon { opacity: 1; }
 .dashboard-panel { flex: 1; padding: 20px; }
 .product-title { font-family: 'Orbitron', sans-serif; font-weight: bold; font-size: 18px; background-color: rgba(20, 20, 20, 0.8); padding: 8px 12px; border-radius: 4px; color: white; margin-bottom: 1rem; max-width: 600px; }
 .product-description { font-size: 13px; color: #ccc; background-color: rgba(30, 30, 30, 0.75); padding: 10px; border-radius: 4px; line-height: 1.5; max-width: 600px; margin-top: 2rem; }
@@ -57,47 +57,40 @@
 button { background-color: #AA0000; color: white; border: 1px solid white; border-radius: 4px; padding: 8px 16px; font-size: 14px; font-family: 'Orbitron', sans-serif; cursor: pointer; transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
 button:hover { background-color: #CC0000; box-shadow: 0 0 6px #AA0000; }
 button:disabled { background-color: #444; color: #999; cursor: default; box-shadow: none; }
-.magnifier-icon { position: absolute; right: 12px; bottom: 12px; width: 24px; height: 24px; opacity: 0.6; pointer-events: none; }
+.magnifier-icon { position: absolute; right: 12px; bottom: 12px; width: 24px; height: 24px; background: url('/static/icons/magnify.svg') no-repeat center center; background-size: contain; opacity: 0.6; pointer-events: none; }
 .share-row { display: flex; align-items: center; gap: 12px; margin: 1rem 0; font-size: 14px; color: white; max-width: 600px}
 .share-icon { text-decoration: none; font-size: 16px; padding: 4px 6px; border-radius: 4px; transition: background 0.2s ease-in-out; }
 .share-icon:hover { background-color: #222; }
 .share-button { background-color: transparent; border: 1px solid #fff; color: white; padding: 4px 10px; border-radius: 4px; font-size: 13px; cursor: pointer; font-family: 'Orbitron', sans-serif; transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
 .share-button:hover { background-color: #222; box-shadow: 0 0 4px #fff; }
 .share-icon img { width: 50px; height: 50px; object-fit: contain; display: inline-block; vertical-align: middle; }
-.tags-section { height: 0; overflow: hidden; opacity: 0; visibility: hidden; position: absolute; left: -9999px; }
+
 </style>
-{% set title = product_edits.title_override or product.title %}
-{% set description = product_edits.description_override or product.seo_description %}
-{% set thumbnails = product_edits.thumbnail_override or product.images %}
-{% set sport = product_edits.sport_override or product.sport %}
-{% set tags = product_edits.tags_override or product.tags %}
+
 <div class="wrapper">
   <div class="empty-container">
     <div class="product-section">
       <div class="image-cluster">
   <div class="thumbnail-stack">
-    {% for img in thumbnails %}
+    {% for img in product.images %}
       <img src="{{ img.src }}" class="thumbnail" alt="Thumbnail" onclick="selectImage('{{ img.src }}', this)">
     {% endfor %}
   </div>
   <div class="main-image-frame">
     <img id="selected-image"
-         src="{{ thumbnails[0].src if thumbnails and thumbnails[0].src }}"
-         alt="{{ title }}">
-    <svg class="magnifier-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-    <path fill="white" d="M10 2a8 8 0 105.293 14.293l4.707 4.707 1.414-1.414-4.707-4.707A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/>
-  </svg>
-
+         src="{{ product.images[0].src if product.images and product.images[0].src }}"
+         alt="{{ product.title }}">
+    <span class="magnifier-icon"></span>
   </div>
 </div>
     </div>
 
   </div>
   <div class="dashboard-panel">
-    <h1 class="product-title">{{ title }}</h1>
+    <h1 class="product-title">{{ product.title }}</h1>
     <div class="share-row">
-  <a class="share-icon" href="https://twitter.com/intent/tweet?url={{ request.url }}" target="_blank" title="Share on X"><img src ="/static/icons/share_on_x1.png" height="50px" width="50px"></a>
-  <a class="share-icon" href="https://www.facebook.com/sharer/sharer.php?u={{ request.url }}" target="_blank" title="Share on Facebook"><img src ="/static/icons/share_on_fb1.png" height="50px" width="50px"></a>
+  <a class="share-icon" href="https://twitter.com/intent/tweet?url={{ request.url }}" target="_blank" title="Share on X"><img src ="/static/icons/share_on_x1.png"></a>
+  <a class="share-icon" href="https://www.facebook.com/sharer/sharer.php?u={{ request.url }}" target="_blank" title="Share on Facebook"><img src ="/static/icons/share_on_fb1.png"></a>
   <button id="share-button" class="share-button" title="Copy link">🔗</button>
 </div>
     <form id="variant-form">
@@ -134,8 +127,8 @@ button:disabled { background-color: #444; color: #999; cursor: default; box-shad
       </button>
     </div>
 
-    {% if description %}
-      <p class="product-description">{{ description }}</p>
+    {% if product.seo_description %}
+      <p class="product-description">{{ product.seo_description }}</p>
     {% endif %}
 
     {% if is_admin %}
@@ -147,13 +140,19 @@ button:disabled { background-color: #444; color: #999; cursor: default; box-shad
       </div>
     {% endif %}
 
-    <ul class="tags-section"  style="list-style: none; margin-top: 2rem; padding: 0;">
+    <ul style="list-style: none; margin-top: 2rem; padding: 0;">
       {% if product.collection %}<li><strong>Collection:</strong> {{ product.collection }}</li>{% endif %}
       {% if product.team %}<li><strong>Team:</strong> {{ product.team }}</li>{% endif %}
-      {% if sport %}<li><strong>Sport:</strong> {{ sport }}</li>{% endif %}
+      {% if product.sport %}<li><strong>Sport:</strong> {{ product.sport }}</li>{% endif %}
       {% if product.city and product.state %}<li><strong>Location:</strong> {{ product.city }}, {{ product.state }}</li>{% endif %}
-      {% if tags %}<li><strong>Tags:</strong> {{ tags | join(', ') }}</li>{% endif %}
+      {% if product.tags %}<li><strong>Tags:</strong> {{ product.tags | join(', ') }}</li>{% endif %}
     </ul>
+
+    <section style="margin-top: 3rem;">
+      <h2>Shipping & Returns</h2>
+      <p>Orders ship within 2–4 business days. Most arrive within 5–9 days depending on your location.</p>
+      <p>Returns accepted on unworn items within 30 days. <a href="/return-policy">Learn more</a>.</p>
+    </section>
   </div>
 </div>
 <div id="zoom-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); justify-content:center; align-items:center; z-index:9999;">

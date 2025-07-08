@@ -10,9 +10,10 @@ import threading
 import subprocess
 
 
-from flask import Flask, jsonify, render_template,  request, redirect, url_for, session, flash
+from flask import Blueprint, Flask, jsonify, render_template,  request, redirect, url_for, session, flash
 from bson import ObjectId
 from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.utils import secure_filename
 from datetime import date, datetime, timedelta, timezone
 from playwright.async_api import async_playwright
 from pymongo import MongoClient
@@ -28,6 +29,7 @@ from sportsdb_api import get_games_for_league, get_leagues
 
 # Initialize Flask app
 app = Flask(__name__, template_folder="pages")
+admin_bp = Blueprint("admin", __name__)
 app.secret_key = "The5Weapon!33534"  # Replace this with a strong, unique string in production
 serializer = URLSafeTimedSerializer(app.secret_key)
 port = int(os.environ.get("PORT", 8080))
@@ -79,7 +81,7 @@ app.config.update(
 )
 
 mail = Mail(app)
-
+UPLOAD_DIR = "static/uploads"
 
 def run_sync_script():
     try:
@@ -1627,6 +1629,60 @@ def load_nav():
         return []
 
 
+@admin_bp.route("/admin/edit-product/<slug>", methods=["GET", "POST"])
+def edit_product(slug):
+    edits_path = f"cms_edits/{slug}.json"
+
+    # Load Printify data
+    with open("product_tags.json") as f:
+        product_data = next((p for p in json.load(f).values() if p.get("slug") == slug), None)
+
+    # Load existing edits
+    edits = {}
+    if os.path.exists(edits_path):
+        with open(edits_path) as f:
+            edits = json.load(f)
+
+    if request.method == "POST":
+        # Handle uploads and metadata
+        title = request.form.get("title") or ""
+        desc = request.form.get("description") or ""
+        font_size = request.form.get("desc_size") or "14"
+        font_color = request.form.get("desc_color") or "#eee"
+        sport = request.form.get("sport") or ""
+        tags = request.form.get("tags").split(",") if request.form.get("tags") else []
+
+        thumbnails = []
+        for i in range(10):
+            thumb_type = request.form.get(f"type_{i}")
+            src = request.form.get(f"src_{i}")
+            poster = request.form.get(f"poster_{i}") if thumb_type == "video" else None
+            if src:
+                thumbnails.append({
+                    "slot": i,
+                    "type": thumb_type,
+                    "src": src,
+                    "poster": poster
+                })
+
+        new_edits = {
+            "title_override": title,
+            "description_override": desc,
+            "description_style": { "font_size": int(font_size), "font_color": font_color },
+            "sport_override": sport,
+            "tags_override": tags,
+            "thumbnail_override": thumbnails
+        }
+
+        os.makedirs("cms_edits", exist_ok=True)
+        with open(edits_path, "w") as f:
+            json.dump(new_edits, f, indent=2)
+
+        return redirect(url_for("admin.edit_product", slug=slug))
+
+    return render_template("admin/edit_product.html", product=product_data, edits=edits, slug=slug)
+
+
 @app.route("/admin/generate-sections")
 def generate_sections_admin():
     try:
@@ -1648,6 +1704,7 @@ from collections import defaultdict
 
 @app.route("/shop/<slug>")
 def product_detail(slug):
+    track_view("/shop/<slug>")
     with open("product_tags.json") as f:
         product_tags = json.load(f)
 
@@ -1779,7 +1836,6 @@ def product_detail(slug):
 
     if not product:
         print(f"🔄 Slug '{slug}' not in product_tags — attempting direct hydration from Printify…")
-        # Try to fetch product metadata directly from Printify
         r = requests.get(f"https://api.printify.com/v1/shops/{SHOP_ID}/products/{slug}.json",
                          headers={"Authorization": f"Bearer {PRINTIFY_API_TOKEN}"})
         if r.status_code == 200:
@@ -1811,12 +1867,21 @@ def product_detail(slug):
             if v.get("images")
         ]
 
-    is_admin = request.cookies.get("admin") == "true"
-    print("seo_description →", product.get("seo_description"))
+        # ✅ Load CMS edits if available
+        edits_path = f"cms_edits/{slug}.json"
+        product_edits = {}
+        if os.path.exists(edits_path):
+            with open(edits_path) as f:
+                product_edits = json.load(f)
 
+        is_admin = request.cookies.get("admin") == "true"
+        print("seo_description →", product.get("seo_description"))
 
-
-    return render_template("product_detail.html", product=product, is_admin=is_admin, nav=load_nav())
+        return render_template("product_detail.html",
+                               product=product,
+                               product_edits=product_edits,
+                               is_admin=is_admin,
+                               nav=load_nav())
 
 
 @app.route("/webhook/printify", methods=["POST"])

@@ -1,0 +1,82 @@
+{% extends "_base.html" %}
+{% block head %}
+<style>
+  body { background: #121212; color: white; font-family: 'Inter', sans-serif; padding: 2rem; }
+  h1, h3 { font-family: 'Orbitron', sans-serif; margin-bottom: 1rem; }
+  label { display: block; margin-top: 1rem; font-size: 14px; }
+  input, textarea, select { width: 100%; padding: 6px; background: #1d1f21; border: 1px solid #666; color: white; border-radius: 4px; font-size: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+  .thumbnail-preview { width: 100px; height: 100px; object-fit: cover; border-radius: 4px; }
+  .video-thumb { position: relative; }
+  .video-thumb::after {
+    content: '▶';
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    background: rgba(0,0,0,0.6); color: white;
+    padding: 6px; border-radius: 50%;
+  }
+  .compare-box { background: #222; padding: 1rem; border-radius: 4px; margin-top: 2rem; font-size: 13px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>Edit Product: {{ product.title }}</h1>
+
+<form method="POST" enctype="multipart/form-data">
+  <h3>Override Title & Description</h3>
+  <label>Title Override</label>
+  <input type="text" name="title" value="{{ edits.title_override or '' }}">
+
+  <label>Description Override</label>
+  <textarea name="description" rows="4">{{ edits.description_override or '' }}</textarea>
+
+  <label>Font Size</label>
+  <input type="text" name="desc_size" value="{{ edits.description_style.font_size if edits.description_style else 14 }}">
+  <label>Font Color</label>
+  <input type="text" name="desc_color" value="{{ edits.description_style.font_color if edits.description_style else '#eee' }}">
+
+  <h3>Sport & Tags</h3>
+  <label>Sport</label>
+  <input type="text" name="sport" value="{{ edits.sport_override or '' }}">
+
+  <label>Tags (comma separated)</label>
+  <input type="text" name="tags" value="{{ edits.tags_override | join(', ') if edits.tags_override else '' }}">
+
+  <h3>Thumbnail Overrides</h3>
+  <p>You can assign up to 10 thumbnails. Videos require a poster image and are marked with ▶</p>
+
+  <div class="grid">
+    {% for i in range(10) %}
+      <div>
+        <label>Slot {{ i + 1 }}</label>
+        <select name="type_{{ i }}">
+            {% if edits.thumbnail_override[i].type == "image" %}
+              <option value="image" selected>Image</option>
+            {% else %}
+              <option value="image">Image</option>
+            {% endif %}
+
+            {% if edits.thumbnail_override[i].type == "video" %}
+              <option value="video" selected>Video</option>
+            {% else %}
+              <option value="video">Video</option>
+            {% endif %}
+        </select>
+        <input type="text" name="src_{{ i }}" placeholder="Image/Video Path or URL" value="{{ edits.thumbnail_override[i].src if edits.thumbnail_override and edits.thumbnail_override[i] }}">
+        <input type="text" name="poster_{{ i }}" placeholder="Poster (if video)" value="{{ edits.thumbnail_override[i].poster if edits.thumbnail_override and edits.thumbnail_override[i].type == 'video' }}">
+      </div>
+    {% endfor %}
+  </div>
+
+  <button type="submit" style="margin-top:2rem;">💾 Save Overrides</button>
+</form>
+
+<div class="compare-box">
+  <h3>Printify Data Snapshot</h3>
+  <p><strong>Title:</strong> {{ product.title }}</p>
+  <p><strong>Description:</strong> {{ product.seo_description }}</p>
+  <p><strong>Sport:</strong> {{ product.sport }}</p>
+  <p><strong>Tags:</strong> {{ product.tags | join(', ') }}</p>
+</div>
+{% endblock %}
