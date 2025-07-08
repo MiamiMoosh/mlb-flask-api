@@ -30,7 +30,6 @@ from admin import admin_bp  # adjust based on file path
 
 # Initialize Flask app
 app = Flask(__name__, template_folder="pages")
-admin_bp = Blueprint("admin", __name__)
 app.register_blueprint(admin_bp)
 app.secret_key = "The5Weapon!33534"  # Replace this with a strong, unique string in production
 serializer = URLSafeTimedSerializer(app.secret_key)
