@@ -1640,6 +1640,7 @@ def load_nav():
 
 
 @admin_bp.route("/admin/edit-product/<slug>", methods=["GET", "POST"])
+@admin_required
 def edit_product(slug):
     edits_path = f"cms_edits/{slug}.json"
 
