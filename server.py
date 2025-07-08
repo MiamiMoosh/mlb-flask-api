@@ -30,7 +30,6 @@ from sportsdb_api import get_games_for_league, get_leagues
 # Initialize Flask app
 app = Flask(__name__, template_folder="pages")
 admin_bp = Blueprint("admin", __name__)
-is_admin = request.cookies.get("admin") == "true"
 app.secret_key = "The5Weapon!33534"  # Replace this with a strong, unique string in production
 serializer = URLSafeTimedSerializer(app.secret_key)
 port = int(os.environ.get("PORT", 8080))
@@ -1554,6 +1553,7 @@ def auto_tag_product(p, tag_rules):
 @app.route("/shop/<path:subpath>")
 def shop(subpath):
     import json
+    is_admin = request.cookies.get("admin") == "true"
 
     track_view("/shop")
     parts = [p.lower() for p in subpath.strip("/").split("/")] if subpath else []
