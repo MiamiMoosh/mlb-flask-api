@@ -1867,21 +1867,22 @@ def product_detail(slug):
             if v.get("images")
         ]
 
-        # ✅ Load CMS edits if available
-        edits_path = f"cms_edits/{slug}.json"
-        product_edits = {}
-        if os.path.exists(edits_path):
-            with open(edits_path) as f:
-                product_edits = json.load(f)
+    # ✅ Load CMS edits if available
+    edits_path = f"cms_edits/{slug}.json"
+    product_edits = {}
+    if os.path.exists(edits_path):
+        with open(edits_path) as f:
+            product_edits = json.load(f)
 
-        is_admin = request.cookies.get("admin") == "true"
-        print("seo_description →", product.get("seo_description"))
+    is_admin = request.cookies.get("admin") == "true"
+    print("seo_description →", product.get("seo_description"))
 
-        return render_template("product_detail.html",
-                               product=product,
-                               product_edits=product_edits,
-                               is_admin=is_admin,
-                               nav=load_nav())
+    # ✅ Always return template, regardless of image logic
+    return render_template("product_detail.html",
+                           product=product,
+                           product_edits=product_edits,
+                           is_admin=is_admin,
+                           nav=load_nav())
 
 
 @app.route("/webhook/printify", methods=["POST"])
