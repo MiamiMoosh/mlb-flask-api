@@ -83,6 +83,15 @@ app.config.update(
 mail = Mail(app)
 UPLOAD_DIR = "static/uploads"
 
+
+@app.context_processor
+def inject_admin():
+    try:
+        return {'is_admin': request.cookies.get("admin") == "true"}
+    except RuntimeError:
+        return {'is_admin': False}
+
+
 def run_sync_script():
     try:
         subprocess.run(["python", "sync_printify.py"], check=True)
@@ -1706,6 +1715,7 @@ from collections import defaultdict
 @app.route("/shop/<slug>")
 def product_detail(slug):
     track_view("/shop/<slug>")
+    is_admin = request.cookies.get("admin") == "true"
     with open("product_tags.json") as f:
         product_tags = json.load(f)
 
