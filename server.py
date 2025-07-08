@@ -25,11 +25,13 @@ from insight_utils import generate_or_fetch_matchup_insight, generate_matchup_in
     get_pitcher_mix, extract_matchup_pair
 from game_logic import extract_game_state, is_high_leverage
 from sportsdb_api import get_games_for_league, get_leagues
+from admin import admin_bp  # adjust based on file path
 
 
 # Initialize Flask app
 app = Flask(__name__, template_folder="pages")
 admin_bp = Blueprint("admin", __name__)
+app.register_blueprint(admin_bp)
 app.secret_key = "The5Weapon!33534"  # Replace this with a strong, unique string in production
 serializer = URLSafeTimedSerializer(app.secret_key)
 port = int(os.environ.get("PORT", 8080))
