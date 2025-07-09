@@ -71,6 +71,9 @@ threadline_surveys = threadline_db["threadline_surveys"]
 threadline_votes = threadline_db["threadline_votes"]
 user_reputation = threadline_db["user_reputation"]
 
+product_db = client["products"]
+product_edits = product_db["product_edits"]
+
 MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
 app.config.update(
     MAIL_SERVER="smtp.gmail.com",

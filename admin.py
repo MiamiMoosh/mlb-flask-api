@@ -4,6 +4,8 @@ import mimetypes
 from flask import Blueprint, render_template, request, redirect, url_for, session
 from functools import wraps
 from werkzeug.utils import secure_filename
+from pymongo import MongoClient
+from server import client  # Assuming MongoClient is initialized in server.py
 
 admin_bp = Blueprint("admin", __name__)
 
@@ -22,7 +24,9 @@ def detect_type(filename):
 @admin_bp.route("/admin/edit-product/<slug>", methods=["GET", "POST"])
 @admin_required
 def edit_product(slug):
-    edits_path = f"cms_edits/{slug}.json"
+    db = client["first_string"]
+    product_edits = db["product_edits"]
+
     upload_dir = f"static/images/{slug}"
     os.makedirs(upload_dir, exist_ok=True)
 
@@ -30,13 +34,8 @@ def edit_product(slug):
     with open("product_tags.json") as f:
         product_data = next((p for p in json.load(f).values() if p.get("slug") == slug), None)
 
-    # Load existing edits
-    edits = {}
-    if os.path.exists(edits_path):
-        with open(edits_path) as f:
-            edits = json.load(f)
-    else:
-        edits = {"thumbnail_override": []}
+    # Load existing edits from MongoDB
+    edits = product_edits.find_one({ "slug": slug }) or { "thumbnail_override": [] }
 
     # Get available uploaded files
     available_files = os.listdir(upload_dir)
@@ -61,11 +60,7 @@ def edit_product(slug):
         for i in range(10):
             src = request.form.get(f"src_{i}")
             poster = request.form.get(f"poster_{i}")
-
             file_type = detect_type(src) if src else "image"
-
-            # Stub: Add auto-poster logic here if poster missing
-            # e.g., use ffmpeg to extract first frame of video
 
             thumbnails.append({
                 "slot": i,
@@ -75,6 +70,7 @@ def edit_product(slug):
             })
 
         new_edits = {
+            "slug": slug,
             "title_override": title,
             "description_override": desc,
             "description_style": {
@@ -86,9 +82,12 @@ def edit_product(slug):
             "thumbnail_override": thumbnails
         }
 
-        os.makedirs("cms_edits", exist_ok=True)
-        with open(edits_path, "w") as f:
-            json.dump(new_edits, f, indent=2)
+        # Save to MongoDB
+        product_edits.update_one(
+            { "slug": slug },
+            { "$set": new_edits },
+            upsert=True
+        )
 
         return redirect(url_for("admin.edit_product", slug=slug))
 
