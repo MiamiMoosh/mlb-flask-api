@@ -27,6 +27,8 @@ def edit_product(slug):
     if os.path.exists(edits_path):
         with open(edits_path) as f:
             edits = json.load(f)
+    else:
+        edits = {"thumbnail_override": []}  # ✅ Add a fallback
 
     if request.method == "POST":
         # Handle uploads and metadata
