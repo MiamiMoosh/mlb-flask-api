@@ -23,8 +23,6 @@ def detect_type(filename):
 @admin_bp.route("/admin/edit-product/<slug>", methods=["GET", "POST"])
 @admin_required
 def edit_product(slug):
-    db = client["first_string"]
-    product_edits = db["product_edits"]
 
     upload_dir = f"static/images/{slug}"
     os.makedirs(upload_dir, exist_ok=True)
