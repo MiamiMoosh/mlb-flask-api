@@ -26,7 +26,7 @@ from insight_utils import generate_or_fetch_matchup_insight, generate_matchup_in
 from game_logic import extract_game_state, is_high_leverage
 from sportsdb_api import get_games_for_league, get_leagues
 from admin import admin_bp  # adjust based on file path
-
+from db import (client, mlb_db, users_db, threadline_db, product_edits)
 
 # Initialize Flask app
 app = Flask(__name__, template_folder="pages")
@@ -43,17 +43,9 @@ SHOP_ID = os.environ.get("PRINTIFY_SHOP_ID")
 response = requests.get("https://api.printify.com/v1/shops.json", headers=HEADERS)
 print(response.json())
 
-# Connect to MongoDB using Railway-provided URI
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://mongo:MXQDxgcJWYBgTFtLPiwGdsnRXTIONzNc@trolley.proxy.rlwy.net:25766")
-client = MongoClient(MONGO_URI)
-
-# MLB stats DB
-mlb_db = client["mlb_stats"]
 collection = mlb_db["batter_vs_pitcher"]
 streak_collection = mlb_db["hot_streak_players"]
 
-# First String users DB
-users_db = client["first_string_users"]
 users_collection = users_db["users"]
 listings_collection = users_db["listings"]
 page_views = users_db["page_views"]
@@ -61,8 +53,6 @@ search_logs = users_db["search_logs"]
 bot_views = users_db["bot_views"]
 banned_emails = users_db["banned_emails"]
 
-# Threadline DB
-threadline_db = client["threadline"]
 threadline_comments = threadline_db["threadline_comments"]
 threadline_users = threadline_db["threadline_users"]
 threadline_insights = threadline_db["threadline_insights"]
@@ -70,9 +60,6 @@ threadline_games = threadline_db["threadline_games"]
 threadline_surveys = threadline_db["threadline_surveys"]
 threadline_votes = threadline_db["threadline_votes"]
 user_reputation = threadline_db["user_reputation"]
-
-product_db = client["products"]
-product_edits = product_db["product_edits"]
 
 MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
 app.config.update(

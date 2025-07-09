@@ -4,8 +4,7 @@ import mimetypes
 from flask import Blueprint, render_template, request, redirect, url_for, session
 from functools import wraps
 from werkzeug.utils import secure_filename
-from pymongo import MongoClient
-from server import client  # Assuming MongoClient is initialized in server.py
+from db import product_edits
 
 admin_bp = Blueprint("admin", __name__)
 
