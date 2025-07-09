@@ -1816,11 +1816,9 @@ def product_detail(slug):
         ]
 
     # ✅ Load CMS edits if available
-    edits_path = f"cms_edits/{slug}.json"
-    product_edits = {}
-    if os.path.exists(edits_path):
-        with open(edits_path) as f:
-            product_edits = json.load(f)
+
+    from db import product_edits as product_edits_collection
+    product_edits = product_edits_collection.find_one({"slug": slug}) or {}
 
     is_admin = request.cookies.get("admin") == "true"
     print("seo_description →", product.get("seo_description"))
