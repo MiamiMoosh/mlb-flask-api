@@ -135,7 +135,7 @@ button:disabled { background-color: #444; color: #999; cursor: default; box-shad
     </div>
 
     {% if description %}
-      <p class="product-description">{{ description }}</p>
+      <p class="product-description">>{{ description | safe }}</p>
     {% endif %}
 
     {% if is_admin %}

@@ -29,8 +29,9 @@
   <input type="text" name="title" value="{{ edits.title_override | default('') }}">
 
   <label>Description Override</label>
-  <textarea name="description" rows="4">{{ edits.description_override | default('') }}</textarea>
-
+  <textarea name="description" rows="6" placeholder="Use <br>, <strong>, etc.">{{ edits.description_override | default('') }}</textarea>
+  <p style="font-size:12px; color:#aaa;">Supports basic HTML tags like <code>&lt;br&gt;</code>, <code>&lt;strong&gt;</code>, <code>&lt;em&gt;</code></p>
+  
   <label>Font Size</label>
   <input type="text" name="desc_size" value="{{ edits.description_style.font_size if edits.description_style and edits.description_style.font_size is defined else 14 }}">
   <label>Font Color</label>
