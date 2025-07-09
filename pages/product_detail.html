@@ -2,7 +2,7 @@
 
 {% block meta %}
   {% if product %}
-    <title>{{ title }} – First String</title>
+    <title>{{ meta.title if meta and meta.title else "First String" }}</title>
     <meta name="description" content="{{ description or title }}">
     <meta property="og:title" content="{{ title }}">
     <meta property="og:description" content="{{ description or title }}">

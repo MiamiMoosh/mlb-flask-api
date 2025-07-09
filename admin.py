@@ -65,5 +65,10 @@ def edit_product(slug):
 
         return redirect(url_for("admin.edit_product", slug=slug))
 
-    return render_template("admin/edit_product.html", product=product_data, edits=edits, slug=slug)
-
+    return render_template(
+        "admin/edit_product.html",
+        product=product_data,
+        edits=edits,
+        slug=slug,
+        meta={"title": "Edit Product | First String"}
+    )
