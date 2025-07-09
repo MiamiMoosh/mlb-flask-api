@@ -6,7 +6,7 @@
   label { display: block; margin-top: 1rem; font-size: 14px; }
   input, textarea, select { width: 100%; padding: 6px; background: #1d1f21; border: 1px solid #666; color: white; border-radius: 4px; font-size: 14px; }
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
-  .thumbnail-preview { width: 100px; height: 100px; object-fit: cover; border-radius: 4px; }
+  .thumbnail-preview { width: 100%; height: auto; object-fit: cover; border-radius: 4px; margin-bottom: 0.5rem; }
   .video-thumb { position: relative; }
   .video-thumb::after {
     content: '▶';
@@ -31,7 +31,7 @@
   <label>Description Override</label>
   <textarea name="description" rows="6" placeholder="Use <br>, <strong>, etc.">{{ edits.description_override | default('') }}</textarea>
   <p style="font-size:12px; color:#aaa;">Supports basic HTML tags like <code>&lt;br&gt;</code>, <code>&lt;strong&gt;</code>, <code>&lt;em&gt;</code></p>
-  
+
   <label>Font Size</label>
   <input type="text" name="desc_size" value="{{ edits.description_style.font_size if edits.description_style and edits.description_style.font_size is defined else 14 }}">
   <label>Font Color</label>
@@ -50,17 +50,42 @@
   <div class="grid">
     {% for i in range(10) %}
       {% set thumb = edits.thumbnail_override[i] if edits.thumbnail_override is defined and edits.thumbnail_override[i] is defined else {} %}
+      {% set file_type = 'video' if thumb.src is defined and ('.mp4' in thumb.src or '.webm' in thumb.src or '.mov' in thumb.src) else 'image' %}
       <div>
         <label>Slot {{ i + 1 }}</label>
-        <select name="type_{{ i }}">
-          <option value="image" {% if thumb.type == "image" %}selected{% endif %}>Image</option>
-          <option value="video" {% if thumb.type == "video" %}selected{% endif %}>Video</option>
-        </select>
+        {% if thumb.src %}
+          {% if file_type == 'image' %}
+            <img src="{{ thumb.src }}" class="thumbnail-preview">
+          {% else %}
+            <video src="{{ thumb.src }}" class="thumbnail-preview" muted autoplay loop></video>
+          {% endif %}
+        {% endif %}
+        <input type="hidden" name="type_{{ i }}" value="{{ file_type }}">
         <input type="text" name="src_{{ i }}" placeholder="Image/Video Path or URL" value="{{ thumb.src | default('') }}">
-        <input type="text" name="poster_{{ i }}" placeholder="Poster (if video)" value="{{ thumb.poster if thumb.type == 'video' and thumb.poster is defined else '' }}">
+        <input type="text" name="poster_{{ i }}" placeholder="Poster (if video)" value="{{ thumb.poster if thumb.poster is defined else '' }}">
       </div>
     {% endfor %}
   </div>
+
+  <h3>Upload New Media</h3>
+  <input type="file" name="new_media" accept="image/*,video/*">
+
+  {% if available_files %}
+    <h3>Available Uploaded Files</h3>
+    <div class="grid">
+      {% for file in available_files %}
+        {% set file_url = url_for('static', filename='images/' ~ slug ~ '/' ~ file) %}
+        <div>
+          {% if '.mp4' in file or '.webm' in file or '.mov' in file %}
+            <video src="{{ file_url }}" class="thumbnail-preview" muted autoplay loop></video>
+          {% else %}
+            <img src="{{ file_url }}" class="thumbnail-preview">
+          {% endif %}
+          <small>{{ file }}</small>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
 
   <button type="submit" style="margin-top:2rem;">💾 Save Overrides</button>
 </form>
