@@ -1682,9 +1682,9 @@ def product_detail(slug):
         for area in pdata.get("print_areas", []):
             for ph in area.get("placeholders", []):
                 if ph.get("src"):
-                    images.append({"src": ph["src"]})
+                    images.append({"src": ph["src"], "type": "image"})
         if not images:
-            images = [{"src": i["src"]} for i in pdata.get("images", []) if i.get("src")]
+            images = [{"src": i["src"], "type": "image"} for i in pdata.get("images", []) if i.get("src")]
 
         filtered_variants = []
         for v in pdata.get("variants", []):
@@ -1797,7 +1797,6 @@ def product_detail(slug):
             return redirect(url_for("shop"))
 
     product = hydrate_if_stale(slug, fallback=product)
-    print("Hydrated Printify images:", product.get("images"))
 
     if not product or product.get("hide"):
         return redirect(url_for("shop"))
