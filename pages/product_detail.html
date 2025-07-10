@@ -68,7 +68,7 @@ button:disabled { background-color: #444; color: #999; cursor: default; box-shad
 </style>
 {% set title = product_edits.title_override or product.title %}
 {% set description = product_edits.description_override or product.seo_description %}
-{% set thumbnails = product_edits.thumbnail_override or product.images %}
+{% set thumbnails = product_edits.thumbnail_override if product_edits.thumbnail_override is defined and product_edits.thumbnail_override else product.images %}
 {% set sport = product_edits.sport_override or product.sport %}
 {% set tags = product_edits.tags_override or product.tags %}
 <div class="wrapper">
@@ -77,21 +77,29 @@ button:disabled { background-color: #444; color: #999; cursor: default; box-shad
       <div class="image-cluster">
   <div class="thumbnail-stack">
     {% for img in thumbnails %}
-      <img src="{{ img.src }}" class="thumbnail" alt="Thumbnail" onclick="selectImage('{{ img.src }}', this)">
+      {% if img.src %}
+        {% set img_path = url_for('static', filename='images/' ~ product.slug ~ '/' ~ img.src) if 'static/images/' not in img.src else img.src %}
+        {% if img.type == 'video' %}
+          <video src="{{ img_path }}" class="thumbnail" muted autoplay loop onclick="selectImage('{{ img_path }}', this)"></video>
+        {% else %}
+          <img src="{{ img_path }}" class="thumbnail" alt="Thumbnail" onclick="selectImage('{{ img_path }}', this)">
+        {% endif %}
+      {% endif %}
     {% endfor %}
   </div>
   <div class="main-image-frame">
-    <img id="selected-image"
-         src="{{ thumbnails[0].src if thumbnails and thumbnails[0].src }}"
-         alt="{{ title }}">
+    {% if thumbnails and thumbnails[0].src %}
+      {% set main_path = url_for('static', filename='images/' ~ product.slug ~ '/' ~ thumbnails[0].src) if 'static/images/' not in thumbnails[0].src else thumbnails[0].src %}
+      <img id="selected-image"
+           src="{{ main_path }}"
+           alt="{{ title }}">
+    {% endif %}
     <svg class="magnifier-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
     <path fill="white" d="M10 2a8 8 0 105.293 14.293l4.707 4.707 1.414-1.414-4.707-4.707A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/>
   </svg>
-
   </div>
 </div>
     </div>
-
   </div>
   <div class="dashboard-panel">
     <h1 class="product-title">{{ title }}</h1>
@@ -135,7 +143,7 @@ button:disabled { background-color: #444; color: #999; cursor: default; box-shad
     </div>
 
     {% if description %}
-      <p class="product-description">>{{ description | safe }}</p>
+      <p class="product-description">{{ description | safe }}</p>
     {% endif %}
 
     {% if is_admin %}
@@ -160,7 +168,6 @@ button:disabled { background-color: #444; color: #999; cursor: default; box-shad
   <img id="zoomed-image" src="" style="max-width:90%; max-height:90%; object-fit:contain; border-radius:8px;" />
 </div>
 
-{% endblock %}
 
 {% block scripts %}
 <script>
