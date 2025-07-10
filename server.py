@@ -1797,6 +1797,7 @@ def product_detail(slug):
             return redirect(url_for("shop"))
 
     product = hydrate_if_stale(slug, fallback=product)
+    print("Hydrated Printify images:", product.get("images"))
 
     if not product or product.get("hide"):
         return redirect(url_for("shop"))
