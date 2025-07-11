@@ -68,7 +68,6 @@ button:disabled { background-color: #444; color: #999; cursor: default; box-shad
 </style>
 {% set title = product_edits.title_override or product.title %}
 {% set description = product_edits.description_override or product.seo_description %}
-{% set thumbnails = product_edits.thumbnail_override if product_edits.thumbnail_override else product.images %}
 {% set sport = product_edits.sport_override or product.sport %}
 {% set tags = product_edits.tags_override or product.tags %}
 <div class="wrapper">

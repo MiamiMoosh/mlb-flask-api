@@ -1825,12 +1825,19 @@ def product_detail(slug):
     is_admin = request.cookies.get("admin") == "true"
     print("seo_description →", product.get("seo_description"))
 
-    print("🧪 Final thumbnails list:", product.get("images"))
-    print("🧪 Edits override:", product_edits.get("thumbnail_override"))
+    # Use override only if populated with real images
+    override = product_edits.get("thumbnail_override", [])
+    valid_override = [img for img in override if img.get("src")]
+
+    if valid_override:
+        thumbnails = valid_override
+    else:
+        thumbnails = product.get("images", [])
     # ✅ Always return template, regardless of image logic
     return render_template("product_detail.html",
                            product=product,
                            product_edits=product_edits,
+                           thumbnails=thumbnails,
                            is_admin=is_admin,
                            nav=load_nav())
 
