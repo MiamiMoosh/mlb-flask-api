@@ -1686,7 +1686,7 @@ def product_detail(slug):
                     images.append({"src": src, "type": "image"})
 
         if not images:
-            images = [{"src": i["src"].rstrip(";"), "type": "image"} for i in pdata.get("images", []) if i.get("src")]images = [{"src": i["src"], "type": "image"} for i in pdata.get("images", []) if i.get("src")]
+            images = [{"src": i["src"].rstrip(";"), "type": "image"} for i in pdata.get("images", []) if i.get("src")]
 
         filtered_variants = []
         for v in pdata.get("variants", []):
