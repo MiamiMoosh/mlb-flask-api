@@ -1823,6 +1823,8 @@ def product_detail(slug):
     is_admin = request.cookies.get("admin") == "true"
     print("seo_description →", product.get("seo_description"))
 
+    print("🧪 Final thumbnails list:", product.get("images"))
+    print("🧪 Edits override:", product_edits.get("thumbnail_override"))
     # ✅ Always return template, regardless of image logic
     return render_template("product_detail.html",
                            product=product,

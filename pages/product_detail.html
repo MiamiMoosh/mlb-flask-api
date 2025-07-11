@@ -77,6 +77,8 @@ button:disabled { background-color: #444; color: #999; cursor: default; box-shad
       <div class="image-cluster">
         <div class="thumbnail-stack">
           {% for img in thumbnails %}
+            <p>🧪 Debug Thumbnail: {{ img.src }} (type: {{ img.type }})</p>
+
             {% if img.src %}
               {% set img_path = (
                 img.src if img.src.startswith('http')
